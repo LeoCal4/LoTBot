@@ -10,13 +10,20 @@
 5. Once in the virtualenv, install the application's requirements using:  
     `pip install -r requirements.txt`
 
-**You should always activate the _virtual env_ to run the bot** 
+**You should always activate the _virtual env_; everything written here assumes that you have activated it**
+
+Now that the bot has been installed, you must create a _config.py_ file in the *lot_bot* directory, copying the *sample_config.py*.
+In the _config.py_ file, add all the values to the variables marked with _"TBA"_ (_To Be Added_). They are all set to `None`, so the bot won't work if you don't set them first.
 
 # Environments
 _LoTBot_ has three different environments:
 - **Development**: the default environment, used when developing the application. Everything should be as local as possible and should not rely on external parts.
 - **Testing**: the environment in which tests (both unit and integration) are run. More on those two in the _Testing_ section.
 - **Production**: the environment in which the bot is run once it is deployed.
+
+# Running the bot
+To run the bot locally, simply run:
+    `py .\main.py`
 
 # Development
 ## Main components
