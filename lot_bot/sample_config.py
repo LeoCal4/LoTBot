@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -82,7 +83,7 @@ def create_config():
         config.TESTING = os.getenv("TESTING", False)
         config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
         config.LOG_PATH = os.getenv("LOG_PATH", None)
-        config.CHANNELS_ID = os.getenv("CHANNELS_ID", {})
+        config.CHANNELS_ID = json.load(os.getenv("CHANNELS_ID", {}))
         config.DEVELOPER_CHAT_IDS = os.getenv("DEVELOPER_CHAT_IDS", [])
     else:
         if ENV == "testing":
