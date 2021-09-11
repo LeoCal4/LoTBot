@@ -1,9 +1,9 @@
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
                       KeyboardButton, ReplyKeyboardMarkup, Update)
 
-from lot_bot.constants import SPORTS
-from lot_bot.dao.abbonamenti_manager import retrieve_abbonamenti_from_user_id
-from lot_bot.logger import logger
+from lot_bot import constants as cst
+from lot_bot import logger as lgt
+from lot_bot.dao import abbonamenti_manager
 
 startup_buttons = [
     [KeyboardButton(text="🙋🏼‍♀️ Vai alla Community 🙋🏾")],
@@ -55,22 +55,23 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """
 
     chat_id = update.effective_chat.id
-    abbonamenti = retrieve_abbonamenti_from_user_id(chat_id)
-    sport_attivi = [entry["sport"] for entry in abbonamenti]
-    emoji_sport = {sport: "🔴" for sport in SPORTS}
+    abbonamenti = abbonamenti_manager.retrieve_abbonamenti_from_user_id(chat_id)
+    sport_attivi = [entry["sport"].lower() for entry in abbonamenti]
+    emoji_sport = {sport: "🔴" for sport in cst.SPORTS}
     for sport in sport_attivi:
         emoji_sport[sport] = "🟢"
     SPORT_STRING_MENU_LEN = 19
     # ljust appends " " at the end of the string, until the specified length is reached
-    sport_menu_entries = [sport.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport] for sport in SPORTS]
-    inline_buttons = {sport: entry for sport, entry in zip(SPORTS, sport_menu_entries)}
+    # capitalize makes the first letter uppercase and the rest lowercase
+    sport_menu_entries = [sport.ljust(SPORT_STRING_MENU_LEN).capitalize() + emoji_sport[sport] for sport in cst.SPORTS]
+    inline_buttons = {sport: entry for sport, entry in zip(cst.SPORTS, sport_menu_entries)}
     keyboard_sport = []
-    for i, sport in enumerate(SPORTS):
+    for i, sport in enumerate(cst.SPORTS):
         sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport], callback_data=sport)
         if i % 2 == 0:
             keyboard_sport.append([sport_keyboard_button])
         else:
-            keyboard_sport[i-1].append(sport_keyboard_button)
+            keyboard_sport[(i-1)//2].append(sport_keyboard_button)
     keyboard_sport.append([back_keyboard_button])
     inline_sport = InlineKeyboardMarkup(inline_keyboard=keyboard_sport)
     return inline_sport
