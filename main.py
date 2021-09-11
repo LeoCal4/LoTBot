@@ -10,7 +10,9 @@ from lot_bot import filters
 
 def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("start", handlers.start_command))
-    dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), handlers.handle_giocata))
+    dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), handlers.giocata_handler))
+    # this has to be the last one, since they are checked in the same order they are added
+    dispatcher.add_handler(MessageHandler(filters.get_normal_messages_filter(), handlers.first_message_handler))
     dispatcher.add_error_handler(handlers.error_handler)
 
 

@@ -1,6 +1,8 @@
+import datetime 
 import html
 import json
 import traceback
+from pymongo import database
 
 from telegram import ParseMode, Update
 from telegram.ext.dispatcher import CallbackContext
@@ -10,6 +12,7 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import abbonamenti_manager, user_manager
+from lot_bot import constants as cst
 
 
 def start_command(update: Update, context: CallbackContext):
@@ -91,7 +94,7 @@ def error_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=dev_chat_id, text=message, parse_mode=ParseMode.HTML)        
 
 
-def handle_giocata(update: Update, context: CallbackContext):
+def giocata_handler(update: Update, context: CallbackContext):
     """Sends the received giocata to all the active user subscribed to 
     its sport and strategy.
 
@@ -122,3 +125,63 @@ def handle_giocata(update: Update, context: CallbackContext):
             continue
         lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
         context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.startup_reply_keyboard)
+
+
+def first_message_handler(update: Update, context: CallbackContext):
+    """Sends welcome messages to the user, then creates two standard
+    abbonamenti for her/him and creates the user itself.
+    In case the user already exists, the function just exits.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    Raises:
+        Exception: in case any of the db operation fails
+    """
+    user = update.effective_user
+    if user_manager.retrieve_user(user.id):
+        lgr.logger.warning(f"User with id {user.id} already exists, not sending welcome messages")
+        return
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(trial_expiration_timestamp).strftime("%d/%m/%Y alle %H:%M")
+    welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date)
+    update.message.reply_text(welcome_message, reply_markup=kyb.startup_reply_keyboard, parse_mode="html")
+    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
+    abbonamenti_calcio_data = {
+        "telegramID": user.id,
+        "sport": "calcio",
+        "strategia": "PiaQuest",
+    }
+    abb_result = abbonamenti_manager.create_abbonamenti(abbonamenti_calcio_data)
+    if not abb_result:
+        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_calcio_data=}")
+        raise Exception
+    abbonamenti_exchange_data = {
+        "telegramID": user.id,
+        "sport": "exchange",
+        "strategia": "MaxExchange",  
+    }
+    abb_result = abbonamenti_manager.create_abbonamenti(abbonamenti_exchange_data)
+    if not abb_result:
+        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_exchange_data=}")
+        raise Exception
+    user_data = {
+        "_id": user.id,
+        "piano": "Sport Signals 19.90 -60%",
+        "nome": user.first_name,
+        "nomeUtente": user.username,
+        "validoFino": trial_expiration_timestamp,
+        "situazione": "domanda1",
+        "attivo": 1,
+        "lingua": "it",
+        "primoAlert": 0
+    }
+    user_result = user_manager.create_user(user_data)
+    if not user_result:
+        lgr.logger.error(f"Could not create user upon first message - {user_data=}")
+        raise Exception
+    # ? TODO do we still need this?
+#     if chat_id != idManuel:
+#         temp = f"Un nuovo utente ha avviato il bot!\n\nTelegram ID: {str(chat_id)}\nNome: {str(nome)}\nUsername: @{str(nomeUtente)}"
+#         bot.sendMessage(canaleNuoviUtenti, temp)

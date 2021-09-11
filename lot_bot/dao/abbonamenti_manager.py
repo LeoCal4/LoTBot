@@ -4,6 +4,15 @@ from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 
 def create_abbonamenti(abbonamenti_data : dict) -> bool:
+    """Creates an abbonamento using abbonamenti_data
+
+    Args:
+        abbonamenti_data (dict)
+
+    Returns:
+        bool: True if the abbonamento was inserted,
+            False otherwise
+    """
     try:
         result: InsertOneResult = db.mongo.abbonamenti.insert_one(abbonamenti_data)
         lgr.logger.info(f"Created new abbonamento for user id {abbonamenti_data['telegramID']}")

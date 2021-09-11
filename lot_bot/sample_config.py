@@ -35,6 +35,7 @@ class Development(Config):
     # ====== Add the values of the following variables ====== 
     TOKEN = None # TBA
     SPORTS_CHANNELS_ID = {} # TBA
+    DEVELOPER_CHAT_IDS = [] # TBA
     
 
 
