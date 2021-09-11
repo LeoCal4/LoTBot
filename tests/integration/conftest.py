@@ -4,10 +4,11 @@ from pathlib import Path
 from random import randrange
 
 import pytest
-from telethon.client.telegramclient import TelegramClient
-from xprocess import ProcessStarter
 from lot_bot import config as cfg
 from lot_bot import logger as lgr
+from lot_bot.database import create_db
+from telethon.client.telegramclient import TelegramClient
+from xprocess import ProcessStarter
 
 """The fixtures found in this file are automatically added by pytest 
     to all the tests files in this directory
@@ -23,6 +24,11 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def run_integration_tests_db():
+    create_db()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -108,6 +114,45 @@ async def client() -> TelegramClient:
     lgr.logger.info(f"Generated fake number {phone_number}")
     confirmation_code = str(DC_ID) * 5
     await client.start(phone=phone_number, code_callback=lambda: confirmation_code)
+
+    yield client
+
+    await client.disconnect()
+    await client.disconnected
+
+
+@pytest.fixture(scope="session")
+async def channel_admin_client() -> TelegramClient:
+    """Same as client, but instead of creating a random user, 
+    it logs in with an existing one which is the admin of the 
+    test channel.
+    ======================== ! IMPORTANT ! ===========================
+    Integration tests involving channels won't work if you have not 
+    performed the following steps yet.
+    To create an admin for the channel, choose a phone number among the
+    available ones and run the following lines of code to have that
+    account join the channel:
+    
+        `from telethon.tl.functions.channels import JoinChannelRequest`
+        `await channel_admin_client(JoinChannelRequest(channel))`
+
+    where `channel` is the id of the channel.
+    Once the client is part of the channel, you have to manually make it an
+    admin.    
+    
+    Yields:
+        TelegramClient: the Telegram client connected to the test servers
+    """
+    # TODO add connection errors handling
+    client = TelegramClient(None, cfg.config.API_ID, cfg.config.API_HASH, sequential_updates=True)
+    DC_ID = 3
+    TELEGRAM_TEST_SERVER_IP = "149.154.167.40"
+    TELEGRAM_TEST_SERVER_PORT = 443
+    CHANNEL_ADMIN_PHONE_NUMBER = f"99966{DC_ID}0001"
+    client.session.set_dc(DC_ID, TELEGRAM_TEST_SERVER_IP, TELEGRAM_TEST_SERVER_PORT)
+    confirmation_code = str(DC_ID) * 5
+    await client.start(first_name="Channel Admin", phone=CHANNEL_ADMIN_PHONE_NUMBER, 
+                        code_callback=lambda: confirmation_code, password="")
 
     yield client
 

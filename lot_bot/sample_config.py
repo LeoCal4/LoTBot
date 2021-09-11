@@ -19,7 +19,7 @@ class Config(object):
     ENV = None
     TOKEN = None
     TESTING = False
-    CHANNELS_ID = {}
+    SPORTS_CHANNELS_ID = {}
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
@@ -34,6 +34,7 @@ class Development(Config):
     MONGO_DB_URL = "mongodb://localhost:27017/"
     # ====== Add the values of the following variables ====== 
     TOKEN = None # TBA
+    SPORTS_CHANNELS_ID = {} # TBA
     
 
 
@@ -46,9 +47,11 @@ class Testing(Config):
     TOKEN = None # TBA
     MONGO_DB_USER = None # TBA
     MONGO_DB_PSW = None # TBA
+    MONGO_DB_CLUSTER = None # TBA
     MONGO_DB_NAME = None # TBA
-    MONGO_DB_URL = f"mongodb+srv://{MONGO_DB_USER}:{MONGO_DB_PSW}@{MONGO_DB_NAME}<...>" # TBA
-    # to get those two, use the following guide
+    MONGO_DB_URL = f"mongodb+srv://{MONGO_DB_USER}:{MONGO_DB_PSW}@{MONGO_DB_CLUSTER}.gbfdd.mongodb.net/{MONGO_DB_NAME}?retryWrites=true&w=majority"
+    SPORTS_CHANNELS_ID = {} # TBA
+    # to get the following two, use the following guide
     # https://core.telegram.org/api/obtaining_api_id#obtaining-api-id
     API_ID = None # TBA
     API_HASH = None # TBA

@@ -25,6 +25,8 @@ _LoTBot_ has three different environments:
 To run the bot locally, simply run:
     `py .\main.py`
 
+TODO: account on test server
+
 # Development
 ## Main components
 _LoTBot_ has three main components, that are initialized in the main entry point 
@@ -114,6 +116,18 @@ Integration tests are used to test the bot using external parts, which are as si
 To do so, a test bot has been created in Telegram's test servers and a test db has been created on cloud.mongo. 
 
 The code in `conftests.py` takes care of running the bot automatically, at the beginning of the tests.
+
+#### Channel admin client
+There are tests which require to have a client which is the admin of one of the sport test channels.  
+Integration tests involving said channels won't work if you have not performed the following steps yet.
+To create an admin for the channel, choose a phone number among the
+available ones (those with pattern 99966<dc_id><4 random digits>) and run the following lines of code to have that
+account join the channel:  
+    `from telethon.tl.functions.channels import JoinChannelRequest`
+    `await channel_admin_client(JoinChannelRequest(channel))`
+
+where `channel_admin_client` is the client and `channel` is the id of the channel.
+Once the client is part of the channel, you have to manually make it an admin.  
 
 ## _pytest.ini_
 All the information regarding where are tests found and the implicit command line arguments for the `pytest` command can be found in the _pytest.ini_ file.

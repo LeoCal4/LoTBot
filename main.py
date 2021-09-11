@@ -1,9 +1,17 @@
-from telegram.ext import CommandHandler, Updater
+from telegram.ext import CommandHandler, MessageHandler, Updater
+from telegram.ext.dispatcher import Dispatcher
 
 from lot_bot import config as cfg
 from lot_bot import database as db
+from lot_bot import handlers
 from lot_bot import logger as lgr
-from lot_bot.handlers import error_handler, fake_command_handler, start_command
+from lot_bot import filters
+
+
+def add_handlers(dispatcher: Dispatcher):
+    dispatcher.add_handler(CommandHandler("start", handlers.start_command))
+    dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), handlers.handle_giocata))
+    dispatcher.add_error_handler(handlers.error_handler)
 
 
 def run_bot_locally():
@@ -16,9 +24,7 @@ def run_bot_locally():
     db.create_db()
     updater = Updater(cfg.config.TOKEN)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("test", fake_command_handler))
-    dispatcher.add_handler(CommandHandler("start", start_command))
-    dispatcher.add_error_handler(error_handler)
+    add_handlers(dispatcher)
     lgr.logger.info("Start polling")
     updater.start_polling(timeout=15.0)
     updater.idle()
@@ -26,19 +32,15 @@ def run_bot_locally():
 
 def run_test_bot():
     cfg.create_config()
-    print(f"{cfg.config.ENV=}")
-    print("Aaoooooooooo")
     lgr.create_logger()
-    lgr.logger.info("Starting bot locally")
+    lgr.logger.info("Starting bot locally for tests")
     if not cfg.config.TOKEN:
         lgr.logger.error("ERROR: TOKEN not valid")
         raise Exception("No config TOKEN")
     db.create_db()
     updater = Updater(cfg.config.TOKEN)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("test", fake_command_handler))
-    dispatcher.add_handler(CommandHandler("start", start_command))
-    dispatcher.add_error_handler(error_handler)
+    add_handlers(dispatcher)
     lgr.logger.info("Start polling")
     updater.start_polling(timeout=15.0)
     updater.idle()
