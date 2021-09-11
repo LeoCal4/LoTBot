@@ -1,6 +1,8 @@
+import datetime
 from json import dumps
 
 from lot_bot import database as db
+from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 
@@ -21,9 +23,9 @@ def create_user(user_data: dict) -> bool:
         # checks if the inserted id is the one that was passed
         return result.inserted_id == user_data["_id"]
     except Exception as e:
-        print("Error during user creation")
-        print(f"Exception: {str(e)}")
-        print(f"User data: {dumps(user_data)}")
+        lgr.logger.error("Error during user creation")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User data: {dumps(user_data)}")
         return False
 
 
@@ -41,9 +43,9 @@ def retrieve_user(user_id: int) -> dict:
     try:
         return db.mongo.utenti.find_one({"_id": user_id})
     except Exception as e:
-        print("Error during user retrieval")
-        print(f"Exception: {str(e)}")
-        print(f"User id: {user_id}")
+        lgr.logger.error("Error during user retrieval")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
         return None
 
 
@@ -71,10 +73,10 @@ def update_user(user_id: int, user_data: dict) -> bool:
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
-        print("Error during user update")
-        print(f"Exception: {str(e)}")
-        print(f"User id: {user_id}")
-        print(f"User data: {dumps(user_data)}")
+        lgr.logger.error("Error during user update")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
+        lgr.logger.error(f"User data: {dumps(user_data)}")
         return False
 
 
@@ -91,9 +93,29 @@ def delete_user(user_id: int) -> bool:
         result: DeleteResult = db.mongo.utenti.delete_one({"_id": user_id})
         return bool(result.deleted_count)
     except Exception as e:
-        print("Error during user deletion")
-        print(f"Exception: {str(e)}")
-        print(f"User id: {user_id}")
+        lgr.logger.error("Error during user deletion")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
         return False
 
 
+def check_user_validity(message_date: datetime.datetime, user_data: dict, update_user_state_if_expired: bool = False) -> bool:
+    """Checks if the user subscription is still valid.
+
+    Args:
+        message_date (datetime): the date of the message being checked
+        user_data (dict)
+        update_user_state_if_expired (bool, optional): updates the subscription state of the user, 
+            in case it has expired. Defaults to False.
+
+    Returns:
+        bool: True if the the user's subscription is still valid, 
+            False otherwise
+    """
+    validity = float(user_data["validoFino"]) > message_date.timestamp()
+    if not validity and update_user_state_if_expired:
+        # TODO check return
+        result = update_user(user_data["_id"], {"attivo": 0})
+        if not result:
+            lgr.logger.error("Updating user validity state failed")
+    return validity
