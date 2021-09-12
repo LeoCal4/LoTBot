@@ -59,3 +59,54 @@ def get_strategy_from_giocata(text: str) -> str:
         lgr.logger.error(f"Could not find {played_strategy} in strategies for {sport}")
         raise Exception
 
+
+def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
+    """Returns the emoji relative to the cashout percentage sign.
+    The percentage text can either be integer number or a floating point
+    number, with a "," or a "." dividing the decimal part. Additionally,
+    it can have a "+" or a "-" sign as a first character.
+
+    Args:
+        percentage_text (str): the token of the message containing
+            the cashout percentage
+
+    Returns:
+        str: 🟢 for a non-negative cashout,  
+            🔴 for a negative cashout,  
+            an empty string in case of errors
+    """
+    if "," in percentage_text:
+        percentage_text = percentage_text.replace(",", ".")
+    try:
+        if float(percentage_text) >= 0:
+            return  "🟢"
+        else:
+            return "🔴"
+    except Exception as e:
+        lgr.logger.error(f"Could not parse the cashout percentage {percentage_text}")
+        lgr.logger.error(f"Exception: {e}")
+        return ""
+
+
+def create_cashout_message(message_text: str) -> str: 
+    """Creates the cashout message to be broadcasted from a cashout message text.
+    The message_text needs to be in the form "#<giocata id> +|-<percentage>.
+    The final cashout message has the form:
+    🟢|🔴 CASHOUT Exchange <giocata id> +|-<percentage>% 🟢|🔴
+
+    Args:
+        message_text (str): the text of the message containing the cashout.
+
+    Returns:
+        str: the cashout message to be broadcasted,
+            or an empty string in case of errors
+
+    """
+    message_tokens = message_text.split()
+    giocata_id = message_tokens[0]
+    cashout_percentage = message_tokens[1]
+    emoji = get_emoji_for_cashout_percentage(cashout_percentage)
+    if emoji == "":
+        lgr.logger.error(f"Error parsing cashout message {message_text}")
+        return ""
+    return f"{emoji} CASHOUT Exchange {giocata_id} {cashout_percentage}% {emoji}"

@@ -24,3 +24,13 @@ def test_get_strategy_from_wrong_giocata(wrong_giocata):
     giocata, _, _ = wrong_giocata
     with pytest.raises(Exception):
         utils.get_strategy_from_giocata(giocata)
+
+
+@pytest.mark.parametrize(
+    "percentage_text,expected",
+    [("-999.00", "🔴"), ("+999,00", "🟢"), ("0", "🟢"), ("/start", "")]
+)
+def test_get_emoji_for_cashout_percentage(percentage_text, expected):
+    emoji = utils.get_emoji_for_cashout_percentage(percentage_text)
+    assert emoji == expected
+

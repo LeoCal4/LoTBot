@@ -36,7 +36,7 @@ def retrieve_abbonamenti_from_user_id(user_id: int) -> list:
         None: if no abbonamenti were found or if there was an error
     """
     try:
-        return db.mongo.abbonamenti.find({"telegramID": user_id})
+        return list(db.mongo.abbonamenti.find({"telegramID": user_id}))
     except Exception as e:
         lgr.logger.error("Error during retrieve abbonamenti from user id")
         lgr.logger.error(f"Exception: {str(e)}")
@@ -56,10 +56,10 @@ def retrieve_abbonamenti_from_sport_strategy(sport: str, strategy: str) -> list:
         None: if no abbonamenti were found or if there was an error
     """
     try:
-        return db.mongo.abbonamenti.find({
+        return list(db.mongo.abbonamenti.find({
             "sport": sport,
             "strategia": strategy
-        })
+        }))
     except Exception as e:
         lgr.logger.error("Error during retrieve abbonamenti from sport and strategy")
         lgr.logger.error(f"Exception: {str(e)}")

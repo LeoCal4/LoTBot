@@ -25,4 +25,10 @@ def get_normal_messages_filter() -> Filters:
     Returns:
         Filters
     """
-    return Filters.text & (~Filters.command)
+    return (Filters.text & (~ Filters.command))
+
+
+def get_cashout_filter() -> Filters:
+    exchange_channel_filter = Filters.chat(cfg.config.SPORTS_CHANNELS_ID["exchange"])
+    cashout_text_filter = Filters.regex(r"^\s*#")
+    return exchange_channel_filter & cashout_text_filter

@@ -1,18 +1,17 @@
-import datetime 
+import datetime
 import html
 import json
 import traceback
-from pymongo import database
 
 from telegram import ParseMode, Update
 from telegram.ext.dispatcher import CallbackContext
 
 from lot_bot import config as cfg
+from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import abbonamenti_manager, user_manager
-from lot_bot import constants as cst
 
 
 def start_command(update: Update, context: CallbackContext):
@@ -94,22 +93,11 @@ def error_handler(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=dev_chat_id, text=message, parse_mode=ParseMode.HTML)        
 
 
-def giocata_handler(update: Update, context: CallbackContext):
-    """Sends the received giocata to all the active user subscribed to 
-    its sport and strategy.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    text = update.effective_message.text
-    strategy = utils.get_strategy_from_giocata(text)
-    sport = utils.get_sport_from_giocata(text)
-    lgr.logger.debug(f"Received giocata {sport} - {strategy}")
+def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str) -> bool:
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti_from_sport_strategy(sport, strategy)
     if not abbonamenti:
         lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
-        return
+        return False
     for abbonamento in abbonamenti:
         user_data = user_manager.retrieve_user(abbonamento["telegramID"])
         if not user_data:
@@ -125,6 +113,27 @@ def giocata_handler(update: Update, context: CallbackContext):
             continue
         lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
         context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.startup_reply_keyboard)
+    return True
+
+
+def giocata_handler(update: Update, context: CallbackContext):
+    """Sends the received giocata to all the active user subscribed to 
+    its sport and strategy.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    
+    Raise:
+        Exception: when there is an error sending the messages
+    """
+    text = update.effective_message.text
+    strategy = utils.get_strategy_from_giocata(text)
+    sport = utils.get_sport_from_giocata(text)
+    lgr.logger.debug(f"Received giocata {sport} - {strategy}")
+    if not send_message_to_all_abbonati(update, context, text, sport, strategy):
+        lgr.logger.error(f"Error with sending giocata {text} for {sport} - {strategy}")
+        raise Exception
 
 
 def first_message_handler(update: Update, context: CallbackContext):
@@ -146,8 +155,6 @@ def first_message_handler(update: Update, context: CallbackContext):
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
     trial_expiration_date = datetime.datetime.utcfromtimestamp(trial_expiration_timestamp).strftime("%d/%m/%Y alle %H:%M")
     welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date)
-    update.message.reply_text(welcome_message, reply_markup=kyb.startup_reply_keyboard, parse_mode="html")
-    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
     abbonamenti_calcio_data = {
         "telegramID": user.id,
         "sport": "calcio",
@@ -181,7 +188,31 @@ def first_message_handler(update: Update, context: CallbackContext):
     if not user_result:
         lgr.logger.error(f"Could not create user upon first message - {user_data=}")
         raise Exception
+    # the messages are sent only if the previous operations succeeded, this is fundamental
+    #   for the integration tests too
+    update.message.reply_text(welcome_message, reply_markup=kyb.startup_reply_keyboard, parse_mode="html")
+    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
+
     # ? TODO do we still need this?
 #     if chat_id != idManuel:
 #         temp = f"Un nuovo utente ha avviato il bot!\n\nTelegram ID: {str(chat_id)}\nNome: {str(nome)}\nUsername: @{str(nomeUtente)}"
 #         bot.sendMessage(canaleNuoviUtenti, temp)
+
+
+def exchange_cashout_handler(update: Update, context: CallbackContext):
+    """Sends out the cashout message to all the MaxExchange subscribers.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    Raises:
+        Exception: when there is an error parsing the cashout or sending the messages
+    """
+    cashout_text = utils.create_cashout_message(update.effective_message.text)
+    if cashout_text == "":
+        lgr.logger.error(f"Could not parse cashout text {update.effective_message.text}")
+        raise Exception
+    if not send_message_to_all_abbonati(update, context, cashout_text, "exchange", "MaxExchange"):
+        lgr.logger.error(f"Error with sending cashout {cashout_text}")
+        raise Exception
