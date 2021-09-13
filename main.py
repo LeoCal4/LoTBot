@@ -1,20 +1,35 @@
-from telegram.ext import CommandHandler, MessageHandler, Updater
+from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Updater
 from telegram.ext.dispatcher import Dispatcher
 
 from lot_bot import config as cfg
 from lot_bot import database as db
-from lot_bot import handlers
+from lot_bot.handlers import callback_handlers, message_handlers 
 from lot_bot import logger as lgr
 from lot_bot import filters
 
 
 def add_handlers(dispatcher: Dispatcher):
-    dispatcher.add_handler(CommandHandler("start", handlers.start_command))
-    dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), handlers.giocata_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), handlers.exchange_cashout_handler))
+    """Adds all the bot's handlers to the dispatcher.
+
+    Args:
+        dispatcher (Dispatcher)
+    """
+    # ============ COMMAND HANDLERS ===========
+    dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
+    # ======= CALLBACK QUERIES HANDLERS =======
+    # matches any callback with pattern "sport_<...>"
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"sport_\w+"))
+    # matches any callback with pattern "<sport>_<strategy>_[activate | disable]"
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"\w+_\w+_(activate|disable)"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.back_to_sports, pattern="back_to_sports"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.back_to_homepage, pattern="back_to_homepage"))
+    # ============ MESSAGE HANDLERS ===========
+    dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     # this has to be the last one, since they are checked in the same order they are added
-    dispatcher.add_handler(MessageHandler(filters.get_normal_messages_filter(), handlers.first_message_handler))
-    dispatcher.add_error_handler(handlers.error_handler)
+    dispatcher.add_handler(MessageHandler(filters.get_normal_messages_filter(), message_handlers.first_message_handler))
+    # ============ ERROR HANDLERS =============
+    dispatcher.add_error_handler(message_handlers.error_handler)
 
 
 def run_bot_locally():

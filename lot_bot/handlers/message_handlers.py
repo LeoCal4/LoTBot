@@ -1,9 +1,11 @@
+"""Module containing all the message handlers (including the command ones)"""
+
 import datetime
 import html
 import json
 import traceback
 
-from telegram import ParseMode, Update
+from telegram import ParseMode, Update, User
 from telegram.ext.dispatcher import CallbackContext
 
 from lot_bot import config as cfg
@@ -12,6 +14,52 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import abbonamenti_manager, user_manager
+
+
+def create_first_time_user(user: User, trial_expiration_timestamp: float) -> bool:
+    """Creates the user using the bot for the first time.
+
+    Args:
+        user (User)
+        trial_expiration_timestamp (float)
+
+    Returns:
+        bool: True if the operation was successful, False otherwise
+    """
+    abbonamenti_calcio_data = {
+        "telegramID": user.id,
+        "sport": "calcio",
+        "strategia": "PiaQuest",
+    }
+    abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_calcio_data)
+    if not abb_result:
+        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_calcio_data=}")
+        return False
+    abbonamenti_exchange_data = {
+        "telegramID": user.id,
+        "sport": "exchange",
+        "strategia": "MaxExchange",  
+    }
+    abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
+    if not abb_result:
+        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_exchange_data=}")
+        return False
+    user_data = {
+        "_id": user.id,
+        "piano": "Sport Signals 19.90 -60%",
+        "nome": user.first_name,
+        "nomeUtente": user.username,
+        "validoFino": trial_expiration_timestamp,
+        "situazione": "domanda1",
+        "attivo": 1,
+        "lingua": "it",
+        "primoAlert": 0
+    }
+    user_result = user_manager.create_user(user_data)
+    if not user_result:
+        lgr.logger.error(f"Could not create user upon first message - {user_data=}")
+        return False
+    return True
 
 
 def start_command(update: Update, context: CallbackContext):
@@ -23,25 +71,21 @@ def start_command(update: Update, context: CallbackContext):
         update (Update): the Update containing the command message
         context (CallbackContext)
     """
-    user_id = update.effective_user.id
-    lgr.logger.info(f"Received /start command from {user_id}")
     # the effective_message field is always present in normal messages
     # from_user gets the user which sent the message
-    language_code = update.effective_user.language_code or "it"
+    user_id = update.effective_user.id
+    lgr.logger.info(f"Received /start command from {user_id}")
     # update.message.reply_text is equal to bot.send_message(update.effective_message.chat_id, ...)
     bentornato_message = "Bentornato, puoi continuare ad utilizzare il bot"
     update.message.reply_text(bentornato_message, reply_markup=kyb.startup_reply_keyboard)
     lista_canali_message = "Questa è la lista dei canali di cui è possibile ricevere le notifiche"
     # ! this next line should probably be moved after the creation of the account
-    sent_message = update.message.reply_text(lista_canali_message, reply_markup=kyb.create_sports_inline_keyboard(update))
-    new_user_data = {
-        "_id": user_id,
-        "situazione": "gestioneSport", 
-        "message": sent_message.to_json(),
-        "lingua": language_code
-    }
-    if not user_manager.update_user(user_id, new_user_data):
-        user_manager.create_user(new_user_data)
+    update.message.reply_text(lista_canali_message, reply_markup=kyb.create_sports_inline_keyboard(update))
+    if not user_manager.retrieve_user(user_id):
+        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+        if not create_first_time_user(update.effective_user, trial_expiration_timestamp):
+            lgr.logger.error("Could not create first time user upon /start")
+            raise Exception
 
 
 def reset_command(update: Update, context: CallbackContext):
@@ -73,27 +117,46 @@ def error_handler(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     lgr.logger.error(msg="Exception while handling an update:", exc_info=context.error)
-
     # traceback.format_exception returns the usual python message about an exception, but as a
     #   list of strings rather than a single string, so we have to join them together.
     tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
     tb_string = "".join(tb_list)
-
     update_str = update.to_dict() if isinstance(update, Update) else str(update)
-    message = (
+    base_message = (
         f"An exception was raised while handling an update\n"
         f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
         "</pre>\n\n"
         f"<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n"
         f"<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n"
-        f"<pre>{html.escape(tb_string)}</pre>"
     )
-    
+    to_send = [base_message]
+    escaped_tb_string = html.escape(tb_string)
+    MAX_MESSAGE_LENGTH = 4000
+    splits = int(max(len(escaped_tb_string) // MAX_MESSAGE_LENGTH, 1))
+    for i in range(splits):
+        start_index = i * MAX_MESSAGE_LENGTH
+        end_index = int(min((i+1) * MAX_MESSAGE_LENGTH, len(escaped_tb_string)))
+        lgr.logger.error(html.escape(tb_string[start_index:end_index]))
+        to_send.append(f"<pre>{html.escape(tb_string[start_index:end_index])}</pre>")
     for dev_chat_id in cfg.config.DEVELOPER_CHAT_IDS:
-        context.bot.send_message(chat_id=dev_chat_id, text=message, parse_mode=ParseMode.HTML)        
+        for msg in to_send:
+            context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML)
+    # TODO manda un messaggio all'utente
 
 
 def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str) -> bool:
+    """Sends a message to all the user subscribed to a certain sport's strategy.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+        text (str)
+        sport (str)
+        strategy (str)
+
+    Returns:
+        bool: True if the operation was successful, False otherwise.
+    """
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti_from_sport_strategy(sport, strategy)
     if not abbonamenti:
         lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
@@ -112,6 +175,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
             lgr.logger.info(f"User {user_data['_id']} is not active (2)")
             continue
         lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
+        # TODO check blocco utenti
         context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.startup_reply_keyboard)
     return True
 
@@ -155,39 +219,7 @@ def first_message_handler(update: Update, context: CallbackContext):
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
     trial_expiration_date = datetime.datetime.utcfromtimestamp(trial_expiration_timestamp).strftime("%d/%m/%Y alle %H:%M")
     welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date)
-    abbonamenti_calcio_data = {
-        "telegramID": user.id,
-        "sport": "calcio",
-        "strategia": "PiaQuest",
-    }
-    abb_result = abbonamenti_manager.create_abbonamenti(abbonamenti_calcio_data)
-    if not abb_result:
-        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_calcio_data=}")
-        raise Exception
-    abbonamenti_exchange_data = {
-        "telegramID": user.id,
-        "sport": "exchange",
-        "strategia": "MaxExchange",  
-    }
-    abb_result = abbonamenti_manager.create_abbonamenti(abbonamenti_exchange_data)
-    if not abb_result:
-        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_exchange_data=}")
-        raise Exception
-    user_data = {
-        "_id": user.id,
-        "piano": "Sport Signals 19.90 -60%",
-        "nome": user.first_name,
-        "nomeUtente": user.username,
-        "validoFino": trial_expiration_timestamp,
-        "situazione": "domanda1",
-        "attivo": 1,
-        "lingua": "it",
-        "primoAlert": 0
-    }
-    user_result = user_manager.create_user(user_data)
-    if not user_result:
-        lgr.logger.error(f"Could not create user upon first message - {user_data=}")
-        raise Exception
+    
     # the messages are sent only if the previous operations succeeded, this is fundamental
     #   for the integration tests too
     update.message.reply_text(welcome_message, reply_markup=kyb.startup_reply_keyboard, parse_mode="html")

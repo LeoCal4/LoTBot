@@ -43,21 +43,20 @@ def delete_user_and_abbonamenti(user_id: int):
 # =================================================================================
 
 class TestHandlers:
-    # ! IMPORTANT: this test has to be the first for the client
-    @pytest.mark.asyncio
-    async def test_first_message(self, client: TelegramClient):
-        async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
-            await conv.send_message("hi")
-            first_resp: Message = await conv.get_response()
-            # TODO use messages in constants
-            assert "Benvenuto/a" in first_resp.raw_text
-            second_resp: Message = await conv.get_response()
-            assert "contrastare la ludopatia" in second_resp.raw_text
-        client_me = await client.get_me()
-        assert user_exists_and_is_valid(client_me.id)
-        # the start messages sets calcio and exchange
-        assert len(list(abbonamenti_manager.retrieve_abbonamenti_from_user_id(client_me.id))) == 2
-        delete_user_and_abbonamenti(client_me.id)
+    # @pytest.mark.asyncio
+    # async def test_first_message(self, client: TelegramClient):
+    #     async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
+    #         await conv.send_message("hi")
+    #         first_resp: Message = await conv.get_response()
+    #         # TODO use messages in constants
+    #         assert "Benvenuto/a" in first_resp.raw_text
+    #         second_resp: Message = await conv.get_response()
+    #         assert "contrastare la ludopatia" in second_resp.raw_text
+    #     client_me = await client.get_me()
+    #     assert user_exists_and_is_valid(client_me.id)
+    #     # the start messages sets calcio and exchange
+    #     assert len(list(abbonamenti_manager.retrieve_abbonamenti_from_user_id(client_me.id))) == 2
+    #     delete_user_and_abbonamenti(client_me.id)
 
 
     @pytest.mark.asyncio
@@ -70,6 +69,7 @@ class TestHandlers:
             second_resp: Message = await conv.get_response()
             assert "lista dei canali" in second_resp.raw_text
         client_me = await client.get_me()
+        assert user_exists_and_is_valid(client_me.id)
         delete_user_and_abbonamenti(client_me.id)
 
 
@@ -79,7 +79,7 @@ class TestHandlers:
         giocata, sport, strategy = correct_giocata
         # ! use client to subscribe to sport-strategy, this also sets it to active
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
-            await conv.send_message("hi")
+            await conv.send_message("/start")
             await conv.get_response()
             await conv.get_response()
         client_me = await client.get_me()
@@ -89,7 +89,7 @@ class TestHandlers:
             "sport": sport,
             "strategia": strategy,
         }
-        abbonamenti_manager.create_abbonamenti(abbonamenti_data)
+        abbonamenti_manager.create_abbonamento(abbonamenti_data)
         assert abbonamento_exists_and_is_valid(client_me.id, sport, strategy)
         # ! send giocata on channel using admin_client
         await channel_admin_client.send_message(TEST_CHANNEL_NAME, giocata)
@@ -106,7 +106,7 @@ class TestHandlers:
     async def test_exchange_cashout_handler(self, client: TelegramClient, channel_admin_client: TelegramClient, monkeypatch):
         # ! send start to have the bot message as the latest one
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
-            await conv.send_message("hi")
+            await conv.send_message("/start")
             await conv.get_response()
             await conv.get_response()
         client_me = await client.get_me()
@@ -117,7 +117,7 @@ class TestHandlers:
             "sport": "exchange",
             "strategia": "MaxExchange",
         }
-        abbonamenti_manager.create_abbonamenti(abbonamenti_exchange_data)
+        abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
         assert abbonamento_exists_and_is_valid(client_me.id, "exchange", "MaxExchange")
         # ! generate cashout message
         cashout_message = "#123 +100.00"
