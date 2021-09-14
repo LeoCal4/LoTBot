@@ -22,8 +22,7 @@ def test_get_strategy_from_correct_giocata(correct_giocata):
 
 def test_get_strategy_from_wrong_giocata(wrong_giocata):
     giocata, _, _ = wrong_giocata
-    with pytest.raises(Exception):
-        utils.get_strategy_from_giocata(giocata)
+    assert utils.get_strategy_from_giocata(giocata) == ""
 
 
 @pytest.mark.parametrize(

@@ -122,5 +122,8 @@ Seleziona un tasto oppure attendi una notifica dal bot !
 <b>Fatto in  🇮🇹  con </b>♥️"""
 
 
+ERROR_MESSAGE = "Abbiamo riscontrato un problema tecnico con il bot. Si consiglia di riprovare più tardi, ci scusiamo per il disagio."
+
+
 # this defines what will be imported if you import * from this module 
 __all__ = ["SPORTS", "STRATEGIES"]

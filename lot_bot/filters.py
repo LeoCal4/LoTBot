@@ -32,3 +32,9 @@ def get_cashout_filter() -> Filters:
     exchange_channel_filter = Filters.chat(cfg.config.SPORTS_CHANNELS_ID["exchange"])
     cashout_text_filter = Filters.regex(r"^\s*#")
     return exchange_channel_filter & cashout_text_filter
+
+
+def get_sport_channel_normal_message_filter() -> Filters:
+    sport_channels_filter = Filters.chat()
+    sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
+    return sport_channels_filter & Filters.chat
