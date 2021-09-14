@@ -87,9 +87,9 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
-def back_to_homepage(update: Update, context: CallbackContext):
+def to_homepage(update: Update, context: CallbackContext):
     """Loads the homepage of the bot.
-    The callback for this is "back_to_homepage".
+    The callback for this is "to_homepage".
 
     Args:
         update (Update)
@@ -99,16 +99,16 @@ def back_to_homepage(update: Update, context: CallbackContext):
         cst.HOMEPAGE_MESSAGE,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.homepage_inline_keyboard,
+        reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
     # must answer the callback query, even if it is useless
     context.bot.answer_callback_query(update.callback_query.id, text="")
     
 
-def back_to_sports(update: Update, context: CallbackContext):
+def to_sports_menu(update: Update, context: CallbackContext):
     """Loads the sports menù.
-    The callback for this is "back_to_sports".
+    The callback for this is "to_sports_menu".
 
     Args:
         update (Update)
@@ -130,5 +130,20 @@ def back_to_sports(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_sports_inline_keyboard(update)
     )
+    # must answer the callback query, even if it is useless
+    context.bot.answer_callback_query(update.callback_query.id, text="")
+
+
+def to_links(update: Update, context: CallbackContext):
+    context.bot.edit_message_text(
+        "💥 Qui trovi tutti i tasti per muoverti nelle varie aree del LoTVerse ! 💥",
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.USEFUL_LINKS_INLINE_KEYBOARD,
+    )
+    # must answer the callback query, even if it is useless
+    context.bot.answer_callback_query(update.callback_query.id, text="")
+
+def feature_to_be_added(update: Update, context: CallbackContext):
     # must answer the callback query, even if it is useless
     context.bot.answer_callback_query(update.callback_query.id, text="")

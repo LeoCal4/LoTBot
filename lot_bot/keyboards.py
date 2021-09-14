@@ -4,38 +4,46 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
 from lot_bot import constants as cst
 from lot_bot.dao import abbonamenti_manager
 
-startup_buttons = [
+_startup_buttons = [
     [KeyboardButton(text="🙋🏼‍♀️ Vai alla Community 🙋🏾")],
     [KeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻")],
     [KeyboardButton(text="📱 Homepage 📱")]
 ]
-startup_reply_keyboard = ReplyKeyboardMarkup(keyboard=startup_buttons, resize_keyboard=True)
+STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
 
-gestione_account_buttons = [
-    [InlineKeyboardButton(text="Sport e strategie", callback_data="sport_and_strategies")], 
-    [InlineKeyboardButton(text="Assistenza", callback_data="assistenza")], 
-    [InlineKeyboardButton(text="Nuove funzionalità in arrivo!", callback_data="new")]
-]
-gestione_account_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=gestione_account_buttons)
+# gestione_account_buttons = [
+#     [InlineKeyboardButton(text="Sport e strategie", callback_data="to_sports_menu")], 
+#     [InlineKeyboardButton(text="Assistenza", url="https://t.me/LegacyOfTipstersBot")], 
+#     [InlineKeyboardButton(text="Nuove funzionalità in arrivo!", callback_data="new")]
+# ]
+# gestione_account_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=gestione_account_buttons)
 
 
-next_button = [InlineKeyboardButton(text="Next", callback_data="next")]
-next_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[next_button])
+# next_button = [InlineKeyboardButton(text="Next", callback_data="next")]
+# next_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[next_button])
 
 
-homepage_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Sport e Strategie  📖", callback_data="sport_and_strategies")], 
-    [InlineKeyboardButton(text="💰  Capitale e Obiettivi  🎯  in arrivo", callback_data="c e obiettivi")], 
+_homepage_buttons = [
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Sport e Strategie  📖", callback_data="to_sports_menu")], 
+    [InlineKeyboardButton(text="💰  Capitale e Obiettivi  🎯  in arrivo", callback_data="new")], 
     [InlineKeyboardButton(text="🏆    Record e Statistiche   📊  in arrivo", callback_data="new")], 
     [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
-    [InlineKeyboardButton(text="👨‍🏫 Formazione e Lezioni  🧑‍🎓  in arrivo", callback_data="formazione e lezioni")], 
-    [InlineKeyboardButton(text="👩🏼‍⚕️  Supporto al gioco d'azzardo  🎰 ", callback_data="c e obiettivi")], 
+    [InlineKeyboardButton(text="👨‍🏫 Formazione e Lezioni  🧑‍🎓  in arrivo", callback_data="new")], 
+    [InlineKeyboardButton(text="👩🏼‍⚕️  Supporto al gioco d'azzardo  🎰 in arrivo", callback_data="new")], 
     [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")], 
     [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 
-    [InlineKeyboardButton(text="⚙️️  Impostazioni ⚙️", callback_data="settings")]
+    [InlineKeyboardButton(text="⚙️️  Impostazioni ⚙️", callback_data="new")]
 ]
-homepage_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=homepage_buttons)
+HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
+
+_useful_links_buttons = [
+    [InlineKeyboardButton(text="📉 Tracciabilità Produzione LoT +24h📉 ", url="t.me/LoT_Tracciabilita")],
+    [InlineKeyboardButton(text="📊 Report e Rendimenti 📊 ", url = "t.me/LoT_ReportGiornalieri")],
+    [InlineKeyboardButton(text="📱 Pagina Instagram 📱 ", url="https://www.instagram.com/lot.official")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+]
+USEFUL_LINKS_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_useful_links_buttons, resize_keyboard=True)
 
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
@@ -71,7 +79,7 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
             keyboard_sport.append([sport_keyboard_button])
         else:
             keyboard_sport[(i-1)//2].append(sport_keyboard_button)
-    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "back_to_homepage")])
+    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_homepage")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_sport)
      
 
@@ -111,5 +119,5 @@ def create_strategies_inline_keyboard(update: Update, sport: str) -> InlineKeybo
             InlineKeyboardButton(text=active_text, callback_data=positive_callback),
             InlineKeyboardButton(text=not_active_text, callback_data=negative_callback)
         ])
-    strategies_buttons.append([InlineKeyboardButton(text="Indietro ↩️", callback_data= "back_to_sports")])
+    strategies_buttons.append([InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_sports_menu")])
     return InlineKeyboardMarkup(inline_keyboard=strategies_buttons)

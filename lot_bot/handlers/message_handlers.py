@@ -95,7 +95,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
             continue
         lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
         # TODO check blocco utenti
-        context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.startup_reply_keyboard)
+        context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
     return True
 
 
@@ -123,7 +123,7 @@ def start_command(update: Update, context: CallbackContext):
             raise Exception
     # update.message.reply_text is equal to bot.send_message(update.effective_message.chat_id, ...)
     bentornato_message = "Bentornato, puoi continuare ad utilizzare il bot"
-    update.message.reply_text(bentornato_message, reply_markup=kyb.startup_reply_keyboard)
+    update.message.reply_text(bentornato_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
     update.message.reply_text(lista_canali_message, reply_markup=kyb.create_sports_inline_keyboard(update))
 
 
@@ -220,7 +220,7 @@ def first_message_handler(update: Update, context: CallbackContext):
     
     # the messages are sent only if the previous operations succeeded, this is fundamental
     #   for the integration tests too
-    update.message.reply_text(welcome_message, reply_markup=kyb.startup_reply_keyboard, parse_mode="html")
+    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="html")
     update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
 
 

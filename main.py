@@ -21,8 +21,10 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"sport_\w+"))
     # matches any callback with pattern "<sport>_<strategy>_[activate | disable]"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"\w+_\w+_(activate|disable)"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.back_to_sports, pattern="back_to_sports"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.back_to_homepage, pattern="back_to_homepage"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern="to_sports_menu"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern="to_homepage"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern="new"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_links, pattern="links"))
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
