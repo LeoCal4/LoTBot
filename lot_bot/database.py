@@ -22,16 +22,13 @@ class MongoDatabase:
             # The ping command is cheap and does not require auth, 
             #   so it is run to check if the db is active
             self.client.admin.command("ping")
-        except ConnectionFailure:
-            lgr.logger.error(f"Error creating DB: server not available - {cfg.config.MONGO_DB_URL=}")
+        except Exception as e:
+            lgr.logger.error(f"Error creating DB: {str(e)} - {cfg.config.MONGO_DB_URL=}")
             raise Exception
         lgr.logger.info("Connected to db") 
         db = self.client[cfg.config.MONGO_DB_NAME]
         self.abbonamenti = db["abbonamenti2"]
-        self.canaliConReportInCorso = db["canaliConReportInCorso"]
         self.utenti = db["utenti2"]
-        self.inlineGiocate = db["inlineGiocate2"]
-        self.messaggiUpdateID = db["updateID2"]
 
 
 def create_db():
@@ -42,7 +39,3 @@ def create_db():
     """
     global mongo
     mongo = MongoDatabase()
-    # else:
-    #     import mongomock
-    #     db = mongomock.MongoClient().client
-    # return db

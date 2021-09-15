@@ -71,7 +71,32 @@ def test_get_normal_messages_filter():
 def test_get_cashout_filter(message_text, expected, monkeypatch): 
     fake_exchange_channel_id = 123
     monkeypatch.setitem(cfg.config.SPORTS_CHANNELS_ID, "exchange", fake_exchange_channel_id)
+    # correct
     update = get_update_from_sports_channel(sports_channel_id=fake_exchange_channel_id)
     update.message.text = message_text
     cashout_filter = filters.get_cashout_filter()
     assert bool(cashout_filter(update)) == expected
+    # wrong channels
+    update = get_update_from_sports_channel(sports_channel_id=-1)
+    update.message.text = message_text
+    cashout_filter = filters.get_cashout_filter()
+    assert bool(cashout_filter(update)) == False
+
+
+@pytest.mark.parametrize(
+    "message_text,expected",
+    [("normal message", True), ("sport strategia \n giocata error", True)]
+)
+def test_get_sport_channel_normal_message_filter(message_text, expected, monkeypatch):
+    fake_exchange_channel_id = 123
+    monkeypatch.setitem(cfg.config.SPORTS_CHANNELS_ID, "exchange", fake_exchange_channel_id)
+    update = get_update_from_sports_channel(sports_channel_id=fake_exchange_channel_id)
+    update.message.text = message_text
+    normal_message_filter = filters.get_sport_channel_normal_message_filter()
+    assert bool(normal_message_filter(update)) == expected
+    # wrong channel
+    update = get_update_from_sports_channel(sports_channel_id=-1)
+    update.message.text = message_text
+    normal_message_filter = filters.get_sport_channel_normal_message_filter()
+    assert bool(normal_message_filter(update)) == False
+

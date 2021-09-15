@@ -29,12 +29,31 @@ def get_normal_messages_filter() -> Filters:
 
 
 def get_cashout_filter() -> Filters:
+    """Creates the filter for the cashout messages of the Exchange channel.
+    Cashout messages must attive from the Exchange channel and have the form:
+         #<numero giocata> (+|-)<giocata percentage>
+    For simplicity/possibile human errors in writing the messages, we only check whetever it 
+    starts with #.
+
+    Returns:
+        Filters
+    """
     exchange_channel_filter = Filters.chat(cfg.config.SPORTS_CHANNELS_ID["exchange"])
+    # looks for any number of spaces and then #
     cashout_text_filter = Filters.regex(r"^\s*#")
     return exchange_channel_filter & cashout_text_filter
 
 
 def get_sport_channel_normal_message_filter() -> Filters:
+    """Creates the filter for all text messages coming from any 
+    sport channels.
+    Regardless, they should have the form:
+    <sport> <strategy>
+    <...> 
+
+    Returns:
+        Filters: [description]
+    """
     sport_channels_filter = Filters.chat()
     sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
-    return sport_channels_filter & Filters.chat
+    return sport_channels_filter & Filters.text

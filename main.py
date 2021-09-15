@@ -16,6 +16,7 @@ def add_handlers(dispatcher: Dispatcher):
     """
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
+
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"sport_\w+"))
@@ -25,12 +26,15 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern="to_homepage"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern="new"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_links, pattern="links"))
+
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.sport_channel_normal_message_handler))
+    # TODO homepage, assistenza
     # this has to be the last one, since they are checked in the same order they are added
     dispatcher.add_handler(MessageHandler(filters.get_normal_messages_filter(), message_handlers.first_message_handler))
+
     # ============ ERROR HANDLERS =============
     dispatcher.add_error_handler(message_handlers.error_handler)
 

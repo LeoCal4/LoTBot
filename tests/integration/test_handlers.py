@@ -24,7 +24,7 @@ def user_exists_and_is_valid(user_id: int) -> bool:
 
 
 def abbonamento_exists_and_is_valid(user_id: int, sport: str, strategy: str) -> bool:
-    abb_result = abbonamenti_manager.retrieve_abbonamenti_from_user_id(user_id)
+    abb_result = abbonamenti_manager.retrieve_abbonamenti({"telegramID": user_id})
     if not abb_result or len(abb_result) == 0:
         assert False, f"Abbonamento not created for id {user_id}"
     found = False
@@ -55,7 +55,7 @@ class TestHandlers:
     #     client_me = await client.get_me()
     #     assert user_exists_and_is_valid(client_me.id)
     #     # the start messages sets calcio and exchange
-    #     assert len(list(abbonamenti_manager.retrieve_abbonamenti_from_user_id(client_me.id))) == 2
+    #     assert len(list(abbonamenti_manager.retrieve_abbonamenti({"telegramID": client_me.id}))) == 2
     #     delete_user_and_abbonamenti(client_me.id)
 
 

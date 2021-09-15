@@ -16,7 +16,7 @@ def create_abbonamento(abbonamento_data : dict) -> bool:
     """
     try:
         result: InsertOneResult = db.mongo.abbonamenti.insert_one(abbonamento_data)
-        lgr.logger.info(f"Created new abbonamento for user id {abbonamento_data['telegramID']}")
+        lgr.logger.debug(f"Created new abbonamento for user id {abbonamento_data['telegramID']}")
         return bool(result.inserted_id)
     except Exception as e:
         lgr.logger.error("Error during create abbonamenti")
@@ -25,74 +25,26 @@ def create_abbonamento(abbonamento_data : dict) -> bool:
         return False
 
 
-def retrieve_abbonamenti_from_user_id(user_id: int) -> list:
-    """Retrieves all the abbonamenti of the user identified
-        by the user_id
+def retrieve_abbonamenti(abbonamenti_data: dict) -> list:
+    """Retrieves all the abbonamenti according to abbonamenti_data.
 
     Args:
-        user_id (int)
+        abbonamenti_data (dict): the fields can be: "telegramID", "sport", "strategia"
 
     Returns:
-        list: a list of the user's abbonamenti 
-        None: if no abbonamenti were found or if there was an error
+        list: the results obtained
+        None: in case of errors
     """
     try:
-        return list(db.mongo.abbonamenti.find({"telegramID": user_id}))
+        return list(db.mongo.abbonamenti.find(abbonamenti_data))
     except Exception as e:
-        lgr.logger.error("Error during retrieve abbonamenti from user id")
+        lgr.logger.error("Error during retrieve abbonamenti")
         lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
+        lgr.logger.error(f"{abbonamenti_data=}")
         return None 
 
 
-def retrieve_abbonamenti_from_sport_strategy(sport: str, strategy: str) -> list:
-    """Retrieves all the abbonamenti for the specified sport strategy.
-
-    Args:
-        sport (str)
-        strategy (str)
-
-    Returns:
-        list: a list of abbonamenti
-        None: if no abbonamenti were found or if there was an error
-    """
-    try:
-        return list(db.mongo.abbonamenti.find({
-            "sport": sport,
-            "strategia": strategy
-        }))
-    except Exception as e:
-        lgr.logger.error("Error during retrieve abbonamenti from sport and strategy")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"{sport=} - {strategy=}")
-        return None
-
-
-def retrieve_abbonamenti_sport_from_user_id(user_id: int, sport: str) -> list:
-    """Returns all the abbonamenti of a certain sport for the 
-    specified user_id.
-
-    Args:
-        user_id (int)
-        sport (str)
-
-    Returns:
-        list: the list of abbonamenti found 
-        None: in case there is an error
-    """
-    try:
-        return list(db.mongo.abbonamenti.find({
-            "telegramID": user_id,
-            "sport": sport, 
-        }))
-    except Exception as e:
-        lgr.logger.error("Error during retrieve sport abbonamenti for user id")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"{user_id=} - {sport=}")
-        return None
-
-
-def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, strategy: str) -> list:
+def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, strategy: str) -> dict:
     """Returns the abbonamento for a certain strategy
 
     Args:
@@ -101,15 +53,15 @@ def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, s
         strategy (str): [description]
 
     Returns:
-        list: the list containing the abbonamento found (if there was any)
-        None: if there was an error
+        dict: the dict containing the dati of the abbonamento found (if there was any)
+        None: if there was an error or if no abbonamento was found
     """
     try:
-        return list(db.mongo.abbonamenti.find({
+        return db.mongo.abbonamenti.find_one({
             "telegramID": user_id,
             "sport": sport, 
             "strategia": strategy,
-        }))
+        })
     except Exception as e:
         lgr.logger.error("Error during retrieve sport strategy abbonamento for user id")
         lgr.logger.error(f"Exception: {str(e)}")
@@ -150,7 +102,7 @@ def delete_abbonamenti_for_user_id(user_id: int) -> bool:
     """
     try:
         db.mongo.abbonamenti.delete_many({"telegramID": user_id})
-        # there may be a case in which a user has not abbonamenti,
+        # there may be a case in which a user has no abbonamenti,
         #   so we don't do any check on the result of the operation 
         return True
     except Exception as e:
@@ -159,3 +111,12 @@ def delete_abbonamenti_for_user_id(user_id: int) -> bool:
         lgr.logger.error(f"User id: {user_id}")
         return False
 
+
+def delete_all_abbonamenti():
+    try:
+        db.mongo.abbonamenti.delete_many({})
+        return True
+    except Exception as e:
+        lgr.logger.error("Error during delete all abbonamenti")
+        lgr.logger.error(f"Exception: {str(e)}")
+        return False

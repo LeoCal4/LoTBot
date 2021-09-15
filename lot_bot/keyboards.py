@@ -11,19 +11,6 @@ _startup_buttons = [
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
-
-# gestione_account_buttons = [
-#     [InlineKeyboardButton(text="Sport e strategie", callback_data="to_sports_menu")], 
-#     [InlineKeyboardButton(text="Assistenza", url="https://t.me/LegacyOfTipstersBot")], 
-#     [InlineKeyboardButton(text="Nuove funzionalità in arrivo!", callback_data="new")]
-# ]
-# gestione_account_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=gestione_account_buttons)
-
-
-# next_button = [InlineKeyboardButton(text="Next", callback_data="next")]
-# next_inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[next_button])
-
-
 _homepage_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Sport e Strategie  📖", callback_data="to_sports_menu")], 
     [InlineKeyboardButton(text="💰  Capitale e Obiettivi  🎯  in arrivo", callback_data="new")], 
@@ -62,7 +49,7 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """
 
     chat_id = update.effective_chat.id
-    abbonamenti = abbonamenti_manager.retrieve_abbonamenti_from_user_id(chat_id)
+    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id})
     sport_attivi = [entry["sport"].lower() for entry in abbonamenti]
     emoji_sport = {sport: "🔴" for sport in cst.SPORTS}
     for sport in sport_attivi:
@@ -100,7 +87,7 @@ def create_strategies_inline_keyboard(update: Update, sport: str) -> InlineKeybo
         InlineKeyboardMarkup
     """
     chat_id = update.effective_chat.id
-    abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti_sport_from_user_id(chat_id, sport)
+    abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id, "sport": sport})
     active_strategies = [entry["strategia"] for entry in abbonamento_sport]
     emoji_strategies = {strategy: "🔴" for strategy in cst.STRATEGIES[sport]}
     for strategy in active_strategies:
