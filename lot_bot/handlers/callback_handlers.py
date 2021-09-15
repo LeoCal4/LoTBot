@@ -63,7 +63,7 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     # (that would mean that we would edit the inline keyboard with an identical one
     #   and that would cause an error)
     abb_results = abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(update.effective_user.id, sport, strategy)
-    if (abb_results == [] and state == "disable") or (abb_results != [] and state == "activate"):
+    if (abb_results == None and state == "disable") or (abb_results != None and state == "activate"):
         # we are either trying to disable an already disabled strategy or activate an already active one
         context.bot.answer_callback_query(update.callback_query.id, text="")
         return

@@ -30,14 +30,20 @@ TODO: account on test server
 # Branches
 - `git branch`: lists local branches
 - `git branch -a`: lists remote branches
+
 - `git branch -m`: renames the current branch
+
 - `git branch -d`: deletes the current branch (if it has no uncommited changes)
 - `git push origin --delete remote_branch_name`: deletes the remote branch
+
 - `git branch local_branch_name`: creates a local branch with the specified name
 - `git remote add remote_branch_name repository_link`: creates a new remote branch on the repo
+
+- `git checkout branch_name`: switches to the specified (local or remote) branch
+
 - `git push <remote_branch_name> local_branch_name~`: pushes the local branch to the remote one
 - `git fetch --all`: fetches the contents of the remote branches
-- `git checkout branch_name`: switches to the specified (local or remote) branch
+
 - `git checkout -b local_branch_name2 local_branch_name1`: creates a new branch based on local_branch_name2
 
 
