@@ -52,7 +52,6 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         "nomeUtente": user.username,
         "validoFino": trial_expiration_timestamp,
         "situazione": "domanda1",
-        "attivo": 1,
         "lingua": "it",
         "primoAlert": 0
     }
@@ -76,7 +75,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     Returns:
         bool: True if the operation was successful, False otherwise.
     """
-    abbonamenti = abbonamenti_manager.retrieve_abbonamenti_from_sport_strategy(sport, strategy)
+    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport, "strategia": strategy})
     if not abbonamenti:
         lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
         return False
@@ -86,12 +85,8 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
             lgr.logger.warning(f"No user found with id {abbonamento['telegramID']} while handling giocata")
             continue
         lgr.logger.debug(f"Retrieved user data from id {user_data['_id']}")
-        if not user_manager.check_user_validity(update.effective_message.date, user_data, update_user_state_if_expired=True):
+        if not user_manager.check_user_validity(update.effective_message.date, user_data):
             lgr.logger.info(f"User {user_data['_id']} is not active (1)")
-            continue
-        # ! this is redundant
-        if not user_data["attivo"]:
-            lgr.logger.info(f"User {user_data['_id']} is not active (2)")
             continue
         lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
         # TODO check blocco utenti

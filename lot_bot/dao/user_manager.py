@@ -99,23 +99,15 @@ def delete_user(user_id: int) -> bool:
         return False
 
 
-def check_user_validity(message_date: datetime.datetime, user_data: dict, update_user_state_if_expired: bool = False) -> bool:
+def check_user_validity(message_date: datetime.datetime, user_data: dict) -> bool:
     """Checks if the user subscription is still valid.
 
     Args:
         message_date (datetime): the date of the message being checked
-        user_data (dict)
-        update_user_state_if_expired (bool, optional): updates the subscription state of the user, 
-            in case it has expired. Defaults to False.
+
 
     Returns:
         bool: True if the the user's subscription is still valid, 
             False otherwise
     """
-    validity = float(user_data["validoFino"]) > message_date.timestamp()
-    if not validity and update_user_state_if_expired:
-        # TODO check return
-        result = update_user(user_data["_id"], {"attivo": 0})
-        if not result:
-            lgr.logger.error("Updating user validity state failed")
-    return validity
+    return float(user_data["validoFino"]) > message_date.timestamp()
