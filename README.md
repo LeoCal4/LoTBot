@@ -118,6 +118,12 @@ To run all the tests, simply run the following command
 
 `pytest`
 
+You can also run unit and integration tests separately:
+
+`pytest .\tests\unit`
+
+`pytest .\tests\integration`
+
 ### Unit tests
 This kind of tests only check for the correctness of 
 single functions in an isolate environment. To do so, 

@@ -5,6 +5,7 @@ from lot_bot import config as cfg
 @pytest.fixture
 def reset_config(monkeypatch):
     yield
+    monkeypatch.setenv("ENV", "testing")
     cfg.create_config()
 
 
