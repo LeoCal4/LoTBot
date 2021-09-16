@@ -9,7 +9,7 @@ import random
 def get_abbonamento_data(user_id=None, sport=None, strategy=None) -> dict:
     user_id = user_id if user_id else random.randrange(0, 1000)
     sport = sport if sport else random.choice(cst.SPORTS)
-    strategy = strategy if strategy else random.choice(cst.STRATEGIES[sport])
+    strategy = strategy if strategy else random.choice(cst.SPORT_STRATEGIES[sport])
     return {
         "telegramID": user_id,
         "sport": sport,

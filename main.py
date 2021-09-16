@@ -16,17 +16,18 @@ def add_handlers(dispatcher: Dispatcher):
     """
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
-
+    dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"sport_\w+"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
     # matches any callback with pattern "<sport>_<strategy>_[activate | disable]"
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"\w+_\w+_(activate|disable)"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern="to_sports_menu"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern="to_homepage"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern="new"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_links, pattern="links"))
-
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern=r"^to_homepage$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_links, pattern=r"^links$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_explanations_menu, pattern=r"^to_explanation_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))

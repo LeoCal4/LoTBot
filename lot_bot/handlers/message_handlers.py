@@ -3,6 +3,7 @@
 import datetime
 import html
 import json
+import os
 import traceback
 
 from telegram import ParseMode, Update, User
@@ -15,7 +16,9 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import abbonamenti_manager, user_manager
 
+
 ################################# HELPER METHODS #######################################
+
 
 def create_first_time_user(user: User, trial_expiration_timestamp: float) -> bool:
     """Creates the user using the bot for the first time.
@@ -137,6 +140,48 @@ def reset_command(update: Update, context: CallbackContext):
         return
     user_manager.delete_user(user_id)
     abbonamenti_manager.delete_abbonamenti_for_user_id(user_id)
+
+
+def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
+    """Responds to the command `/send_all_videos` and can be used only by the developers.
+
+    This command is used in order to upload the videos for the first time and get 
+    their `file_id`, so that those can be used instead of sending the real files.
+
+    Sends either the videos listed in `VIDEO_FILE_NAMES` (if they exist) and found in the dir `VIDEO_BASE_PATH`
+    or all the videos in `VIDEO_BASE_PATH`, in case `VIDEO_FILE_NAMES` is empty.
+
+    In addition to the videos, a message specifiying the `file_id` of each video is sent.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    # ! command accessible only by developers
+    if not update.effective_user.id in cfg.config.DEVELOPER_CHAT_IDS:
+        return
+    # ! check whetever to use the whole dir or just some files of it
+    if cfg.config.VIDEO_FILE_NAMES and cfg.config.VIDEO_FILE_NAMES != []:
+        video_file_names = cfg.config.VIDEO_FILE_NAMES
+    else:
+        video_file_names = os.listdir(cfg.config.VIDEO_BASE_PATH)
+    video_file_paths = [
+        os.path.join(cfg.config.VIDEO_BASE_PATH, file_name) 
+        for file_name in video_file_names 
+        if os.path.isfile(os.path.join(cfg.config.VIDEO_BASE_PATH, file_name)) and \
+            file_name.lower().endswith(cfg.config.VIDEO_FILE_EXTENSIONS)
+    ]
+    for video_file_path in video_file_paths:
+        update.message.reply_text(f"Sending {video_file_path}")
+        video_to_send = open(video_file_path, "rb")
+        video_sent_update = context.bot.send_video(
+            update.effective_message.chat_id,
+            video_to_send
+        )
+        context.bot.send_message(
+            update.effective_message.chat_id,
+            f"Video file_id: {video_sent_update.video.file_id}",
+        )
 
 
 ##################################### MESSAGE HANDLERS #####################################
@@ -277,4 +322,7 @@ def error_handler(update: Update, context: CallbackContext):
     for dev_chat_id in cfg.config.DEVELOPER_CHAT_IDS:
         for msg in to_send:
             context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML)
-    update.message.reply_text(text=cst.ERROR_MESSAGE)
+    # TODO add a way to answer the user, this below does not work -> because it was raised by a callback and not by a message handler 
+    # ! check the update dict  
+    # update.message.reply_text(text=cst.ERROR_MESSAGE)
+

@@ -23,6 +23,8 @@ class Config(object):
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
+    VIDEO_FILE_NAMES = []
+    VIDEO_FILE_IDS = []
     API_ID = None
     API_HASH = None
     BOT_TEST_USERNAME = None
@@ -36,6 +38,8 @@ class Development(Config):
     TOKEN = None # TBA
     SPORTS_CHANNELS_ID = {} # TBA
     DEVELOPER_CHAT_IDS = [] # TBA
+    VIDEO_FILE_NAMES = []
+    VIDEO_FILE_IDS = []
     
 
 
@@ -52,6 +56,8 @@ class Testing(Config):
     MONGO_DB_NAME = None # TBA
     MONGO_DB_URL = f"mongodb+srv://{MONGO_DB_USER}:{MONGO_DB_PSW}@{MONGO_DB_CLUSTER}.gbfdd.mongodb.net/{MONGO_DB_NAME}?retryWrites=true&w=majority"
     SPORTS_CHANNELS_ID = {} # TBA
+    VIDEO_FILE_NAMES = []
+    VIDEO_FILE_IDS = []
     # to get the following two, use the following guide
     # https://core.telegram.org/api/obtaining_api_id#obtaining-api-id
     API_ID = None # TBA
@@ -87,8 +93,14 @@ def create_config():
         config.TESTING = os.getenv("TESTING", False)
         config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
         config.LOG_PATH = os.getenv("LOG_PATH", None)
-        config.CHANNELS_ID = json.load(os.getenv("CHANNELS_ID", {}))
+        channels_id = os.getenv("CHANNELS_ID", False)
+        if channels_id:
+            config.CHANNELS_ID = json.loads(channels_id)
+        else:
+            config.CHANNELS_ID = {}
         config.DEVELOPER_CHAT_IDS = os.getenv("DEVELOPER_CHAT_IDS", [])
+        config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
+        config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", [])
     else:
         if ENV == "testing":
             config = Testing()
