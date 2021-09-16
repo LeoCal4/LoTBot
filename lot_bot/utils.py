@@ -7,7 +7,7 @@ def check_sport_validity(sport: str) -> bool:
 
 
 def check_sport_strategy_validity(sport: str, strategy: str) -> bool:
-    return sport and strategy and strategy in cst.STRATEGIES[sport]
+    return sport and strategy and strategy in cst.SPORT_STRATEGIES[sport]
 
 
 def get_sport_from_giocata(text: str) -> str:

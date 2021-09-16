@@ -12,17 +12,18 @@ _startup_buttons = [
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
 _homepage_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Sport e Strategie  📖", callback_data="to_sports_menu")], 
-    [InlineKeyboardButton(text="💰  Capitale e Obiettivi  🎯  in arrivo", callback_data="new")], 
-    [InlineKeyboardButton(text="🏆    Record e Statistiche   📊  in arrivo", callback_data="new")], 
-    [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
-    [InlineKeyboardButton(text="👨‍🏫 Formazione e Lezioni  🧑‍🎓  in arrivo", callback_data="new")], 
-    [InlineKeyboardButton(text="👩🏼‍⚕️  Supporto al gioco d'azzardo  🎰 in arrivo", callback_data="new")], 
-    [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")], 
-    [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 
-    [InlineKeyboardButton(text="⚙️️  Impostazioni ⚙️", callback_data="new")]
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
 ]
 HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
+
+
+_explanation_test_buttons = [
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Singola  📖", callback_data="explanation_singola")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Multiple 📖", callback_data="explanation_multiple")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+]
+EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 _useful_links_buttons = [
     [InlineKeyboardButton(text="📉 Tracciabilità Produzione LoT +24h📉 ", url="t.me/LoT_Tracciabilita")],
@@ -89,11 +90,11 @@ def create_strategies_inline_keyboard(update: Update, sport: str) -> InlineKeybo
     chat_id = update.effective_chat.id
     abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id, "sport": sport})
     active_strategies = [entry["strategia"] for entry in abbonamento_sport]
-    emoji_strategies = {strategy: "🔴" for strategy in cst.STRATEGIES[sport]}
+    emoji_strategies = {strategy: "🔴" for strategy in cst.SPORT_STRATEGIES[sport]}
     for strategy in active_strategies:
         emoji_strategies[strategy] = "🟢"
     strategies_buttons = []
-    for strategy in cst.STRATEGIES[sport]:
+    for strategy in cst.SPORT_STRATEGIES[sport]:
         positive_callback = f"{sport}_{strategy}_activate"
         negative_callback = f"{sport}_{strategy}_disable"
         active_text = f"{cst.STRATEGIES_DISPLAY_NAME[strategy]} SI"

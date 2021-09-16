@@ -39,7 +39,7 @@ SPORTS_DISPLAY_NAMES = {
 # the keys of the STRATEGIES dict must be equal to the values
 #   of SPORTS
 _base_strategie = ["raddoppio", "multiple", "singola", "live", "instagram"]
-STRATEGIES = {
+SPORT_STRATEGIES = {
   "calcio": _base_strategie + ["piaquest", "trilled"],
   "basket": _base_strategie + ["trilled"],
   "tennis": _base_strategie + ["trilled"],

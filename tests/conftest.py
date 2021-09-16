@@ -66,7 +66,7 @@ Cremona 🆚 Sassari
 @pytest.fixture
 def correct_giocata() -> tuple:
     random_sport = random.choice(cst.SPORTS)
-    random_strategy = random.choice(cst.STRATEGIES[random_sport])
+    random_strategy = random.choice(cst.SPORT_STRATEGIES[random_sport])
     return create_giocata(random_sport, random_strategy), random_sport, random_strategy
 
 @pytest.fixture

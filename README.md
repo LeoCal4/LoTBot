@@ -30,7 +30,7 @@ TODO: account on test server
 # Branches
 - `git branch`: lists local branches
 - `git branch -a`: lists remote branches
-- `git branch -m`: renames the current branch
+- `git branch -m <new branch name>`: renames the current branch
 - `git branch -d`: deletes the current branch (if it has no uncommited changes)
 - `git push origin --delete remote_branch_name`: deletes the remote branch
 - `git branch local_branch_name`: creates a local branch with the specified name
