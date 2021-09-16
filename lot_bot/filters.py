@@ -1,6 +1,7 @@
 from telegram.ext.filters import Filters
 
 from lot_bot import config as cfg
+from lot_bot import constants as cst
 
 
 def get_giocata_filter() -> Filters:
@@ -57,3 +58,20 @@ def get_sport_channel_normal_message_filter() -> Filters:
     sport_channels_filter = Filters.chat()
     sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
     return sport_channels_filter & Filters.text
+
+
+# ================================================ PATTERNS ================================================
+
+
+def get_explanation_pattern() -> str:
+    """
+    explanation_(<str1>|<str2>|...|<strN>)
+
+    Returns:
+        str: [description]
+    """
+    pattern = "explanation_("
+    for strategy in cst.STRATEGIES_DISPLAY_NAME.keys():
+        pattern += strategy + "|"
+    return pattern[:-1] + ")"
+
