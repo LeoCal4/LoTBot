@@ -5,9 +5,9 @@ from lot_bot import constants as cst
 from lot_bot.dao import abbonamenti_manager
 
 _startup_buttons = [
-    [KeyboardButton(text="🙋🏼‍♀️ Vai alla Community 🙋🏾")],
-    [KeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻")],
-    [KeyboardButton(text="📱 Homepage 📱")]
+    [KeyboardButton(text=cst.HOMEPAGE_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.COMMUNITY_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.ASSISTANCE_BUTTON_TEXT)],
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
@@ -35,6 +35,12 @@ _useful_links_buttons = [
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
 USEFUL_LINKS_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_useful_links_buttons, resize_keyboard=True)
+
+
+_assistance_buttons = [
+    [InlineKeyboardButton(text="Premi qui", url="https://t.me/LegacyOfTipstersBot")],
+]
+ASSISTANCE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_assistance_buttons)
 
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:

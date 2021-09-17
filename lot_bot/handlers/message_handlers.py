@@ -187,6 +187,22 @@ def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
 ##################################### MESSAGE HANDLERS #####################################
 
 
+def homepage_handler(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        cst.HOMEPAGE_MESSAGE,
+        reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+        parse_mode="HTML"
+    )
+
+
+def assistance_handler(update: Update, context: CallbackContext):
+    pass
+
+
+def community_handler(update: Update, context: CallbackContext):
+    pass
+
+
 def giocata_handler(update: Update, context: CallbackContext):
     """Sends the received giocata to all the active user subscribed to 
     its sport and strategy.

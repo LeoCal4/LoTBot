@@ -17,7 +17,7 @@ def add_handlers(dispatcher: Dispatcher):
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
     dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
-    
+
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
@@ -34,7 +34,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.sport_channel_normal_message_handler))
-    # TODO homepage, assistenza
+    dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     # this has to be the last one, since they are checked in the same order they are added
     dispatcher.add_handler(MessageHandler(filters.get_normal_messages_filter(), message_handlers.first_message_handler))
 

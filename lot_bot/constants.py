@@ -126,5 +126,9 @@ ERROR_MESSAGE = """Abbiamo riscontrato un problema tecnico con il bot.
 Si consiglia di riprovare più tardi, ci scusiamo per il disagio."""
 
 
+COMMUNITY_BUTTON_TEXT = "🙋🏼‍♀️ Vai alla Community 🙋🏾"
+ASSISTANCE_BUTTON_TEXT = "👩🏾‍💻  Assistenza  🧑🏻"
+HOMEPAGE_BUTTON_TEXT = "📱 Homepage 📱"
+
 # this defines what will be imported if you import * from this module 
 __all__ = ["SPORTS", "STRATEGIES"]
