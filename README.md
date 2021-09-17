@@ -28,6 +28,21 @@ To run the bot locally, simply run:
 TODO: account on test server
 
 # Branches
+
+## Branch basic workflow
+
+1. `git branch <local branch name>` to create a new local branch
+2. `git checkout <local branch name>` to move on the new local branch
+3. create commits with the new code on the newly created branch
+4. `git remote add <remote branch name> https://github.com/LeoCal4/LoTBot.git` to create a new remote branch
+5. `git push --set-upstream <remote branch name> <local branch name>` to connect the local branch to the remote one
+6. now you can push your commits to the remote branch
+7. once you have done your work on the branch, create a pull request on GitHub and solve the eventual conflicts
+8. you can then delete the branch directly on GitHub
+9. `git branch -d <local branch name>` to remove the useless local branch 
+10. `git fetch --prune` to remove references to useless remote branches (they won't show up anymore with `git branch -a`) 
+
+## General commands
 - `git branch`: lists local branches
 - `git branch -a`: lists remote branches
 
@@ -45,6 +60,9 @@ TODO: account on test server
 - `git fetch --all`: fetches the contents of the remote branches
 
 - `git checkout -b local_branch_name2 local_branch_name1`: creates a new branch based on local_branch_name2
+
+- `git fetch --prune`: deletes useless branches (for example after merging them) 
+
 
 
 # Development
