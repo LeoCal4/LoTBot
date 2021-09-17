@@ -321,8 +321,17 @@ def error_handler(update: Update, context: CallbackContext):
         to_send.append(f"<pre>{html.escape(tb_string[start_index:end_index])}</pre>")
     for dev_chat_id in cfg.config.DEVELOPER_CHAT_IDS:
         for msg in to_send:
-            context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML)
-    # TODO add a way to answer the user, this below does not work -> because it was raised by a callback and not by a message handler 
-    # ! check the update dict  
-    # update.message.reply_text(text=cst.ERROR_MESSAGE)
-
+            context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML) 
+    # ! send a message to the user
+    if update.callback_query:
+        user_chat_id = update.callback_query.message.chat_id
+    else:
+        user_chat_id = update.message.chat_id
+    try:
+        context.bot.send_message(
+            user_chat_id,
+            cst.ERROR_MESSAGE,
+        )
+    except Exception as e:
+        lgr.logger.error(f"Could not send error message to user {user_chat_id}")
+        lgr.logger.error(f"Exception: {str(e)}")

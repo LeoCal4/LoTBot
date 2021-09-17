@@ -17,6 +17,7 @@ def add_handlers(dispatcher: Dispatcher):
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
     dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
+    
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
@@ -28,6 +29,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_links, pattern=r"^links$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_explanations_menu, pattern=r"^to_explanation_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
+
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))

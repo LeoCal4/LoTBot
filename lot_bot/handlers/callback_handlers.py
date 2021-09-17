@@ -195,7 +195,6 @@ def feature_to_be_added(update: Update, context: CallbackContext):
     # must answer the callback query, even if it is useless
     context.bot.answer_callback_query(update.callback_query.id, text="")
     
-################################## TESTING ################################## 
 
 def to_explanations_menu(update: Update, context: CallbackContext):
     """Loads the strategies explanation menù.
