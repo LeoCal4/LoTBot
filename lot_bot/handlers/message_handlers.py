@@ -56,7 +56,8 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         "validoFino": trial_expiration_timestamp,
         "situazione": "domanda1",
         "lingua": "it",
-        "primoAlert": 0
+        "primoAlert": 0,
+        "giocate": []
     }
     user_result = user_manager.create_user(user_data)
     if not user_result:
@@ -65,8 +66,9 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
     return True
 
 
-def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str) -> bool:
+def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False) -> bool:
     """Sends a message to all the user subscribed to a certain sport's strategy.
+    If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
 
     Args:
         update (Update)
@@ -74,6 +76,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         text (str)
         sport (str)
         strategy (str)
+        is_giocata (bool, default = False): indicates if the message is a giocata or not.
 
     Returns:
         bool: True if the operation was successful, False otherwise.
@@ -81,6 +84,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport, "strategia": strategy})
     if not abbonamenti:
         lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
+        # TODO this creates a mess if legimately there are noa  abbonamenti
         return False
     for abbonamento in abbonamenti:
         user_data = user_manager.retrieve_user(abbonamento["telegramID"])
@@ -91,9 +95,17 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         if not user_manager.check_user_validity(update.effective_message.date, user_data):
             lgr.logger.info(f"User {user_data['_id']} is not active (1)")
             continue
-        lgr.logger.debug(f"Sending giocata to {user_data['_id']}")
+        lgr.logger.debug(f"Sending message to {user_data['_id']}")
+        if is_giocata:
+            custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
+            text += "\n\nHai effettuato la giocata?"
+        else:
+            custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
         # TODO check blocco utenti
-        context.bot.send_message(abbonamento["telegramID"], text, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+        context.bot.send_message(
+            abbonamento["telegramID"], 
+            text, 
+            reply_markup=custom_reply_markup)
     return True
 
 
@@ -215,10 +227,10 @@ def giocata_handler(update: Update, context: CallbackContext):
         Exception: when there is an error sending the messages
     """
     text = update.effective_message.text
-    strategy = utils.get_strategy_from_giocata(text)
     sport = utils.get_sport_from_giocata(text)
+    strategy = utils.get_strategy_from_giocata(text)
     lgr.logger.debug(f"Received giocata {sport} - {strategy}")
-    if not send_message_to_all_abbonati(update, context, text, sport, strategy):
+    if not send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True):
         lgr.logger.error(f"Error with sending giocata {text} for {sport} - {strategy}")
         raise Exception
 
@@ -339,15 +351,16 @@ def error_handler(update: Update, context: CallbackContext):
         for msg in to_send:
             context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML) 
     # ! send a message to the user
-    if update.callback_query:
-        user_chat_id = update.callback_query.message.chat_id
-    else:
-        user_chat_id = update.message.chat_id
     try:
-        context.bot.send_message(
-            user_chat_id,
-            cst.ERROR_MESSAGE,
-        )
+        if update.callback_query:
+            user_chat_id = update.callback_query.message.chat_id
+        else:
+            user_chat_id = update.message.chat_id
+            context.bot.send_message(
+                user_chat_id,
+                cst.ERROR_MESSAGE,
+            )
     except Exception as e:
-        lgr.logger.error(f"Could not send error message to user {user_chat_id}")
+        lgr.logger.error(f"Could not send error message to user")
+        lgr.logger.error(f"Update: {str(update)}")
         lgr.logger.error(f"Exception: {str(e)}")

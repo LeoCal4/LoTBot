@@ -10,6 +10,7 @@ from lot_bot import logger as lgr
 from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
 from lot_bot import config as cfg
+from lot_bot import utils
 
 
 # ========================================== HELPER FUNCTIONS ================================================
@@ -267,3 +268,50 @@ def strategy_explanation(update: Update, context: CallbackContext):
         )
     # must answer the callback query, even if it is useless
     context.bot.answer_callback_query(update.callback_query.id, text="")
+
+
+######################################### TESTING #########################################
+
+
+def accept_register_giocata(update: Update, context: CallbackContext):
+    """
+    The callback for this is register_giocata_yes
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    user_chat_id = update.callback_query.message.chat_id
+    giocata_text = update.callback_query.message.text
+    giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
+    updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Giocata effettuata 🟩"
+    parsed_giocata = utils.parse_giocata(giocata_text)
+    user_manager.register_giocata_for_user_id(parsed_giocata, user_chat_id)
+    context.bot.edit_message_text(
+        updated_giocata_text,
+        chat_id=user_chat_id,
+        message_id=update.callback_query.message.message_id,
+    )
+
+
+def refuse_register_giocata(update: Update, context: CallbackContext):
+    """
+    The callback for this is register_giocata_no
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    giocata_text = update.callback_query.message.text
+    giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
+    updated_giocata_text = giocata_text_without_answer_row + "\n🟥 Giocata non effettuata 🟥"
+    context.bot.edit_message_text(
+        updated_giocata_text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+    )
+    # context.bot.edit_message_reply_markup(
+    #     chat_id=update.callback_query.message.chat_id,
+    #     message_id=update.callback_query.message.message_id,
+    #     reply_markup=None,
+    # )

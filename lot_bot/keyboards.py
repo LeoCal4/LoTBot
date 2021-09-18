@@ -42,6 +42,12 @@ _assistance_buttons = [
 ]
 ASSISTANCE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_assistance_buttons)
 
+_register_giocata_buttons = [
+    [InlineKeyboardButton(text="Sì", callback_data= "register_giocata_yes")],
+    [InlineKeyboardButton(text="No", callback_data= "register_giocata_no")],
+]
+REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
+
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """Creates the inline keyboard listing the available sports,

@@ -80,6 +80,31 @@ def update_user(user_id: int, user_data: dict) -> bool:
         return False
 
 
+def register_giocata_for_user_id(giocata: dict, user_id: int) -> bool:
+    try:
+        # TODO add document fields validation 
+        # TODO check if it is already present
+        lgr.logger.debug(f"Registering {giocata=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            {
+                "_id": user_id,
+            },
+            {
+                "$push": {
+                    "giocate": giocata
+                }
+            }
+        )
+        # this will be true if there was at least a match
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error("Error during giocata registration")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
+        lgr.logger.error(f"User data: {dumps(giocata)}")
+        return False
+
+
 def delete_user(user_id: int) -> bool:
     """Deletes the user specified by user_id
 
