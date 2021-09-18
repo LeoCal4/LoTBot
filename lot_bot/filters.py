@@ -59,6 +59,7 @@ def get_sport_channel_normal_message_filter() -> Filters:
     sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
     return sport_channels_filter & Filters.text
 
+
 def get_homepage_filter() -> Filters:
     return Filters.regex(cst.HOMEPAGE_BUTTON_TEXT)
 

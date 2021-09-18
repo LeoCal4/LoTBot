@@ -3,11 +3,11 @@ from lot_bot import logger as lgr
 
 
 def check_sport_validity(sport: str) -> bool:
-    return sport and sport.lower() in cst.SPORTS
+    return sport and sport.lower().strip() in cst.SPORTS
 
 
 def check_sport_strategy_validity(sport: str, strategy: str) -> bool:
-    return sport and strategy and strategy in cst.SPORT_STRATEGIES[sport]
+    return sport and strategy and strategy.lower().strip() in cst.SPORT_STRATEGIES[sport]
 
 
 def get_sport_from_giocata(text: str) -> str:
@@ -44,9 +44,9 @@ def get_strategy_from_giocata(text: str) -> str:
     played_strategy = text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX]
     sport = get_sport_from_giocata(text)
     if check_sport_validity(sport) and check_sport_strategy_validity(sport, played_strategy):
-        return played_strategy
+        return played_strategy.lower().strip()
     else:
-        return ""
+         return ""
 
 
 def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
@@ -99,3 +99,37 @@ def create_cashout_message(message_text: str) -> str:
         lgr.logger.error(f"Error parsing cashout message {message_text}")
         return ""
     return f"{emoji} CASHOUT Exchange {giocata_id} {cashout_percentage}% {emoji}"
+
+
+
+######################################## TESTING #############################################
+"""
+🏀 Exchange 🏀
+🇮🇹Supercoppa Serie A🇮🇹
+⚜️  MaxExchange  ⚜️
+
+Trieste 🆚 Trento
+🧮 1 inc overtime 🧮
+📈 Quota 1.55 📈
+
+Cremona 🆚 Sassari
+🧮 2 inc overtime 🧮
+📈 Quota 1.30 📈
+
+🧾 2.02 🧾 
+
+🕑 18:30 🕑 
+
+🏛 Stake 5% 🏛
+🖊 hockey #8🖊
+"""
+def parse_giocata(giocata_text: str) -> dict:
+    # giocata_rows = giocata_text.split("\n")
+    sport = get_sport_from_giocata(giocata_text)
+    strategy = get_strategy_from_giocata(giocata_text)
+    parsed_giocata = {
+        "sport": sport,
+        "strategia": strategy,
+        "raw_text": giocata_text
+    }
+    return parsed_giocata
