@@ -14,8 +14,9 @@ from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
+from lot_bot.models import sports as spr, strategies as strat
 from lot_bot.dao import abbonamenti_manager, user_manager
-
+from lot_bot import custom_exceptions
 
 ################################# HELPER METHODS #######################################
 
@@ -32,8 +33,8 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
     """
     abbonamenti_calcio_data = {
         "telegramID": user.id,
-        "sport": "calcio",
-        "strategia": "PiaQuest",
+        "sport": spr.sports_container.CALCIO.name,
+        "strategia": strat.strategies_container.PIAQUEST.name,
     }
     abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_calcio_data)
     if not abb_result:
@@ -41,8 +42,8 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         return False
     abbonamenti_exchange_data = {
         "telegramID": user.id,
-        "sport": "exchange",
-        "strategia": "MaxExchange",  
+        "sport": spr.sports_container.EXCHANGE.name,
+        "strategia": strat.strategies_container.MAXEXCHANGE.name,  
     }
     abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
     if not abb_result:
@@ -50,13 +51,9 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         return False
     user_data = {
         "_id": user.id,
-        "piano": "Sport Signals 19.90 -60%",
         "nome": user.first_name,
         "nomeUtente": user.username,
         "validoFino": trial_expiration_timestamp,
-        "situazione": "domanda1",
-        "lingua": "it",
-        "primoAlert": 0,
         "giocate": []
     }
     user_result = user_manager.create_user(user_data)
@@ -82,18 +79,25 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         bool: True if the operation was successful, False otherwise.
     """
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport, "strategia": strategy})
-    if not abbonamenti:
+    if abbonamenti is None:
         lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
-        # TODO this creates a mess if legimately there are noa  abbonamenti
         return False
+    if abbonamenti == []:
+        lgr.logger.warning(f"There are not abbonamenti for {sport=} {strategy=}")
+    messages_sent = 0
+    message_to_be_sent = len(abbonamenti)
+    lgr.logger.debug(f"Found {message_to_be_sent} abbonamenti for {sport} - {strategy}")
     for abbonamento in abbonamenti:
+        lgr.logger.debug(f"Checking abbonamento {abbonamento}")
         user_data = user_manager.retrieve_user(abbonamento["telegramID"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {abbonamento['telegramID']} while handling giocata")
+            message_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Retrieved user data from id {user_data['_id']}")
         if not user_manager.check_user_validity(update.effective_message.date, user_data):
-            lgr.logger.info(f"User {user_data['_id']} is not active (1)")
+            lgr.logger.warning(f"User {user_data['_id']} is not active")
+            message_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Sending message to {user_data['_id']}")
         if is_giocata:
@@ -102,10 +106,13 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
         # TODO check blocco utenti
-        context.bot.send_message(
+        result = context.bot.send_message(
             abbonamento["telegramID"], 
             text, 
             reply_markup=custom_reply_markup)
+        lgr.logger.debug(f"{result}")
+        messages_sent += 1
+    lgr.logger.debug(f"{messages_sent} messages have been sent out of {message_to_be_sent}")
     return True
 
 
@@ -124,7 +131,7 @@ def start_command(update: Update, context: CallbackContext):
     # the effective_message field is always present in normal messages
     # from_user gets the user which sent the message
     user_id = update.effective_user.id
-    lgr.logger.info(f"Received /start command from {user_id}")
+    lgr.logger.debug(f"Received /start command from {user_id}")
     lista_canali_message = "Questa è la lista dei canali di cui è possibile ricevere le notifiche"
     if not user_manager.retrieve_user(user_id):
         trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
@@ -228,11 +235,18 @@ def giocata_handler(update: Update, context: CallbackContext):
     """
     text = update.effective_message.text
     sport = utils.get_sport_from_giocata(text)
+    if not sport:
+        lgr.logger.error(f"Sport {sport=} not found")
+        raise custom_exceptions.SportNotFoundError(sport, update=update)
     strategy = utils.get_strategy_from_giocata(text)
+    if strategy == "":
+        lgr.logger.error(f"Strategy {strategy=} not found")
+        raise custom_exceptions.StrategyNotFoundError(sport, strategy, update=update)
     lgr.logger.debug(f"Received giocata {sport} - {strategy}")
     if not send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True):
         lgr.logger.error(f"Error with sending giocata {text} for {sport} - {strategy}")
-        raise Exception
+        raise custom_exceptions.SendMessageError(text, update=update)
+    lgr.logger.debug("Finished sending giocate")
 
 
 def sport_channel_normal_message_handler(update: Update, context: CallbackContext):
@@ -255,15 +269,15 @@ def sport_channel_normal_message_handler(update: Update, context: CallbackContex
     sport = first_row_tokens[0]
     if not utils.check_sport_validity(sport):
         lgr.logger.error(f"Could not send normal message: {sport} does not exist")
-        raise Exception
+        raise custom_exceptions.SportNotFoundError(sport)
     strategy = first_row_tokens[1]
     if not utils.check_sport_strategy_validity(sport, strategy):
         lgr.logger.error(f"Could not send normal message: {strategy} does not exist for {sport}")
-        raise Exception
+        raise custom_exceptions.StrategyNotFoundError(sport, strategy)
     lgr.logger.debug(f"Received normal message")
     if not send_message_to_all_abbonati(update, context, text, sport, strategy):
         lgr.logger.error(f"Error with sending normal message {text} for {sport} - {strategy}")
-        raise Exception
+        raise custom_exceptions.SendMessageError(text)
 
 
 def first_message_handler(update: Update, context: CallbackContext):
@@ -303,12 +317,19 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         Exception: when there is an error parsing the cashout or sending the messages
     """
     cashout_text = utils.create_cashout_message(update.effective_message.text)
+    lgr.logger.debug(f"Received cashout message {cashout_text}")
     if cashout_text == "":
         lgr.logger.error(f"Could not parse cashout text {update.effective_message.text}")
-        raise Exception
-    if not send_message_to_all_abbonati(update, context, cashout_text, "exchange", "MaxExchange"):
+        raise Exception(f"Could not parse cashout text {update.effective_message.text}")
+    if not send_message_to_all_abbonati(
+        update, 
+        context, 
+        cashout_text, 
+        spr.sports_container.EXCHANGE.name, 
+        strat.strategies_container.MAXEXCHANGE.name
+    ):
         lgr.logger.error(f"Error with sending cashout {cashout_text}")
-        raise Exception
+        raise custom_exceptions.SendMessageError(cashout_text)
 
 
 ############################################ ERROR HANDLERS ############################################
@@ -354,8 +375,9 @@ def error_handler(update: Update, context: CallbackContext):
     try:
         if update.callback_query:
             user_chat_id = update.callback_query.message.chat_id
-        else:
+        elif update.message:
             user_chat_id = update.message.chat_id
+        if user_chat_id:
             context.bot.send_message(
                 user_chat_id,
                 cst.ERROR_MESSAGE,

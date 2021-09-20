@@ -1,17 +1,17 @@
 """Module for the Callback Query Handlers"""
 import datetime
 
-from telegram import Update, InputMediaPhoto
-from telegram.ext.dispatcher import CallbackContext
-from telegram.files.inputmedia import InputMediaVideo
-
-from lot_bot.dao import user_manager, abbonamenti_manager
-from lot_bot import logger as lgr
+from lot_bot import config as cfg
 from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
-from lot_bot import config as cfg
+from lot_bot import logger as lgr
 from lot_bot import utils
-
+from lot_bot import custom_exceptions
+from lot_bot.dao import abbonamenti_manager, user_manager
+from lot_bot.models import sports as spr, strategies as strat
+from telegram import Update
+from telegram.ext.dispatcher import CallbackContext
+from telegram.files.inputmedia import InputMediaVideo
 
 # ========================================== HELPER FUNCTIONS ================================================
 
@@ -47,12 +47,13 @@ def select_sport_strategies(update: Update, context: CallbackContext):
     Raises:
         Exception: raised in case the sport is not valid
     """
-    sport = update.callback_query.data.replace("sport_", "")
-    if not sport in cst.SPORTS:
-        lgr.logger.error(f"Could not open strategies for sport {sport}")
-        raise Exception
+    sport_token = update.callback_query.data.replace("sport_", "")
+    sport = spr.sports_container.get_sport_from_string(sport_token)
+    if not sport:
+        lgr.logger.error(f"Could not open strategies for sport {sport_token}")
+        raise custom_exceptions.SportNotFoundError(sport_token)
     context.bot.edit_message_text(
-        f"Ecco le strategie disponibili per {sport}",
+        f"Ecco le strategie disponibili per {sport.display_name}",
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_strategies_inline_keyboard(update, sport),
@@ -73,21 +74,23 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     Raises:
         Exception: in case any among sport, strategy and state are invalid. 
     """
-    sport, strategy, state = update.callback_query.data.split("_")
-    if not sport in cst.SPORTS:
-        lgr.logger.error(f"Could not set strategies for sport {sport}")
-        raise Exception
-    if not strategy in cst.SPORT_STRATEGIES[sport]:
-        lgr.logger.error(f"Could not find strategies in sport {sport}")
-        raise Exception
+    sport_token, strategy_token, state = update.callback_query.data.split("_")
+    sport = spr.sports_container.get_sport_from_string(sport_token)
+    if not sport:
+        lgr.logger.error(f"Could not set strategies for sport {sport_token}")
+        raise custom_exceptions.SportNotFoundError(sport_token)
+    strategy = strat.strategies_container.get_strategy_from_string(strategy_token)
+    if not strategy or not strategy in sport.strategies:
+        lgr.logger.error(f"Could not find {strategy} taken from {strategy_token} in sport {sport.name}")
+        raise custom_exceptions.StrategyNotFoundError(sport_token, strategy_token)
     if state != "activate" and state != "disable":
         lgr.logger.error(f"Invalid set strategy state {state}")
-        raise Exception
+        raise Exception(f"Invalid set strategy state {state}")
 
     # ! check if the strategy is being set to the same state it is already in
     # (that would mean that we would edit the inline keyboard with an identical one
     #   and that would cause an error)
-    abb_results = abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(update.effective_user.id, sport, strategy)
+    abb_results = abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(update.effective_user.id, sport.name, strategy.name)
     lgr.logger.debug(f"Found abbonamenti {abb_results=}")
     if (not abb_results and state == "disable") or (abb_results and state == "activate"):
         # we are either trying to disable an already disabled strategy or activate an already active one
@@ -95,8 +98,8 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
         return
     abbonamento_data = {
         "telegramID": update.callback_query.from_user.id,
-        "sport": sport,
-        "strategia": strategy
+        "sport": sport.name,
+        "strategia": strategy.name
     }
     if state == "activate":
         if not abbonamenti_manager.create_abbonamento(abbonamento_data):
@@ -161,7 +164,14 @@ def to_sports_menu(update: Update, context: CallbackContext):
     user_data = user_manager.retrieve_user(user_id)
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
-        raise Exception
+        context.bot.send_message(
+            user_id,
+            f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
+        )
+        # must answer the callback query, even if it is useless
+        context.bot.answer_callback_query(update.callback_query.id, text="")
+        return
+        # raise custom_exceptions.UserNotFound(user_id)
     expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["validoFino"])).strftime('%d/%m/%Y alle %H:%M')
     tip_text = cst.TIP_MESSAGE.format(expiration_date)
     context.bot.edit_message_text(
@@ -234,18 +244,19 @@ def strategy_explanation(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
-    strategy = update.callback_query.data.split("_")[1]
-    lgr.logger.debug(f"Received {strategy=} explanation")
-    if strategy not in cfg.config.VIDEO_FILE_IDS.keys():
+    strategy_token = update.callback_query.data.split("_")[1]
+    lgr.logger.debug(f"Received {strategy_token=} explanation")
+    strategy = strat.strategies_container.get_strategy_from_string(strategy_token)
+    if strategy and strategy.name not in cfg.config.VIDEO_FILE_IDS.keys():
         lgr.logger.error(f"{strategy} cannot be found for explanation")
         raise Exception(f"Strategy {strategy} not found")
     # ! avoid reloading the same video strategy
-    if update.effective_message.caption and cst.STRATEGIES_DISPLAY_NAME[strategy] in update.effective_message.caption:
+    if update.effective_message.caption and strategy.display_name in update.effective_message.caption:
         # must answer the callback query, even if it is useless
         context.bot.answer_callback_query(update.callback_query.id, text="")
         return
-    strategy_video_explanation_id = cfg.config.VIDEO_FILE_IDS[strategy]
-    caption = f"Spiegazione di {cst.STRATEGIES_DISPLAY_NAME[strategy]}"
+    strategy_video_explanation_id = cfg.config.VIDEO_FILE_IDS[strategy.name]
+    caption = f"Spiegazione di {strategy.display_name}"
     # ! if the previous message has a video, edit that message
     if update.effective_message.video:
         context.bot.edit_message_media(

@@ -2,6 +2,7 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
                       KeyboardButton, ReplyKeyboardMarkup, Update)
 
 from lot_bot import constants as cst
+from lot_bot.models import sports as spr
 from lot_bot.dao import abbonamenti_manager
 
 _startup_buttons = [
@@ -10,6 +11,7 @@ _startup_buttons = [
     [KeyboardButton(text=cst.ASSISTANCE_BUTTON_TEXT)],
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
+
 
 _homepage_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
@@ -29,7 +31,7 @@ _explanation_test_buttons = [
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 _useful_links_buttons = [
-    [InlineKeyboardButton(text="📉 Tracciabilità Produzione LoT +24h📉 ", url="t.me/LoT_Tracciabilita")],
+    [InlineKeyboardButton(text="📉 Tracciabilità Produzione LoT +24h 📉 ", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="📊 Report e Rendimenti 📊 ", url = "t.me/LoT_ReportGiornalieri")],
     [InlineKeyboardButton(text="📱 Pagina Instagram 📱 ", url="https://www.instagram.com/lot.official")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
@@ -67,17 +69,18 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     chat_id = update.effective_chat.id
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id})
     sport_attivi = [entry["sport"].lower() for entry in abbonamenti]
-    emoji_sport = {sport: "🔴" for sport in cst.SPORTS}
+    emoji_sport = {sport.name: "🔴" for sport in spr.sports_container}
     for sport in sport_attivi:
         emoji_sport[sport] = "🟢"
     SPORT_STRING_MENU_LEN = 19
     # ljust appends " " at the end of the string, until the specified length is reached
     # capitalize makes the first letter uppercase and the rest lowercase
-    sport_menu_entries = [cst.SPORTS_DISPLAY_NAMES[sport].ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport] for sport in cst.SPORTS]
-    inline_buttons = {sport: entry for sport, entry in zip(cst.SPORTS, sport_menu_entries)}
+    # TODO try without ljust
+    sport_menu_entries = [sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] for sport in spr.sports_container]
+    inline_buttons = {sport.name: entry for sport, entry in zip(spr.sports_container, sport_menu_entries)}
     keyboard_sport = []
-    for i, sport in enumerate(cst.SPORTS):
-        sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport], callback_data=f"sport_{sport}")
+    for i, sport in enumerate(spr.sports_container):
+        sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport.name], callback_data=f"sport_{sport.name}")
         if i % 2 == 0:
             keyboard_sport.append([sport_keyboard_button])
         else:
@@ -87,7 +90,7 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
      
 
 
-def create_strategies_inline_keyboard(update: Update, sport: str) -> InlineKeyboardMarkup:
+def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> InlineKeyboardMarkup:
     """Creates the inline keyboard for the strategies of sports,
         populating it with a 🔴 or a 🟢, depending on the user's 
         preferences.
@@ -103,21 +106,21 @@ def create_strategies_inline_keyboard(update: Update, sport: str) -> InlineKeybo
         InlineKeyboardMarkup
     """
     chat_id = update.effective_chat.id
-    abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id, "sport": sport})
+    abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id, "sport": sport.name})
     active_strategies = [entry["strategia"] for entry in abbonamento_sport]
-    emoji_strategies = {strategy: "🔴" for strategy in cst.SPORT_STRATEGIES[sport]}
+    emoji_strategies = {strategy.name: "🔴" for strategy in sport.strategies}
     for strategy in active_strategies:
         emoji_strategies[strategy] = "🟢"
     strategies_buttons = []
-    for strategy in cst.SPORT_STRATEGIES[sport]:
-        positive_callback = f"{sport}_{strategy}_activate"
-        negative_callback = f"{sport}_{strategy}_disable"
-        active_text = f"{cst.STRATEGIES_DISPLAY_NAME[strategy]} SI"
-        not_active_text = f"{cst.STRATEGIES_DISPLAY_NAME[strategy]} NO"
-        if emoji_strategies[strategy] == "🟢":
-            active_text += f" {emoji_strategies[strategy]}"
+    for strategy in sport.strategies:
+        positive_callback = f"{sport.name}_{strategy.name}_activate"
+        negative_callback = f"{sport.name}_{strategy.name}_disable"
+        active_text = f"{strategy.display_name} SI"
+        not_active_text = f"{strategy.display_name} NO"
+        if emoji_strategies[strategy.name] == "🟢":
+            active_text += f" {emoji_strategies[strategy.name]}"
         else:
-            not_active_text += f" {emoji_strategies[strategy]}"
+            not_active_text += f" {emoji_strategies[strategy.name]}"
         strategies_buttons.append([
             InlineKeyboardButton(text=active_text, callback_data=positive_callback),
             InlineKeyboardButton(text=not_active_text, callback_data=negative_callback)

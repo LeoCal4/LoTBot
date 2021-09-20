@@ -23,7 +23,7 @@ def create_logger():
         logging.Logger
     """
     global logger
-    logger_level = logging.INFO if cfg.config.ENV != "development" else logging.DEBUG
+    logger_level = logging.INFO if cfg.config.ENV != "development" and cfg.config.ENV != "testing" else logging.DEBUG
     if cfg.config.LOG_ON_FILE:
         logging.basicConfig(
             filename=cfg.config.LOG_PATH,

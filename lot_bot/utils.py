@@ -1,13 +1,17 @@
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
 
 
-def check_sport_validity(sport: str) -> bool:
-    return sport and sport.lower().strip() in cst.SPORTS
+def check_sport_validity(sport_token: str) -> bool:
+    return sport_token and bool(spr.sports_container.get_sport_from_string(sport_token.lower().strip()))
 
 
-def check_sport_strategy_validity(sport: str, strategy: str) -> bool:
-    return sport and strategy and strategy.lower().strip() in cst.SPORT_STRATEGIES[sport]
+def check_sport_strategy_validity(sport_token: str, strategy_token: str) -> bool:
+    sport = spr.sports_container.get_sport_from_string(sport_token.lower().strip())
+    strategy = strat.strategies_container.get_strategy_from_string(strategy_token.lower().strip())
+    return sport and strategy and strategy in sport.strategies
 
 
 def get_sport_from_giocata(text: str) -> str:
@@ -22,10 +26,10 @@ def get_sport_from_giocata(text: str) -> str:
     """
     sport_row = text.split("\n")[0].lower()
     # ? could be faster if we would just get the second token
-    for sport in cst.SPORTS:
-        if sport in sport_row:
-            return sport
-    lgr.logger.error(f"Could not find {sport} in SPORTS")
+    for sport in spr.sports_container:
+        if sport.display_name.lower() in sport_row:
+            return sport.name
+    lgr.logger.error(f"Could not find in any sport in line {sport_row}")
     return None
 
 

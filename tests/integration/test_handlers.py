@@ -6,6 +6,7 @@ from lot_bot import utils
 from lot_bot.dao import abbonamenti_manager, user_manager
 from telethon import TelegramClient
 from telethon.tl.custom.message import Message
+from lot_bot.models import sports as spr, strategies as strat
 
 BOT_TEST_TIMEOUT = 15
 TEST_CHANNEL_NAME = "lot_test_channel1"
@@ -40,6 +41,11 @@ def delete_user_and_abbonamenti(user_id: int):
     user_manager.delete_user(user_id)
     abbonamenti_manager.delete_abbonamenti_for_user_id(user_id)
 
+@pytest.fixture
+def clean_abbonamenti_before_test():
+    abbonamenti_manager.delete_all_abbonamenti()
+
+
 # =================================================================================
 
 class TestHandlers:
@@ -62,10 +68,9 @@ class TestHandlers:
     @pytest.mark.asyncio
     async def test_start(self, client: TelegramClient):
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
-            await conv.send_message("/start")
+            print(await conv.send_message("/start"))
             first_resp: Message = await conv.get_response()
             assert "Bentornato" in first_resp.raw_text
-            # TODO finish
             second_resp: Message = await conv.get_response()
             assert "lista dei canali" in second_resp.raw_text
         client_me = await client.get_me()
@@ -74,9 +79,12 @@ class TestHandlers:
 
 
     @pytest.mark.asyncio
-    async def test_giocata_handler(self, channel_admin_client: TelegramClient, client: TelegramClient, correct_giocata: tuple):
+    async def test_giocata_handler(self, 
+    channel_admin_client: TelegramClient, 
+    client: TelegramClient, 
+    correct_giocata: tuple[str, str, str]):
         # ! generate correct_giocata
-        giocata, sport, strategy = correct_giocata
+        giocata, sport_name, strategy_name = correct_giocata
         # ! use client to subscribe to sport-strategy, this also sets it to active
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
             await conv.send_message("/start")
@@ -86,24 +94,29 @@ class TestHandlers:
         assert user_exists_and_is_valid(client_me.id)
         abbonamenti_data = {
             "telegramID": client_me.id,
-            "sport": sport,
-            "strategia": strategy,
+            "sport": sport_name,
+            "strategia": strategy_name,
         }
         abbonamenti_manager.create_abbonamento(abbonamenti_data)
-        assert abbonamento_exists_and_is_valid(client_me.id, sport, strategy)
+        assert abbonamento_exists_and_is_valid(client_me.id, sport_name, strategy_name)
         # ! send giocata on channel using admin_client
         await channel_admin_client.send_message(TEST_CHANNEL_NAME, giocata)
         # ! check if the bot sends the message to the client
         dialogs = await client.get_dialogs()
         bot_chat = await client.get_messages(dialogs[0])
         # ! assert
-        assert bot_chat[0].message == giocata
+        assert bot_chat[0].message == giocata + "\n\nHai effettuato la giocata?"
         # ! reset client
         delete_user_and_abbonamenti(client_me.id)
 
 
     @pytest.mark.asyncio
-    async def test_exchange_cashout_handler(self, client: TelegramClient, channel_admin_client: TelegramClient, monkeypatch):
+    async def test_exchange_cashout_handler(self, 
+        client: TelegramClient, 
+        channel_admin_client: TelegramClient, 
+        monkeypatch, 
+        clean_abbonamenti_before_test
+        ):
         # ! send start to have the bot message as the latest one
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
             await conv.send_message("/start")
@@ -111,20 +124,24 @@ class TestHandlers:
             await conv.get_response()
         client_me = await client.get_me()
         assert user_exists_and_is_valid(client_me.id)
-        # ! subscribe client to exchange - MaxExchange
-        abbonamenti_exchange_data = {
-            "telegramID": client_me.id,
-            "sport": "exchange",
-            "strategia": "MaxExchange",
-        }
-        abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
-        assert abbonamento_exists_and_is_valid(client_me.id, "exchange", "MaxExchange")
+        # ! subscribe client to exchange - MaxExchange (already done with /start)
+        exchange_name = spr.sports_container.EXCHANGE.name
+        maxexchange_name = strat.strategies_container.MAXEXCHANGE.name
+        # abbonamenti_exchange_data = {
+        #     "telegramID": client_me.id,
+        #     "sport": exchange_name,
+        #     "strategia": maxexchange_name,
+        # }
+        # abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
+        assert abbonamento_exists_and_is_valid(client_me.id, exchange_name, maxexchange_name)
         # ! generate cashout message
         cashout_message = "#123 +100.00"
         # ! send cashout message from exchange channel (patch)
-        monkeypatch.setitem(cfg.config.SPORTS_CHANNELS_ID, "exchange", cfg.config.SPORTS_CHANNELS_ID[TEST_CHANNEL_NAME])
+        monkeypatch.setitem(cfg.config.SPORTS_CHANNELS_ID, exchange_name, cfg.config.SPORTS_CHANNELS_ID[TEST_CHANNEL_NAME])
         await channel_admin_client.send_message(TEST_CHANNEL_NAME, cashout_message)
-        # ! check if client received the message
+        # ! check if client received the message 
+        # ! WARNING: if there other users with the same abbonamenti, this fails because the message sending loop needs to
+        #   send the giocate to all the user before this client, since it is the last one in the list
         dialogs = await client.get_dialogs()
         bot_chat = await client.get_messages(dialogs[0])
         # ! final check

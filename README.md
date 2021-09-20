@@ -134,6 +134,8 @@ The following coding conventions should be maintained during the development of 
 - there is no convention when importing _external modules_ (libraries)
 - all of the operation involving the database must be implemented in a DAO, in the appropriate manager. 
     For example: all the methods involving users operations can be found in *lot_bot/dao/user_manager.py*
+- use *models/sports.py/sports_container* and *models/strategies.py/strategies_container* to access sports and strategies.
+    - specifically, use `get_sport/strategy_from_string(sport/strategy_string)` to obtain the correct object
 
 # Testing
 Ideally, every function of the codebase should have its own tests, which inspect the correctness of said function in normal and extreme cases.

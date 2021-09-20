@@ -1,4 +1,3 @@
-from pymongo.uri_parser import _TLSINSECURE_EXCLUDE_OPTS
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
@@ -16,7 +15,7 @@ def create_abbonamento(abbonamento_data : dict) -> bool:
     """
     try:
         result: InsertOneResult = db.mongo.abbonamenti.insert_one(abbonamento_data)
-        lgr.logger.debug(f"Created new abbonamento for user id {abbonamento_data['telegramID']}")
+        lgr.logger.debug(f"Created new abbonamento for user id {abbonamento_data['telegramID']} with data {abbonamento_data}")
         return bool(result.inserted_id)
     except Exception as e:
         lgr.logger.error("Error during create abbonamenti")

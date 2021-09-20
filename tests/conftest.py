@@ -1,12 +1,11 @@
-import pytest
-from _pytest.monkeypatch import MonkeyPatch
 import random
 
-
+import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from lot_bot import config as cfg
-from lot_bot import constants as cst
 from lot_bot import logger as lgr
-from lot_bot import database as db
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
 
 """The fixtures found in this file are automatically added by pytest 
     to all the tests files/subdirectories in this directory
@@ -29,24 +28,19 @@ def set_test_env(monkeysession):
     Everything that is found before the yield is run at the beginning
         of the session, the rest is run at its end.
     """
-
-    # def create_mock_db():
-    #     return mongomock.MongoClient().client
-    
     print("Setting ENV to testing")
     monkeysession.setenv("ENV", "testing")
-    # monkeysession.setattr(db, "mongo", mongomock.MongoClient().client)
     cfg.create_config()
     lgr.create_logger()
 
 
 
-def create_giocata(sport: str, strategy: str) -> str:
-    giocata = f"🏀 {sport} 🏀\n"
-    giocata += "🇮🇹Supercoppa Serie A🇮🇹\n"
-    giocata += f"⚜️ {strategy} ⚜️\n"
-    giocata += "\n"
-    giocata += """Trieste 🆚 Trento
+def create_giocata(sport: spr.Sport, strategy: strat.Strategy) -> str:
+    giocata = f"""🏀 {sport.display_name} 🏀
+🇮🇹 Supercoppa Serie A 🇮🇹
+⚜️  {strategy.display_name} ⚜️
+
+Trieste 🆚 Trento
 🧮 1 inc overtime 🧮
 📈 Quota 1.55 📈
 
@@ -58,19 +52,21 @@ Cremona 🆚 Sassari
 
 🕑 18:30 🕑 
 
-🏛 Stake 5% 🏛\n"""
-    giocata += f"🖊 {sport} #8🖊"
+🏛 Stake 5% 🏛
+🖊 {sport.display_name} #8 🖊"""
+
+# Hai effettuato la giocata?"""
     return giocata
 
 
 @pytest.fixture
-def correct_giocata() -> tuple:
-    random_sport = random.choice(cst.SPORTS)
-    random_strategy = random.choice(cst.SPORT_STRATEGIES[random_sport])
-    return create_giocata(random_sport, random_strategy), random_sport, random_strategy
+def correct_giocata() -> tuple[str, str, str]:
+    random_sport : str.Sport = random.choice(spr.sports_container.astuple())
+    random_strategy =  random.choice(random_sport.strategies)
+    return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name
 
 @pytest.fixture
-def wrong_giocata() -> tuple:
-    random_sport = "wrong"
-    random_strategy = "wronger"
-    return create_giocata(random_sport, random_strategy), random_sport, random_strategy
+def wrong_giocata() -> tuple[str, str, str]:
+    random_sport = spr.Sport("wrong", [])
+    random_strategy = strat.Strategy("wronger")
+    return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name

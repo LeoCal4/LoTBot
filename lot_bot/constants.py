@@ -1,72 +1,4 @@
-""" This module is used to define constants
-"""
-
-# write them lowercase and with no spaces or _
-SPORTS = [
-    "calcio",
-    "basket",
-    "tennis",
-    "exchange",
-    "speciali",
-    "pingpong",
-    "hockey",
-    "freccette",
-    "baseball",
-    "pallavolo",
-    "rugby",
-    "sport2"
-]
-
-
-# those are the ones that are shown in the keyboards 
-# the keys must be equal to the values of sports
-SPORTS_DISPLAY_NAMES = {
-    "calcio": "Calcio",
-    "basket": "Basket",
-    "tennis": "Tennis",
-    "exchange": "Exchange",
-    "speciali": "Speciali",
-    "pingpong": "Ping Pong",
-    "hockey": "Hockey",
-    "freccette": "Freccette",
-    "baseball": "Baseball",
-    "pallavolo": "Pallavolo",
-    "rugby": "Rugby",
-    "sport2": "Sport2"
-}
-
-
-# the keys of the STRATEGIES dict must be equal to the values
-#   of SPORTS
-_base_strategie = ["raddoppio", "multiple", "singola", "live", "instagram"]
-SPORT_STRATEGIES = {
-  "calcio": _base_strategie + ["piaquest", "trilled"],
-  "basket": _base_strategie + ["trilled"],
-  "tennis": _base_strategie + ["trilled"],
-  "pingpong": _base_strategie + ["trilled"],
-  "freccette": _base_strategie + ["trilled"],
-  "hockey": _base_strategie + ["trilled"],
-  "baseball": _base_strategie + ["trilled"],
-  "exchange": ["maxexchange", "instagram"],
-  "speciali": _base_strategie,
-  "rugby": _base_strategie + ["trilled"],
-  "sport2": _base_strategie,
-  "pallavolo": _base_strategie,
-}
-
-
-# those are the ones that are shown in the keyboards 
-# the keys must be equal to the set of values of STRATEGIES
-STRATEGIES_DISPLAY_NAME = {
-  "raddoppio": "Raddoppio",
-  "multiple": "Multiple",
-  "singola": "Singola",
-  "live": "Live",
-  "instagram": "Instagram",
-  "piaquest": "PiaQuest",
-  "trilled": "Trilled",
-  "maxexchange": "MaxExchange"
-}
+""" This module is used to define constants"""
 
 # {0}: first name of the user
 # {1}: subscription expiration date 
@@ -129,6 +61,3 @@ Si consiglia di riprovare più tardi, ci scusiamo per il disagio."""
 COMMUNITY_BUTTON_TEXT = "🙋🏼‍♀️ Vai alla Community 🙋🏾"
 ASSISTANCE_BUTTON_TEXT = "👩🏾‍💻  Assistenza  🧑🏻"
 HOMEPAGE_BUTTON_TEXT = "📱 Homepage 📱"
-
-# this defines what will be imported if you import * from this module 
-__all__ = ["SPORTS", "STRATEGIES"]

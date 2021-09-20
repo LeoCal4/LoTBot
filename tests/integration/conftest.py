@@ -50,12 +50,12 @@ def run_bot_for_tests(xprocess):
             if not path.exists():
                 raise FileNotFoundError(f"main.py path not found: {path}")
             return path
-
+        print("Activating bot for tests")
         # the pattern that will be waited for to be printed
         #   in the console
         # ! WARNING: the logger MUST write on the console during 
-        #   integration testing and not on a log file,
-        #    otherwise the pattern won't be found
+        # !  integration testing and not on a log file,
+        # !   otherwise the pattern won't be found
         pattern = "Scheduler started"
         # maximum time to wait for the patter to appear
         #   before timing out
@@ -68,8 +68,8 @@ def run_bot_for_tests(xprocess):
         # makes the process receive interrupts from the console
         terminate_on_interrupt = True
     
-    xprocess.ensure("run_bot_for_tests", BotStarter)
-
+    print(xprocess.ensure("run_bot_for_tests", BotStarter))
+    # print("Bot activated")
     yield
 
     xprocess.getinfo("run_bot_for_tests").terminate()

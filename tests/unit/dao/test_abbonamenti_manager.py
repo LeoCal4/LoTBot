@@ -1,19 +1,25 @@
-import pytest
-
-from lot_bot.dao import abbonamenti_manager
-from lot_bot import database as db
-from lot_bot import constants as cst
 import random
 
+import pytest
+from lot_bot import constants as cst
+from lot_bot import database as db
+from lot_bot.dao import abbonamenti_manager
+from lot_bot.models import sports as spr
 
-def get_abbonamento_data(user_id=None, sport=None, strategy=None) -> dict:
+
+def get_abbonamento_data(user_id=None, sport_name=None, strategy_name=None) -> dict:
     user_id = user_id if user_id else random.randrange(0, 1000)
-    sport = sport if sport else random.choice(cst.SPORTS)
-    strategy = strategy if strategy else random.choice(cst.SPORT_STRATEGIES[sport])
+    sport = None
+    if not sport_name:
+        sport = random.choice(spr.sports_container.astuple())
+        sport_name = sport.name
+    if not strategy_name:
+        sport = sport if sport else spr.sports_container.get_sport_from_string(sport_name)
+        strategy_name = random.choice(sport.strategies)
     return {
         "telegramID": user_id,
-        "sport": sport,
-        "strategia": strategy,
+        "sport": sport_name,
+        "strategia": sport_name,
     }
 
 @pytest.fixture
@@ -29,7 +35,7 @@ def new_abbonamento():
     yield abbonamento_data
 
 
-def test_create_abbonamento(monkeypatch):
+def test_create_abbonamento(monkeypatch, clear_abbonamenti):
     abbonamento_data = get_abbonamento_data()
     abbonamenti_manager.create_abbonamento(abbonamento_data)
     ret_abbonamento = abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(
@@ -39,8 +45,6 @@ def test_create_abbonamento(monkeypatch):
     assert ret_abbonamento, "Abbonamento was not created"
     for key in abbonamento_data:
         assert abbonamento_data[key] == ret_abbonamento[key]
-    # cleanup
-    abbonamenti_manager.delete_abbonamento(abbonamento_data)
     # db error
     abbonamento_data = get_abbonamento_data()
     monkeypatch.setattr(db, "mongo", None)
@@ -55,7 +59,7 @@ def test_retrieve_abbonamenti(monkeypatch, new_abbonamento: dict, clear_abboname
         "strategia": new_abbonamento["strategia"]
     })) == 1
     # multiple document retrieve
-    abbonamento_data2 = get_abbonamento_data(sport=new_abbonamento["sport"])
+    abbonamento_data2 = get_abbonamento_data(sport_name=new_abbonamento["sport"])
     abbonamenti_manager.create_abbonamento(abbonamento_data2)
     ret_abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": new_abbonamento["sport"]})
     assert len(ret_abbonamenti) == 2

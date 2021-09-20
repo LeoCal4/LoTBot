@@ -2,7 +2,7 @@ from telegram.ext.filters import Filters
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
-
+from lot_bot.models import strategies as strat
 
 def get_giocata_filter() -> Filters:
     """Creates the filter for the giocate. It checks if the
@@ -75,7 +75,7 @@ def get_explanation_pattern() -> str:
         str: [description]
     """
     pattern = "explanation_("
-    for strategy in cst.STRATEGIES_DISPLAY_NAME.keys():
-        pattern += strategy + "|"
+    for strategy in strat.strategies_container:
+        pattern += strategy.name + "|"
     return pattern[:-1] + ")"
 
