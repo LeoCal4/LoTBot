@@ -1,9 +1,7 @@
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure
 
 from lot_bot import config as cfg
 from lot_bot import logger as lgr
-
 
 # the mongo object that is used in the other modules
 # just import this variable in any of the other file which
@@ -28,6 +26,8 @@ class MongoDatabase:
         lgr.logger.info("Connected to db") 
         db = self.client[cfg.config.MONGO_DB_NAME]
         self.abbonamenti = db["abbonamenti2"]
+        # ensures the uniqueness of the abbonamenti
+        self.abbonamenti.create_index([("telegramID", 1), ("sport", 1),("strategia", 1)], unique=True)
         self.utenti = db["utenti2"]
 
 
