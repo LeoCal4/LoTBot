@@ -386,3 +386,10 @@ def error_handler(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not send error message to user")
         lgr.logger.error(f"Update: {str(update)}")
         lgr.logger.error(f"Exception: {str(e)}")
+
+
+# =======================================================================================000
+
+def successful_payment_callback(update: Update, context: CallbackContext):
+    # do something after successfully receiving payment?
+    update.message.reply_text("Thank you for your payment!")

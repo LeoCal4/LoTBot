@@ -16,6 +16,7 @@ STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_k
 _homepage_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
     [InlineKeyboardButton(text="⛹🏿‍♂️  Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️ Test pagamenti  📖", callback_data="to_payments")], 
     [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
     [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")],
     [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 

@@ -79,3 +79,8 @@ def get_explanation_pattern() -> str:
         pattern += strategy.name + "|"
     return pattern[:-1] + ")"
 
+
+
+# ==============================================================================================================
+def get_payments_filter() -> Filters:
+    return Filters.successful_payment

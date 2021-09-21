@@ -1,4 +1,4 @@
-from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Updater
+from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Updater, PreCheckoutQueryHandler
 from telegram.ext.dispatcher import Dispatcher
 
 from lot_bot import config as cfg
@@ -31,6 +31,11 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
+
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.test_payment, pattern=r"^to_payments$"))
+    dispatcher.add_handler(PreCheckoutQueryHandler(callback_handlers.pre_checkout_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_payments_filter(), message_handlers.successful_payment_callback))
+    
 
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
