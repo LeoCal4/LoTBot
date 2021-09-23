@@ -1,11 +1,42 @@
-from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Updater, PreCheckoutQueryHandler
+from telegram.ext import (CallbackQueryHandler, CommandHandler, 
+                          MessageHandler, ConversationHandler,
+                          PreCheckoutQueryHandler, Updater)
 from telegram.ext.dispatcher import Dispatcher
 
 from lot_bot import config as cfg
 from lot_bot import database as db
-from lot_bot.handlers import callback_handlers, message_handlers 
-from lot_bot import logger as lgr
 from lot_bot import filters
+from lot_bot import logger as lgr
+from lot_bot.handlers import callback_handlers, message_handlers, payment_handler
+
+
+
+def get_referral_conversation_handler() -> ConversationHandler:
+    """Creates the conversation handler to contain the referral choice.
+    This approach was used in order to avoid restrictions on the referral/affiliation 
+    codes, since asking for any string as a code would have meant that any of the user
+    text messages to the bot would have been interpreted as a referral code. 
+
+    This conversation handler does not include the pre-checkout and the payment end
+    since adding them here did not make them work.
+
+    Returns:
+        ConversationHandler
+    """
+    payment_conversation_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(payment_handler.to_add_referral_before_payment, pattern=r"^to_add_referral$")],
+        states={
+            payment_handler.REFERRAL: [
+                MessageHandler(filters.get_referral_filter(), payment_handler.received_referral),
+                CallbackQueryHandler(payment_handler.to_payments, pattern=r"^to_payments$")
+                ],
+        },
+        fallbacks=[
+            CallbackQueryHandler(payment_handler.to_homepage_from_referral_callback, pattern=r"^to_homepage_from_referral$"),
+            MessageHandler(filters.get_normal_messages_filter(), payment_handler.to_homepage_from_referral_message),
+            ],
+    )
+    return payment_conversation_handler
 
 
 def add_handlers(dispatcher: Dispatcher):
@@ -31,11 +62,11 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
-
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.test_payment, pattern=r"^to_payments$"))
-    dispatcher.add_handler(PreCheckoutQueryHandler(callback_handlers.pre_checkout_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_payments_filter(), message_handlers.successful_payment_callback))
     
+    # =========== PAYMENTS HANDLERS ===========
+    dispatcher.add_handler(get_referral_conversation_handler())
+    dispatcher.add_handler(PreCheckoutQueryHandler(payment_handler.pre_checkout_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_successful_payment_filter(), payment_handler.successful_payment_callback))
 
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))

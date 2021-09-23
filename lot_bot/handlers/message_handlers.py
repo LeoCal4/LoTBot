@@ -6,17 +6,17 @@ import json
 import os
 import traceback
 
-from telegram import ParseMode, Update, User
-from telegram.ext.dispatcher import CallbackContext
-
 from lot_bot import config as cfg
 from lot_bot import constants as cst
+from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.models import sports as spr, strategies as strat
 from lot_bot.dao import abbonamenti_manager, user_manager
-from lot_bot import custom_exceptions
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
+from telegram import ParseMode, Update, User
+from telegram.ext.dispatcher import CallbackContext
 
 ################################# HELPER METHODS #######################################
 
@@ -54,7 +54,11 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         "nome": user.first_name,
         "nomeUtente": user.username,
         "validoFino": trial_expiration_timestamp,
-        "giocate": []
+        "giocate": [],
+        "payments": [],
+        "referral_code": utils.generate_referral_code(),
+        "linked_referral_code": "",
+        "successful_referrals": 0, # TODO one per payment or one per user?
     }
     user_result = user_manager.create_user(user_data)
     if not user_result:
@@ -386,10 +390,3 @@ def error_handler(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not send error message to user")
         lgr.logger.error(f"Update: {str(update)}")
         lgr.logger.error(f"Exception: {str(e)}")
-
-
-# =======================================================================================000
-
-def successful_payment_callback(update: Update, context: CallbackContext):
-    # do something after successfully receiving payment?
-    update.message.reply_text("Thank you for your payment!")

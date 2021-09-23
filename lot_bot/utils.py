@@ -1,5 +1,8 @@
-from lot_bot import constants as cst
+import random
+import string
+
 from lot_bot import logger as lgr
+from lot_bot.dao import user_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
@@ -42,7 +45,6 @@ def get_strategy_from_giocata(text: str) -> str:
     Returns:
         str: the name of the strategy or empty string if it's not valid
     """
-    # TODO add a safer way to get it
     STRATEGY_ROW = 2
     STRATEGY_INDEX = 1
     played_strategy = text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX]
@@ -129,6 +131,7 @@ Cremona 🆚 Sassari
 """
 def parse_giocata(giocata_text: str) -> dict:
     # giocata_rows = giocata_text.split("\n")
+    # TODO che informazioni salvare
     sport = get_sport_from_giocata(giocata_text)
     strategy = get_strategy_from_giocata(giocata_text)
     parsed_giocata = {
@@ -137,3 +140,22 @@ def parse_giocata(giocata_text: str) -> dict:
         "raw_text": giocata_text
     }
     return parsed_giocata
+
+
+def generate_referral_code() -> str:
+    """Generates a valid referral code for a new user, trying again until
+    it is not already used.
+
+    The pattern is lot-ref-<8 chars among digits and lowercase letters>
+
+    Returns:
+        str: a valid referral code
+    """
+    REFERRAL_CODE_LEN = 8
+    code_chars = string.ascii_lowercase + string.digits
+    new_referral = ""
+    while True:
+        new_referral = "lot-ref-" + "".join((random.choice(code_chars) for x in range(REFERRAL_CODE_LEN)))
+        if user_manager.retrieve_user_by_referral(new_referral) is None:
+            break
+    return new_referral

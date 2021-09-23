@@ -82,5 +82,14 @@ def get_explanation_pattern() -> str:
 
 
 # ==============================================================================================================
-def get_payments_filter() -> Filters:
+
+
+def get_referral_filter() -> Filters:
+    # [a-z A-Z 0-9 _ -]
+    return Filters.regex(r"^lot-ref-(\w|-)+$")
+
+
+def get_successful_payment_filter() -> Filters:
     return Filters.successful_payment
+
+

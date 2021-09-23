@@ -3,13 +3,14 @@ import datetime
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
+from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot import custom_exceptions
 from lot_bot.dao import abbonamenti_manager, user_manager
-from lot_bot.models import sports as spr, strategies as strat
-from telegram import Update, LabeledPrice
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
+from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
 
@@ -145,8 +146,6 @@ def to_homepage(update: Update, context: CallbackContext):
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
         )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
     
 
 def to_sports_menu(update: Update, context: CallbackContext):
@@ -322,36 +321,6 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
     )
 
-##############################################################################################################
 
-def test_payment(update: Update, context: CallbackContext):
-    chat_id = update.callback_query.message.chat_id
-    title = "Payment Example"
-    description = "Payment Example Description"
-    # select a payload just for you to recognize its the donation from your bot
-    payload = "pagamento_abbonamento"
-    # In order to get a provider_token see https://core.telegram.org/bots/payments#getting-a-token
-    currency = "EUR"
-    # price in dollars
-    price = 1
-    # price * 100 so as to include 2 decimal points
-    prices = [LabeledPrice("Abbonamento", price * 100)]
-
-    # optionally pass need_name=True, need_phone_number=True,
-    # need_email=True, need_shipping_address=True, is_flexible=True
-    context.bot.send_invoice(
-        chat_id, title, description, payload, cfg.config.PAYMENT_TOKEN, currency, prices,
-        need_name=True, need_email=True
-    )
-
-
-def pre_checkout_handler(update: Update, context: CallbackContext):
-    query = update.pre_checkout_query
-    # check the payload, is this from your bot?
-    if query.invoice_payload != 'pagamento_abbonamento':
-        # answer False pre_checkout_query
-        query.answer(ok=False, error_message="Something went wrong...")
-    else:
-        query.answer(ok=True)
-
-
+def test(update: Update, context: CallbackContext):
+    print("aooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
