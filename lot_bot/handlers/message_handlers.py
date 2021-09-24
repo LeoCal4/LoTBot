@@ -56,7 +56,7 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         "validoFino": trial_expiration_timestamp,
         "giocate": [],
         "payments": [],
-        "referral_code": utils.generate_referral_code(),
+        "referral_code": utils.create_valid_referral_code(),
         "linked_referral_code": "",
         "successful_referrals": 0, # TODO one per payment or one per user?
     }

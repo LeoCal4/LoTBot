@@ -154,7 +154,7 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
         lgr.logger.error("Error during giocata registration")
         lgr.logger.error(f"Exception: {str(e)}")
         lgr.logger.error(f"User id: {user_id}")
-        lgr.logger.error(f"User data: {payment}")
+        lgr.logger.error(f"User data: {str(payment)}")
         return False
 
 

@@ -2,6 +2,7 @@ import random
 import string
 
 from lot_bot import logger as lgr
+from lot_bot import constants as cst
 from lot_bot.dao import user_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
@@ -143,19 +144,30 @@ def parse_giocata(giocata_text: str) -> dict:
 
 
 def generate_referral_code() -> str:
-    """Generates a valid referral code for a new user, trying again until
-    it is not already used.
-
+    """Generates a random referral code.
     The pattern is lot-ref-<8 chars among digits and lowercase letters>
+
+    Returns:
+        str: the referral code
+    """
+    code_chars = string.ascii_lowercase + string.digits
+    return "lot-ref-" + "".join((random.choice(code_chars) for x in range(cst.REFERRAL_CODE_LEN)))
+
+
+def check_referral_code_availability(new_referral: str) -> bool:
+    return user_manager.retrieve_user_by_referral(new_referral) is None
+
+
+def create_valid_referral_code() -> str:
+    """Creates a valid referral code for a new user, generating them
+    until one which is not already used is found.
 
     Returns:
         str: a valid referral code
     """
-    REFERRAL_CODE_LEN = 8
-    code_chars = string.ascii_lowercase + string.digits
     new_referral = ""
     while True:
-        new_referral = "lot-ref-" + "".join((random.choice(code_chars) for x in range(REFERRAL_CODE_LEN)))
-        if user_manager.retrieve_user_by_referral(new_referral) is None:
+        new_referral = generate_referral_code()
+        if check_referral_code_availability(new_referral):
             break
     return new_referral

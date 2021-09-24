@@ -1,5 +1,7 @@
 """ This module is used to define constants"""
 
+REFERRAL_CODE_LEN = 8
+
 # {0}: first name of the user
 # {1}: subscription expiration date 
 WELCOME_MESSAGE_PART_ONE = """<b>Benvenuto/a {0}!</b> 👍
