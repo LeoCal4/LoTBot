@@ -13,6 +13,7 @@ from telegram import LabeledPrice, Update
 from telegram.ext.conversationhandler import ConversationHandler
 from telegram.ext.dispatcher import CallbackContext
 
+
 REFERRAL = 0
 
 
@@ -133,6 +134,7 @@ def to_payments(update: Update, context: CallbackContext):
         chat_id, title, description, payload, cfg.config.PAYMENT_TOKEN, currency, prices,
         need_email=True, start_parameter="Paga"
     ) # TODO add photo for abbonamento
+    return ConversationHandler.END
 
 
 def pre_checkout_handler(update: Update, _: CallbackContext):
@@ -179,14 +181,9 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     if not retrieved_user:
         lgr.logger.error("Cannot retrieve user {user_id} to save its payment")
         raise custom_exceptions.UserNotFound(user_id, update=update)
-    # * register the user's payment
-    payment_data = update.message.successful_payment.to_dict()
-    lgr.logger.debug(f"Registering payment {str(payment_data)} for {user_id}")
-    register_result = user_manager.register_payment_for_user_id(payment_data, user_id)
-    if not register_result:
-        lgr.logger.error(f"Could not register payment {str(payment_data)} for user {user_id}")
     # * update the referred user's successful referrals, if there is a referral code
     linked_referral_code = retrieved_user["linked_referral_code"]
+    linked_user = None
     if linked_referral_code != "":
         lgr.logger.debug(f"Updating referred user {linked_referral_code} after successful payment by {user_id}")
         linked_user = user_manager.retrieve_user_by_referral(linked_referral_code)
@@ -195,6 +192,18 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         })
         if not update_result:
             lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")
+    # * register the user's payment
+    payment_data = update.message.successful_payment.to_dict()
+    payment_data["datetime"] = datetime.datetime.utcnow().timestamp()
+    referred_by_id = ""
+    if linked_user:
+        referred_by_id = linked_user["_id"]
+    payment_data["referred_by"] = referred_by_id
+    lgr.logger.debug(f"Registering payment {str(payment_data)} for {user_id}")
+    register_result = user_manager.register_payment_for_user_id(payment_data, user_id)
+    if not register_result:
+        lgr.logger.error(f"Could not register payment {str(payment_data)} for user {user_id}")
+    # * send homepage
     message_handlers.homepage_handler(update, context)
 
 
