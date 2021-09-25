@@ -7,12 +7,13 @@ from lot_bot import config as cfg
 from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
+from lot_bot import constants as cst
+from lot_bot import utils
 from lot_bot.dao import user_manager
 from lot_bot.handlers import callback_handlers, message_handlers
 from telegram import LabeledPrice, Update
 from telegram.ext.conversationhandler import ConversationHandler
 from telegram.ext.dispatcher import CallbackContext
-
 
 REFERRAL = 0
 
@@ -42,13 +43,10 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
         # TODO the conversation dies without exiting
     linked_referral_code = retrieved_user["linked_referral_code"]
     if retrieved_user["linked_referral_code"] != "":
-        referral_text = f"""Il codice di referral che hai aggiunto è {linked_referral_code}.\n
-            Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido 
-            oppure premi il bottone sottostante per procedere"""
+        referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_code)
     else:
-        referral_text = """Invia un messaggio con un codice di referral valido oppure 
-            premi il bottone sottostante per procedere."""
-    message_text = f"{referral_text}"
+        referral_text = cst.PAYMENT_ADD_REFERRAL_CODE_TEXT
+    message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
     context.bot.edit_message_text(
         message_text,
         chat_id=chat_id, 
@@ -111,7 +109,7 @@ def to_payments(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
-    INVOICE_TIMEOUT_SECONDS = 120
+    INVOICE_TIMEOUT_SECONDS = 180
     chat_id = update.callback_query.message.chat_id
     title = "LoT Abbonamento Premium"
     description = "LoT Abbonamento Premium"
@@ -132,7 +130,7 @@ def to_payments(update: Update, context: CallbackContext):
         lgr.logger.warning(f"{str(e)}")
     context.bot.send_invoice(
         chat_id, title, description, payload, cfg.config.PAYMENT_TOKEN, currency, prices,
-        need_email=True, start_parameter="Paga"
+        need_email=True, need_name=True, start_parameter="Paga"
     ) # TODO add photo for abbonamento
     return ConversationHandler.END
 
@@ -181,6 +179,17 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     if not retrieved_user:
         lgr.logger.error("Cannot retrieve user {user_id} to save its payment")
         raise custom_exceptions.UserNotFound(user_id, update=update)
+    # * extend the user's subscription up to the same day of the next month
+    new_expiration_date: float = utils.extend_expiration_date(retrieved_user["validoFino"])
+    # * reset user successful referrals
+    # * add email to user data
+    user_email = update.message.successful_payment.order_info.email
+    user_data = {
+        "validoFino": new_expiration_date,
+        "successful_referrals": 0,
+        "email": user_email,
+    }
+    user_manager.update_user(user_id, user_data)
     # * update the referred user's successful referrals, if there is a referral code
     linked_referral_code = retrieved_user["linked_referral_code"]
     linked_user = None

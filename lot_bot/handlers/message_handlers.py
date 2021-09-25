@@ -53,6 +53,7 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
         "_id": user.id,
         "nome": user.first_name,
         "nomeUtente": user.username,
+        "email": "",
         "validoFino": trial_expiration_timestamp,
         "giocate": [],
         "payments": [],
@@ -300,7 +301,7 @@ def first_message_handler(update: Update, context: CallbackContext):
     if user_manager.retrieve_user(user.id):
         lgr.logger.warning(f"User with id {user.id} already exists, not sending welcome messages")
         return
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+    trial_expiration_timestamp = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).timestamp()
     trial_expiration_date = datetime.datetime.utcfromtimestamp(trial_expiration_timestamp).strftime("%d/%m/%Y alle %H:%M")
     welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date)
     
