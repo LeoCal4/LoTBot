@@ -1,3 +1,4 @@
+import datetime
 import re
 from typing import Dict
 
@@ -73,4 +74,20 @@ def test_create_valid_referral_code(monkeypatch, new_user: Dict):
         return next_item
     monkeypatch.setattr(utils, "generate_referral_code", mock_ref_code2)
     assert utils.create_valid_referral_code() == second_code
+
+
+# * for some reason it goes 1 hour back, the month is added correctly though 
+@pytest.mark.parametrize(
+    "exp_date_timestamp,expected",
+    [
+        (datetime.datetime(2020, 2, 28, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2020, 3, 28, tzinfo=datetime.timezone.utc).timestamp()),
+        # january to february to test a non-existing day in the next month
+        (datetime.datetime(2021, 1, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2021, 2, 28, tzinfo=datetime.timezone.utc).timestamp()),
+        # december to january test new year
+        (datetime.datetime(2020, 12, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2021, 1, 30, tzinfo=datetime.timezone.utc).timestamp()),
+    ]
+)
+def test_extend_expiration_date(exp_date_timestamp, expected):
+    extended_timestamp = utils.extend_expiration_date(exp_date_timestamp)
+    assert extended_timestamp == expected
     

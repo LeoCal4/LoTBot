@@ -1,8 +1,11 @@
+import datetime
 import random
 import string
 
-from lot_bot import logger as lgr
+from dateutil.relativedelta import relativedelta
+
 from lot_bot import constants as cst
+from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
@@ -151,7 +154,7 @@ def generate_referral_code() -> str:
         str: the referral code
     """
     code_chars = string.ascii_lowercase + string.digits
-    return "lot-ref-" + "".join((random.choice(code_chars) for x in range(cst.REFERRAL_CODE_LEN)))
+    return "".join((random.choice(code_chars) for x in range(cst.REFERRAL_CODE_LEN))) + "-lot"
 
 
 def check_referral_code_availability(new_referral: str) -> bool:
@@ -171,3 +174,15 @@ def create_valid_referral_code() -> str:
         if check_referral_code_availability(new_referral):
             break
     return new_referral
+
+
+def extend_expiration_date(expiration_date_timestamp: float) -> float:
+    """Adds one month to the expiration date timestamp.
+
+    Args:
+        expiration_date_timestamp (float)
+
+    Returns:
+        float: the original timestamp + 1 month
+    """        
+    return (datetime.datetime.utcfromtimestamp(expiration_date_timestamp) + relativedelta(months=1)).timestamp()
