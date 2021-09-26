@@ -2,6 +2,7 @@ from telegram.ext import (CallbackQueryHandler, CommandHandler,
                           MessageHandler, ConversationHandler,
                           PreCheckoutQueryHandler, Updater)
 from telegram.ext.dispatcher import Dispatcher
+from telegram import Bot, Update
 
 from lot_bot import config as cfg
 from lot_bot import database as db
@@ -110,6 +111,41 @@ def run_test_bot():
     lgr.logger.info("Start polling")
     updater.start_polling(timeout=15.0)
     updater.idle()
+
+
+def check_components():
+    """Checks if config, logger, db and bot are up and running,
+    creating them again if needed"""
+    if not cfg.config:
+        cfg.create_config(),
+    if not lgr.logger:
+        lgr.create_logger()
+    if not db.mongo:
+        db.create_db()
+    # TODO add bot
+
+
+def webhook(request):
+    """Webhook function which will be called at each bot request.
+
+    Args:
+        request: the Flask request object containing the request 
+
+    Returns:
+        str
+    """
+    if request.method != "POST":
+        return
+    check_components()
+    bot = Bot(token=cfg.config.TOKEN)
+    updater: Updater = Updater(cfg.config.TOKEN)
+    dispatcher = updater.dispatcher
+    add_handlers(dispatcher)
+
+    update = Update.de_json(request.get_json(force=True), bot)
+    dispatcher.process_update(update)
+    return "Ok"
+    
 
 
 # this represents the default behaviour in case

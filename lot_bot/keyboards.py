@@ -75,17 +75,27 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     chat_id = update.effective_chat.id
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id})
     sport_attivi = [entry["sport"].lower() for entry in abbonamenti]
-    emoji_sport = {sport.name: "🔴" for sport in spr.sports_container}
+    emoji_sport = {sport.name: "🔴" for sport in spr.sports_container if sport.show_in_menu}
     for sport in sport_attivi:
         emoji_sport[sport] = "🟢"
     SPORT_STRING_MENU_LEN = 19
     # ljust appends " " at the end of the string, until the specified length is reached
     # capitalize makes the first letter uppercase and the rest lowercase
     # TODO try without ljust
-    sport_menu_entries = [sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] for sport in spr.sports_container]
-    inline_buttons = {sport.name: entry for sport, entry in zip(spr.sports_container, sport_menu_entries)}
+    sport_menu_entries = [
+        sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
+        for sport in spr.sports_container 
+        if sport.show_in_menu
+    ]
+    inline_buttons = {
+        sport.name: entry 
+        for sport, entry in zip(spr.sports_container, sport_menu_entries) 
+        if sport.show_in_menu
+    }
     keyboard_sport = []
     for i, sport in enumerate(spr.sports_container):
+        if not sport.show_in_menu:
+            continue
         sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport.name], callback_data=f"sport_{sport.name}")
         if i % 2 == 0:
             keyboard_sport.append([sport_keyboard_button])

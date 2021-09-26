@@ -6,6 +6,7 @@ from lot_bot.models import strategies
 class Sport:
     name : str
     strategies : list[strategies.Strategy] # ! should not partecipate in eq
+    show_in_menu : bool = True
     display_name : str = ""
 
     def __post_init__(self):
@@ -37,8 +38,8 @@ class SportsContainer:
     RUGBY : Sport = Sport("rugby", _base_strategies + [strats.TRILLED])
     SPORT2 : Sport = Sport("sport2", _base_strategies)
     PALLAVOLO : Sport = Sport("pallavolo", _base_strategies)
-    IPPICA : Sport = Sport("ippica", _base_strategies)
-    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto")
+    IPPICA : Sport = Sport("ippica", _base_strategies, show_in_menu=False)
+    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", show_in_menu=False)
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

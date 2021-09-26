@@ -19,7 +19,7 @@ def create_user(user_data: Dict) -> Union[Dict, bool]:
     """
     # TODO add user data validation
     #   https://docs.mongodb.com/manual/core/schema-validation/
-    # https://stackoverflow.com/questions/46569262/does-pymongo-have-validation-rules-built-in/51520384
+    #   https://stackoverflow.com/questions/46569262/does-pymongo-have-validation-rules-built-in/51520384
     try:
         result: InsertOneResult = db.mongo.utenti.insert_one(user_data)
         # checks if the inserted id is the one that was passed

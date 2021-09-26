@@ -5,6 +5,7 @@ import html
 import json
 import os
 import traceback
+from typing import List
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -16,6 +17,7 @@ from lot_bot.dao import abbonamenti_manager, user_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from telegram import ParseMode, Update, User
+from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
 
 ################################# HELPER METHODS #######################################
@@ -68,6 +70,16 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
     return True
 
 
+def send_messages_to_developers(context: CallbackContext, messages_to_send: List[str], parse_mode=None):
+    for dev_chat_id in cfg.config.DEVELOPER_CHAT_IDS:
+        for msg in messages_to_send:
+            try:
+                context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=parse_mode)
+            except Exception as e:
+                lgr.logger.error(f"Could not send message {msg} to developer {dev_chat_id}")
+                lgr.logger.error(f"{str(e)}")
+
+
 def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False) -> bool:
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
@@ -81,28 +93,28 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         is_giocata (bool, default = False): indicates if the message is a giocata or not.
 
     Returns:
-        bool: True if the operation was successful, False otherwise.
+        bool: True if at least one message was supposed to be sent and it was actually sent, False otherwise.
     """
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport, "strategia": strategy})
     if abbonamenti is None:
-        lgr.logger.warning(f"No abbonamenti found for sport {sport} and strategy {strategy} while handling giocata")
+        lgr.logger.warning(f"DB error retrieving {sport} and strategy {strategy} while handling giocata")
         return False
     if abbonamenti == []:
         lgr.logger.warning(f"There are not abbonamenti for {sport=} {strategy=}")
     messages_sent = 0
-    message_to_be_sent = len(abbonamenti)
-    lgr.logger.debug(f"Found {message_to_be_sent} abbonamenti for {sport} - {strategy}")
+    messages_to_be_sent = len(abbonamenti)
+    lgr.logger.debug(f"Found {messages_to_be_sent} abbonamenti for {sport} - {strategy}")
     for abbonamento in abbonamenti:
         lgr.logger.debug(f"Checking abbonamento {abbonamento}")
         user_data = user_manager.retrieve_user(abbonamento["telegramID"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {abbonamento['telegramID']} while handling giocata")
-            message_to_be_sent -= 1
+            messages_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Retrieved user data from id {user_data['_id']}")
         if not user_manager.check_user_validity(update.effective_message.date, user_data):
             lgr.logger.warning(f"User {user_data['_id']} is not active")
-            message_to_be_sent -= 1
+            messages_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Sending message to {user_data['_id']}")
         if is_giocata:
@@ -111,14 +123,27 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
         # TODO check blocco utenti
-        result = context.bot.send_message(
-            abbonamento["telegramID"], 
-            text, 
-            reply_markup=custom_reply_markup)
-        lgr.logger.debug(f"{result}")
-        messages_sent += 1
-    lgr.logger.debug(f"{messages_sent} messages have been sent out of {message_to_be_sent}")
-    return True
+        try:
+            result = context.bot.send_message(
+                abbonamento["telegramID"], 
+                text, 
+                reply_markup=custom_reply_markup)
+            lgr.logger.debug(f"{result=}")
+            lgr.logger.debug(f"{type(result)=}")
+            messages_sent += 1
+        except Unauthorized:
+            lgr.logger.warning("Could not send message {text}: user {user_id} blocked the bot")
+        except Exception as e:
+            lgr.logger.error("Could not send message {text} to user {user_id}")
+            lgr.logger.error(f"{str(e)}")
+    if messages_sent < messages_to_be_sent:
+        error_text = f"{messages_sent} messages have been sent out of {messages_to_be_sent} for {sport} - {strategy}"
+        lgr.logger.warning(error_text)
+        send_messages_to_developers(context, [error_text])
+    if messages_sent == 0 and messages_to_be_sent > 0:
+        return False
+    else:
+        return True
 
 
 ################################## COMMANDS ########################################
@@ -373,11 +398,10 @@ def error_handler(update: Update, context: CallbackContext):
         end_index = int(min((i+1) * MAX_MESSAGE_LENGTH, len(escaped_tb_string)))
         lgr.logger.error(html.escape(tb_string[start_index:end_index]))
         to_send.append(f"<pre>{html.escape(tb_string[start_index:end_index])}</pre>")
-    for dev_chat_id in cfg.config.DEVELOPER_CHAT_IDS:
-        for msg in to_send:
-            context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=ParseMode.HTML) 
+    send_messages_to_developers(context, to_send, parse_mode=ParseMode.HTML)
     # ! send a message to the user
     try:
+        user_chat_id = None
         if update.callback_query:
             user_chat_id = update.callback_query.message.chat_id
         elif update.message:
