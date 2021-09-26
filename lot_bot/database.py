@@ -15,7 +15,7 @@ class MongoDatabase:
         try:
             self.client = MongoClient(
                 cfg.config.MONGO_DB_URL,
-                maxPoolsize=1 # TODO check this
+                maxPoolsize=4 # TODO check this
             )
             # The ping command is cheap and does not require auth, 
             #   so it is run to check if the db is active
@@ -27,8 +27,10 @@ class MongoDatabase:
         db = self.client[cfg.config.MONGO_DB_NAME]
         self.abbonamenti = db["abbonamenti2"]
         # ensures the uniqueness of the abbonamenti
-        self.abbonamenti.create_index([("telegramID", 1), ("sport", 1),("strategia", 1)], unique=True)
+        self.abbonamenti.create_index([("telegramID", 1), ("sport", 1), ("strategia", 1)], unique=True)
         self.utenti = db["utenti2"]
+        # ensures the uniqueness of the users' referral codes
+        self.utenti.create_index([("referral_code", 1)], unique=True)
 
 
 def create_db():

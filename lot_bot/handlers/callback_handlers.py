@@ -3,12 +3,13 @@ import datetime
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
+from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot import custom_exceptions
 from lot_bot.dao import abbonamenti_manager, user_manager
-from lot_bot.models import sports as spr, strategies as strat
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -145,8 +146,6 @@ def to_homepage(update: Update, context: CallbackContext):
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
         )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
     
 
 def to_sports_menu(update: Update, context: CallbackContext):
@@ -321,8 +320,7 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
     )
-    # context.bot.edit_message_reply_markup(
-    #     chat_id=update.callback_query.message.chat_id,
-    #     message_id=update.callback_query.message.message_id,
-    #     reply_markup=None,
-    # )
+
+
+def test(update: Update, context: CallbackContext):
+    print("aooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")

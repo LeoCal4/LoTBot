@@ -1,5 +1,16 @@
 """ This module is used to define constants"""
 
+REFERRAL_CODE_LEN = 8
+
+PAYMENT_BASE_TEXT = """Durante il pagamento, ti verranno richiesti il nome e la tua mail, che verrà utilizzato solo al fine di contattarti nel caso di problemi con il pagamento."""
+
+PAYMENT_EXISTING_REFERRAL_CODE_TEXT = """Il codice di referral che hai aggiunto è {0}.
+
+Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido oppure premi il bottone sottostante per procedere"""
+
+PAYMENT_ADD_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
+
+
 # {0}: first name of the user
 # {1}: subscription expiration date 
 WELCOME_MESSAGE_PART_ONE = """<b>Benvenuto/a {0}!</b> 👍

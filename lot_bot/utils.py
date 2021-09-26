@@ -1,5 +1,12 @@
+import datetime
+import random
+import string
+
+from dateutil.relativedelta import relativedelta
+
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
+from lot_bot.dao import user_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
@@ -42,7 +49,6 @@ def get_strategy_from_giocata(text: str) -> str:
     Returns:
         str: the name of the strategy or empty string if it's not valid
     """
-    # TODO add a safer way to get it
     STRATEGY_ROW = 2
     STRATEGY_INDEX = 1
     played_strategy = text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX]
@@ -129,6 +135,7 @@ Cremona 🆚 Sassari
 """
 def parse_giocata(giocata_text: str) -> dict:
     # giocata_rows = giocata_text.split("\n")
+    # TODO che informazioni salvare
     sport = get_sport_from_giocata(giocata_text)
     strategy = get_strategy_from_giocata(giocata_text)
     parsed_giocata = {
@@ -137,3 +144,45 @@ def parse_giocata(giocata_text: str) -> dict:
         "raw_text": giocata_text
     }
     return parsed_giocata
+
+
+def generate_referral_code() -> str:
+    """Generates a random referral code.
+    The pattern is lot-ref-<8 chars among digits and lowercase letters>
+
+    Returns:
+        str: the referral code
+    """
+    code_chars = string.ascii_lowercase + string.digits
+    return "".join((random.choice(code_chars) for x in range(cst.REFERRAL_CODE_LEN))) + "-lot"
+
+
+def check_referral_code_availability(new_referral: str) -> bool:
+    return user_manager.retrieve_user_by_referral(new_referral) is None
+
+
+def create_valid_referral_code() -> str:
+    """Creates a valid referral code for a new user, generating them
+    until one which is not already used is found.
+
+    Returns:
+        str: a valid referral code
+    """
+    new_referral = ""
+    while True:
+        new_referral = generate_referral_code()
+        if check_referral_code_availability(new_referral):
+            break
+    return new_referral
+
+
+def extend_expiration_date(expiration_date_timestamp: float) -> float:
+    """Adds one month to the expiration date timestamp.
+
+    Args:
+        expiration_date_timestamp (float)
+
+    Returns:
+        float: the original timestamp + 1 month
+    """        
+    return (datetime.datetime.utcfromtimestamp(expiration_date_timestamp) + relativedelta(months=1)).timestamp()

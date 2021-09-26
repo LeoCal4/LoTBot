@@ -34,3 +34,15 @@ class SendMessageError(Exception):
         if self.update:
             string += f"\n{str(self.update)=}"
         return string
+
+
+class UserNotFound(Exception):
+    def __init__(self, user_id: str, update=None):
+        self.user_id = user_id
+        self.update = update
+
+    def __str__(self) -> str:
+        string = f"Error finding user {self.user_id}"
+        if self.update:
+            string += f"\n{str(self.update)=}"
+        return string   

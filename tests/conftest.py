@@ -1,4 +1,5 @@
 import random
+from typing import Tuple
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -54,19 +55,18 @@ Cremona 🆚 Sassari
 
 🏛 Stake 5% 🏛
 🖊 {sport.display_name} #8 🖊"""
-
-# Hai effettuato la giocata?"""
     return giocata
 
 
 @pytest.fixture
-def correct_giocata() -> tuple[str, str, str]:
+def correct_giocata() -> Tuple[str, str, str]:
     random_sport : str.Sport = random.choice(spr.sports_container.astuple())
     random_strategy =  random.choice(random_sport.strategies)
     return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name
 
+
 @pytest.fixture
-def wrong_giocata() -> tuple[str, str, str]:
+def wrong_giocata() -> Tuple[str, str, str]:
     random_sport = spr.Sport("wrong", [])
     random_strategy = strat.Strategy("wronger")
     return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name

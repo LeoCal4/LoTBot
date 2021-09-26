@@ -16,6 +16,7 @@ STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_k
 _homepage_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
     [InlineKeyboardButton(text="⛹🏿‍♂️  Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️ Test pagamenti  📖", callback_data="to_add_referral")], 
     [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
     [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")],
     [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 
@@ -50,6 +51,11 @@ _register_giocata_buttons = [
 ]
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
+_proceed_to_payments_buttons = [
+    [InlineKeyboardButton(text="Procedi al pagamento", callback_data= "to_payments")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage_from_referral")]
+]
+PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_payments_buttons)
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """Creates the inline keyboard listing the available sports,

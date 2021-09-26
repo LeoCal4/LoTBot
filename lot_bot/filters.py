@@ -79,3 +79,17 @@ def get_explanation_pattern() -> str:
         pattern += strategy.name + "|"
     return pattern[:-1] + ")"
 
+
+
+# ==============================================================================================================
+
+
+def get_referral_filter() -> Filters:
+    # [a-z A-Z 0-9 _ -]
+    return Filters.regex(r"^(\w|-)+-lot$")
+
+
+def get_successful_payment_filter() -> Filters:
+    return Filters.successful_payment
+
+

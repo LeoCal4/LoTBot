@@ -1,7 +1,11 @@
-import pytest
-import mongomock
+import random
+from typing import Dict
 
+import mongomock
+import pytest
 from lot_bot import database as db
+from lot_bot.dao import user_manager
+from lot_bot import utils
 
 
 # scope="session" is used to call this fixture only once for the whole test session
@@ -9,3 +13,25 @@ from lot_bot import database as db
 @pytest.fixture(scope="session", autouse=True)
 def mock_db(monkeysession):
     monkeysession.setattr(db, "mongo", mongomock.MongoClient().client)
+
+
+# if no scope is defined, it will be "function", hence it will last 
+#   only for the duration of the test function
+@pytest.fixture()
+def new_user() -> Dict:
+    """Fixture which creates a new user, then 
+        deletes it once the test is completed
+
+    Yields:
+        dict: the user data
+    """
+    user_data = {
+        "_id": random.randint(0, 999),
+        "name": "Mario",
+        "surname": "Rossi",
+        "payments": [],
+        "referral_code": utils.generate_referral_code()
+    }
+    user_manager.create_user(user_data)
+    yield user_data
+    user_manager.delete_user(user_data["_id"])
