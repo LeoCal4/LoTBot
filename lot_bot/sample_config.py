@@ -18,13 +18,18 @@ config = None
 class Config(object):
     ENV = None
     TOKEN = None
+    PAYMENT_TOKEN = None
     TESTING = False
     SPORTS_CHANNELS_ID = {}
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
-    VIDEO_FILE_NAMES = []
-    VIDEO_FILE_IDS = []
+    VIDEO_BASE_PATH = None
+    VIDEO_FILE_NAMES = None
+    VIDEO_FILE_IDS = None
+    VIDEO_FILE_EXTENSIONS = () # has to be a tuple
+    MONGO_DB_NAME = None
+    MONGO_DB_URL = None
     API_ID = None
     API_HASH = None
     BOT_TEST_USERNAME = None
@@ -33,13 +38,17 @@ class Config(object):
 
 class Development(Config):
     ENV = "development"
-    MONGO_DB_URL = "mongodb://localhost:27017/"
     # ====== Add the values of the following variables ====== 
+    SPORTS_CHANNELS_ID = {
+        "exchange": 0, # at least exchange must be present
+    }
+    MONGO_DB_URL = None
     TOKEN = None # TBA
-    SPORTS_CHANNELS_ID = {} # TBA
     DEVELOPER_CHAT_IDS = [] # TBA
-    VIDEO_FILE_NAMES = []
-    VIDEO_FILE_IDS = []
+    VIDEO_BASE_PATH = "" # TBA
+    VIDEO_FILE_NAMES = [] # TBA
+    VIDEO_FILE_IDS = {} # TBA
+    VIDEO_FILE_EXTENSIONS = (".mp4") # TBA
     
 
 
@@ -54,10 +63,10 @@ class Testing(Config):
     MONGO_DB_PSW = None # TBA
     MONGO_DB_CLUSTER = None # TBA
     MONGO_DB_NAME = None # TBA
-    MONGO_DB_URL = f"mongodb+srv://{MONGO_DB_USER}:{MONGO_DB_PSW}@{MONGO_DB_CLUSTER}.gbfdd.mongodb.net/{MONGO_DB_NAME}?retryWrites=true&w=majority"
+    MONGO_DB_URL = None
     SPORTS_CHANNELS_ID = {} # TBA
-    VIDEO_FILE_NAMES = []
-    VIDEO_FILE_IDS = []
+    VIDEO_FILE_NAMES = [] # TBA
+    VIDEO_FILE_IDS = [] # TBA
     # to get the following two, use the following guide
     # https://core.telegram.org/api/obtaining_api_id#obtaining-api-id
     API_ID = None # TBA
@@ -89,18 +98,24 @@ def create_config():
     if ENV == "dotenv":
         config = Config()
         config.TOKEN = os.getenv("TOKEN", None)
+        config.PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN", None)
         config.MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", None)
+        config.MONGO_DB_URL = os.getenv("MONGO_DB_URL", None)
         config.TESTING = os.getenv("TESTING", False)
         config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
         config.LOG_PATH = os.getenv("LOG_PATH", None)
-        channels_id = os.getenv("CHANNELS_ID", False)
-        if channels_id:
-            config.CHANNELS_ID = json.loads(channels_id)
-        else:
-            config.CHANNELS_ID = {}
-        config.DEVELOPER_CHAT_IDS = os.getenv("DEVELOPER_CHAT_IDS", [])
+        channels_id = os.getenv("SPORTS_CHANNELS_ID", {})
+        if channels_id != {}:
+            config.SPORTS_CHANNELS_ID = json.loads(channels_id)
+            config.SPORTS_CHANNELS_ID = {key: int(value) for key, value in config.SPORTS_CHANNELS_ID.items()}
+        dev_chat_ids = os.getenv("DEVELOPER_CHAT_IDS", [])
+        if dev_chat_ids != []:
+            config.DEVELOPER_CHAT_IDS = json.loads(dev_chat_ids)
+            config.DEVELOPER_CHAT_IDS = [int(chat_id) for chat_id in config.DEVELOPER_CHAT_IDS]
         config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
-        config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", [])
+        config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
+        config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())
+
     else:
         if ENV == "testing":
             config = Testing()
