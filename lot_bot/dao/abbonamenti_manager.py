@@ -1,6 +1,6 @@
 from lot_bot import database as db
 from lot_bot import logger as lgr
-from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
+from pymongo.results import InsertOneResult
 
 
 def create_abbonamento(abbonamento_data : dict) -> bool:
@@ -20,6 +20,8 @@ def create_abbonamento(abbonamento_data : dict) -> bool:
     except Exception as e:
         lgr.logger.error("Error during create abbonamenti")
         lgr.logger.error(f"Exception: {str(e)}")
+        if "_id" in abbonamento_data:
+            abbonamento_data["_id"] = str(abbonamento_data["_id"])
         lgr.logger.error(f"{abbonamento_data=}")
         return False
 

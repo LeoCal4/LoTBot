@@ -2,6 +2,8 @@ import datetime
 from json import dumps
 from typing import Dict, Optional, Union
 
+from telegram import user
+
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
@@ -27,6 +29,8 @@ def create_user(user_data: Dict) -> Union[Dict, bool]:
     except Exception as e:
         lgr.logger.error("Error during user creation")
         lgr.logger.error(f"Exception: {str(e)}")
+        if "_id" in user_data:
+            user_data["_id"] = str(user_data["_id"])
         lgr.logger.error(f"User data: {dumps(user_data)}")
         return False
 
@@ -70,6 +74,46 @@ def retrieve_user_by_referral(referral_code: str) -> Optional[Dict]:
         return None
 
 
+def retrieve_all_user_giocate(user_id: int) -> Optional[Dict]:
+    try:
+        return db.mongo.utenti.find_one({"_id": user_id}, { "giocate": 1, "_id": 0})
+    except Exception as e:
+        lgr.logger.error("Error during user giocate retrieval")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
+        return None
+
+
+def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Optional[Dict]:
+    try:
+        return list(db.mongo.utenti.aggregate([
+            {
+                "$match": {
+                    "_id": user_id
+                }
+            },
+            {
+                "$unwind": "$giocate"
+            },
+            {
+                "$match": {
+                    "giocate.acceptance_timestamp": { "$gt": timestamp }
+                }
+            },
+            {
+                "$replaceRoot": {
+                    "newRoot": "$giocate"
+                }
+            }
+            ])
+        )
+    except Exception as e:
+        lgr.logger.error("Error during user giocate retrieval")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"User id: {user_id}")
+        return None
+
+
 def update_user(user_id: int, user_data: Dict) -> bool:
     """Updates the user specified by the user_id,
         using the data found in user_data
@@ -103,7 +147,6 @@ def update_user(user_id: int, user_data: Dict) -> bool:
 
 def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
     try:
-        # TODO add document fields validation 
         # TODO check if it is already present
         lgr.logger.debug(f"Registering {giocata=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(

@@ -1,11 +1,13 @@
 import datetime
 import random
 import string
-from typing import Dict
+from typing import Dict, Tuple, Callable
 
 from lot_bot import database as db
-from lot_bot.dao import user_manager
-
+from lot_bot import logger as lgr
+from lot_bot import utils
+from lot_bot.dao import user_manager, giocate_manager
+from lot_bot.models import giocate as giocata_model
 
 def get_random_string(length: int):
     return "".join([random.choice(string.digits + string.ascii_lowercase) for _ in range(length)])
@@ -131,3 +133,38 @@ def test_get_discount_for_user(new_user: Dict, monkeypatch):
     monkeypatch.setattr(db, "mongo", None)
     discount = user_manager.get_discount_for_user(user_id)
     assert discount == 0    
+
+
+def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):
+    user_id = new_user["_id"]
+    recent_giocate = []
+    older_giocate = []
+    base_giocata_day = random.choice((1, 7, 30))
+    # recent giocate
+    for _ in range(random.randint(2, 10)):
+        correct_giocata_text, _ = correct_giocata_function_fixture()
+        parsed_giocata = utils.parse_giocata(correct_giocata_text)
+        created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
+        assert created_giocata_id
+        user_giocata = giocata_model.create_user_giocata()
+        user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+        user_giocata["original_id"] = created_giocata_id
+        user_manager.register_giocata_for_user_id(user_giocata, user_id)
+        recent_giocate.append(user_giocata)
+    # older giocate
+    for _ in range(random.randint(2, 10)):
+        older_giocata_text, _ = correct_giocata_function_fixture()
+        older_parsed_giocata = utils.parse_giocata(older_giocata_text)
+        older_giocata_id = giocate_manager.create_giocata(older_parsed_giocata)
+        assert older_giocata_id
+        older_user_giocata = giocata_model.create_user_giocata()
+        random_old_day = random.randint(base_giocata_day + 1, base_giocata_day + 30)
+        older_user_giocata["acceptance_timestamp"] = (datetime.datetime.utcnow() - datetime.timedelta(days=random_old_day)).timestamp()
+        older_user_giocata["original_id"] = older_giocata_id
+        user_manager.register_giocata_for_user_id(older_user_giocata, user_id)
+        older_giocate.append(user_giocata)
+    giocate = user_manager.retrieve_user_giocate_since_timestamp(user_id, (datetime.datetime.utcnow() - datetime.timedelta(days=base_giocata_day)).timestamp())
+    lgr.logger.error(f"{giocate=}")
+    assert len(giocate) == len(recent_giocate)
+    for giocata, original_giocata in zip(giocate, recent_giocate):
+        assert giocata["original_id"] == original_giocata["original_id"]

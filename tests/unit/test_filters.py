@@ -41,7 +41,7 @@ def get_command_update_from_private_chat():
 
 def test_get_correct_giocata_filter(correct_giocata: tuple):
     update = get_update_from_sports_channel()
-    update.message.text, _, _ = correct_giocata
+    update.message.text, _= correct_giocata
     giocata_filter = filters.get_giocata_filter()
     assert giocata_filter(update) != False, "Giocata filter not working for correct giocata message"
 

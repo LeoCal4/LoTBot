@@ -1,5 +1,5 @@
 import random
-from typing import Tuple
+from typing import Callable, Dict, Tuple
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -37,6 +37,9 @@ def set_test_env(monkeysession):
 
 
 def create_giocata(sport: spr.Sport, strategy: strat.Strategy) -> str:
+    stake = random.randint(1, 100)
+    giocata_num = random.randint(0, 9999)
+    quota = random.uniform(0.1, 100.0)
     giocata = f"""🏀 {sport.display_name} 🏀
 🇮🇹 Supercoppa Serie A 🇮🇹
 ⚜️  {strategy.display_name} ⚜️
@@ -49,24 +52,40 @@ Cremona 🆚 Sassari
 🧮 2 inc overtime 🧮
 📈 Quota 1.30 📈
 
-🧾 2.02 🧾 
+🧾 {quota:.2f} 🧾 
 
 🕑 18:30 🕑 
 
-🏛 Stake 5% 🏛
-🖊 {sport.display_name} #8 🖊"""
-    return giocata
+🏛 Stake {stake}% 🏛
+🖊 {sport.display_name} #{giocata_num} 🖊"""
+    giocata_data ={
+        "stake": f"{stake}",
+        "giocata_num": f"{giocata_num}",
+        "quota": f"{quota:.2f}",
+        "sport": sport.name,
+        "strategy": strategy.name,
+    }
+    return giocata, giocata_data
 
 
-@pytest.fixture
-def correct_giocata() -> Tuple[str, str, str]:
+def correct_giocata_function() -> Tuple[str, Dict]:
     random_sport : str.Sport = random.choice(spr.sports_container.astuple())
     random_strategy =  random.choice(random_sport.strategies)
-    return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name
+    return create_giocata(random_sport, random_strategy)
 
 
 @pytest.fixture
-def wrong_giocata() -> Tuple[str, str, str]:
+def correct_giocata() -> Tuple[str, Dict]:
+    return correct_giocata_function()
+
+
+@pytest.fixture
+def correct_giocata_function_fixture() -> Callable[[], Tuple[str, Dict]]:
+    return correct_giocata_function
+
+
+@pytest.fixture
+def wrong_giocata() -> Tuple[str, Dict]:
     random_sport = spr.Sport("wrong", [])
     random_strategy = strat.Strategy("wronger")
-    return create_giocata(random_sport, random_strategy), random_sport.name, random_strategy.name
+    return create_giocata(random_sport, random_strategy)

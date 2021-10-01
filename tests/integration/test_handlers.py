@@ -1,4 +1,5 @@
 import datetime
+from typing import Dict
 
 import pytest
 from lot_bot import config as cfg
@@ -82,9 +83,9 @@ class TestHandlers:
     async def test_giocata_handler(self, 
     channel_admin_client: TelegramClient, 
     client: TelegramClient, 
-    correct_giocata: tuple[str, str, str]):
+    correct_giocata: tuple[str, Dict]):
         # ! generate correct_giocata
-        giocata, sport_name, strategy_name = correct_giocata
+        giocata_text, giocata_data = correct_giocata
         # ! use client to subscribe to sport-strategy, this also sets it to active
         async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
             await conv.send_message("/start")
@@ -94,18 +95,18 @@ class TestHandlers:
         assert user_exists_and_is_valid(client_me.id)
         abbonamenti_data = {
             "telegramID": client_me.id,
-            "sport": sport_name,
-            "strategia": strategy_name,
+            "sport": giocata_data["sport"],
+            "strategia": giocata_data["strategy"],
         }
         abbonamenti_manager.create_abbonamento(abbonamenti_data)
-        assert abbonamento_exists_and_is_valid(client_me.id, sport_name, strategy_name)
+        assert abbonamento_exists_and_is_valid(client_me.id, giocata_data["sport"], giocata_data["strategy"])
         # ! send giocata on channel using admin_client
-        await channel_admin_client.send_message(TEST_CHANNEL_NAME, giocata)
+        await channel_admin_client.send_message(TEST_CHANNEL_NAME, giocata_text)
         # ! check if the bot sends the message to the client
         dialogs = await client.get_dialogs()
         bot_chat = await client.get_messages(dialogs[0])
         # ! assert
-        assert bot_chat[0].message == giocata + "\n\nHai effettuato la giocata?"
+        assert bot_chat[0].message == giocata_text + "\n\nHai effettuato la giocata?"
         # ! reset client
         delete_user_and_abbonamenti(client_me.id)
 

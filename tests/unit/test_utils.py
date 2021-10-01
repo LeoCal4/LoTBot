@@ -10,26 +10,27 @@ from lot_bot import utils
 
 
 def test_get_sport_from_correct_giocata(correct_giocata):
-    giocata, sport, _  = correct_giocata
-    sport = utils.get_sport_from_giocata(giocata)
-    assert sport == sport
+    giocata_text, giocata_data  = correct_giocata
+    sport = utils.get_sport_from_giocata(giocata_text)
+    assert giocata_data["sport"] == sport
 
 
 def test_get_sport_from_wrong_giocata(wrong_giocata):
-    giocata, _, _ = wrong_giocata
-    sport = utils.get_sport_from_giocata(giocata)
-    assert sport is None
+    giocata_text, _ = wrong_giocata
+    with pytest.raises(Exception):
+        utils.get_sport_from_giocata(giocata_text)
 
 
 def test_get_strategy_from_correct_giocata(correct_giocata):
-    giocata, _, random_strategy = correct_giocata
-    strategy = utils.get_strategy_from_giocata(giocata)
-    assert strategy == random_strategy
+    giocata_text, giocata_data = correct_giocata
+    strategy = utils.get_strategy_from_giocata(giocata_text)
+    assert strategy == giocata_data["strategy"]
 
 
 def test_get_strategy_from_wrong_giocata(wrong_giocata):
-    giocata, _, _ = wrong_giocata
-    assert utils.get_strategy_from_giocata(giocata) == ""
+    giocata_text, _ = wrong_giocata
+    with pytest.raises(Exception):
+        utils.get_strategy_from_giocata(giocata_text)
 
 
 @pytest.mark.parametrize(
@@ -43,8 +44,8 @@ def test_get_emoji_for_cashout_percentage(percentage_text, expected):
 
 def test_generate_referral_code():
     referral_code = utils.generate_referral_code()
-    assert len(referral_code) == len("lot-ref-") + cst.REFERRAL_CODE_LEN
-    assert not re.match(r"lot-ref-(\w|-)+$", referral_code) is None
+    assert len(referral_code) == cst.REFERRAL_CODE_LEN + len("-lot")
+    assert not re.match(r"(\w|-)+-lot$", referral_code) is None
 
 
 def test_check_referral_code_availability(new_user):
@@ -91,3 +92,31 @@ def test_extend_expiration_date(exp_date_timestamp, expected):
     extended_timestamp = utils.extend_expiration_date(exp_date_timestamp)
     assert extended_timestamp == expected
     
+
+def test_get_giocata_num_from_giocata(correct_giocata):
+    correct_giocata_text, giocata_data = correct_giocata
+    giocata_num = utils.get_giocata_num_from_giocata(correct_giocata_text)
+    assert int(giocata_data["giocata_num"]) == giocata_num
+
+
+def test_get_quota_from_giocata(correct_giocata):
+    correct_giocata_text, giocata_data = correct_giocata
+    quota = utils.get_quota_from_giocata(correct_giocata_text)
+    assert  quota == int(float(giocata_data["quota"])*100)
+
+
+def test_get_stake_from_giocata(correct_giocata):
+    correct_giocata_text, giocata_data = correct_giocata
+    stake = utils.get_stake_from_giocata(correct_giocata_text)
+    assert stake == int(giocata_data["stake"])
+
+
+def test_parse_giocata(correct_giocata):
+    correct_giocata_text, giocata_data = correct_giocata
+    parsed_giocata = utils.parse_giocata(correct_giocata_text)
+    assert parsed_giocata["sport"] == giocata_data["sport"]
+    assert parsed_giocata["strategia"] == giocata_data["strategy"] 
+    assert parsed_giocata["giocata_num"] == int(giocata_data["giocata_num"]) 
+    assert parsed_giocata["base_quota"] == int(float(giocata_data["quota"])*100) 
+    assert parsed_giocata["base_stake"] == int(giocata_data["stake"]) 
+    assert parsed_giocata["raw_text"] == correct_giocata_text
