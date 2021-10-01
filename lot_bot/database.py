@@ -25,12 +25,15 @@ class MongoDatabase:
             raise Exception
         lgr.logger.info("Connected to db") 
         db = self.client[cfg.config.MONGO_DB_NAME]
-        self.abbonamenti = db["abbonamenti2"]
+        self.abbonamenti = db["abbonamenti"]
         # ensures the uniqueness of the abbonamenti
         self.abbonamenti.create_index([("telegramID", 1), ("sport", 1), ("strategia", 1)], unique=True)
-        self.utenti = db["utenti2"]
+        self.utenti = db["utenti"]
         # ensures the uniqueness of the users' referral codes
         self.utenti.create_index([("referral_code", 1)], unique=True)
+        self.giocate = db["giocate"]
+        # ensures the uniqueness of the giocata_num together with sport
+        self.giocate.create_index([("giocata_num", 1), ("sport", 1)], unique=True)
 
 
 def create_db():
