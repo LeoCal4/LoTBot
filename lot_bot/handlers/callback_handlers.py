@@ -7,9 +7,11 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import abbonamenti_manager, user_manager
+from lot_bot.dao import abbonamenti_manager, user_manager, giocate_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import giocate as giocata_model
+
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -225,7 +227,6 @@ def to_explanations_menu(update: Update, context: CallbackContext):
     context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
-
 def strategy_explanation(update: Update, context: CallbackContext):
     """Sends a video explaining the strategy reported in the callback data.
 
@@ -295,8 +296,18 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Giocata effettuata 🟩"
-    parsed_giocata = utils.parse_giocata(giocata_text)
-    user_manager.register_giocata_for_user_id(parsed_giocata, user_chat_id)
+    parsed_giocata = utils.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    # if not parsed_giocata:
+    #     lgr.logger.error("Could not parse giocata {giocata_text}")
+    #     raise Exception(f"Could not parse giocata {giocata_text}")
+    retrieved_giocata = giocate_manager.retrieve_giocata(parsed_giocata) 
+    if not retrieved_giocata:
+        lgr.logger.error(f"Giocata {parsed_giocata} not found")
+        raise Exception(f"Giocata {parsed_giocata} not found")
+    personal_user_giocata = giocata_model.create_user_giocata()
+    personal_user_giocata["original_id"] = retrieved_giocata["_id"]
+    personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+    user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     context.bot.edit_message_text(
         updated_giocata_text,
         chat_id=user_chat_id,
@@ -322,5 +333,71 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
     )
 
 
-def test(update: Update, context: CallbackContext):
-    print("aooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+def to_resoconti(update: Update, context: CallbackContext):
+    """
+    Callback data: to_resoconti
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    chat_id = update.callback_query.from_user.id
+    message_id = update.callback_query.message.message_id
+    context.bot.edit_message_text(
+        cst.RESOCONTI_MESSAGE,
+        chat_id=chat_id,
+        message_id=message_id,
+        reply_markup=kyb.RESOCONTI_KEYBOARD,
+    )
+
+
+def last_24_hours_resoconto(update: Update, context: CallbackContext):
+    """
+    Callback data: resoconto_24_hours
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(hours=24)).timestamp()
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+
+
+def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float):
+    """[summary]
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+        giocate_since_timestamp (float): [description]
+    """
+    chat_id = update.callback_query.from_user.id
+    message_id = update.callback_query.message.message_id
+    user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
+    if user_giocate_data is None:
+        raise Exception # TODO
+    if user_giocate_data == []:
+        context.bot.edit_message_text(
+            "Nessuna giocata trovata.",
+            chat_id=chat_id,
+            message_id=message_id,
+            reply_markup=kyb.RESOCONTI_KEYBOARD,
+        )
+        return
+    user_giocate_ids = [giocata["original_id"] for giocata in user_giocate_data]
+    giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
+    if giocate_full_data is None:
+        raise Exception # TODO
+    resoconto_message = utils.create_resoconto_message(giocate_full_data)
+    # edit last message with resoconto
+    context.bot.edit_message_text(
+        resoconto_message,
+        chat_id=chat_id,
+        message_id=message_id,
+        reply_markup=None,
+    )
+    # send new message with menu
+    context.bot.send_message(
+        chat_id,
+        cst.RESOCONTI_MESSAGE,
+        reply_markup=kyb.RESOCONTI_KEYBOARD,
+    )

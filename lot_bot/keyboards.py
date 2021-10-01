@@ -15,8 +15,9 @@ STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_k
 
 _homepage_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️ Test pagamenti  📖", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  TEST Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️ TEST pagamenti  📖", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️ TEST resoconto  📖", callback_data="to_resoconti")], 
     [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
     [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")],
     [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 
@@ -56,6 +57,15 @@ _proceed_to_payments_buttons = [
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage_from_referral")]
 ]
 PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_payments_buttons)
+
+_to_resoconti_buttons = [
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖", callback_data="resoconto_7_days")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖", callback_data="resoconto_30_hours")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+]
+RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
+
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """Creates the inline keyboard listing the available sports,

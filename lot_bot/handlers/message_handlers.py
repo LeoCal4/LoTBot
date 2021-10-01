@@ -13,9 +13,10 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import abbonamenti_manager, user_manager
+from lot_bot.dao import abbonamenti_manager, user_manager, giocate_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import users as user_model
 from telegram import ParseMode, Update, User
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -51,18 +52,11 @@ def create_first_time_user(user: User, trial_expiration_timestamp: float) -> boo
     if not abb_result:
         lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_exchange_data=}")
         return False
-    user_data = {
-        "_id": user.id,
-        "nome": user.first_name,
-        "nomeUtente": user.username,
-        "email": "",
-        "validoFino": trial_expiration_timestamp,
-        "giocate": [],
-        "payments": [],
-        "referral_code": utils.create_valid_referral_code(),
-        "linked_referral_code": "",
-        "successful_referrals": 0, # TODO one per payment or one per user?
-    }
+    user_data = user_model.create_base_user_data()
+    user_data["_id"] = user.id
+    user_data["nome"] = user.first_name
+    user_data["nomeUtente"] = user.username
+    user_data["validoFino"] = trial_expiration_timestamp
     user_result = user_manager.create_user(user_data)
     if not user_result:
         lgr.logger.error(f"Could not create user upon first message - {user_data=}")
@@ -90,7 +84,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         text (str)
         sport (str)
         strategy (str)
-        is_giocata (bool, default = False): indicates if the message is a giocata or not.
+        is_giocata (bool, default = False): False if it is not a giocata, True otherwise.
 
     Returns:
         bool: True if at least one message was supposed to be sent and it was actually sent, False otherwise.
@@ -122,7 +116,6 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
             text += "\n\nHai effettuato la giocata?"
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
-        # TODO check blocco utenti
         try:
             result = context.bot.send_message(
                 abbonamento["telegramID"], 
@@ -182,13 +175,14 @@ def reset_command(update: Update, context: CallbackContext):
         update (Update): the Update containing the reset command
         context (CallbackContext)
     """
-    user_id = update.effective_user.id
-    lgr.logger.info(f"Received /reset command from {user_id}")
-    # ! TODO check for admin rights set on the DB, not for specific ID
-    if user_id != ID_MANUEL and user_id != ID_MASSI:
-        return
-    user_manager.delete_user(user_id)
-    abbonamenti_manager.delete_abbonamenti_for_user_id(user_id)
+    # user_id = update.effective_user.id
+    # lgr.logger.info(f"Received /reset command from {user_id}")
+    # # ! TODO check for admin rights set on the DB, not for specific ID
+    # if user_id != ID_MANUEL and user_id != ID_MASSI:
+    #     return
+    # user_manager.delete_user(user_id)
+    # abbonamenti_manager.delete_abbonamenti_for_user_id(user_id)
+    return
 
 
 def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
@@ -245,11 +239,11 @@ def homepage_handler(update: Update, context: CallbackContext):
 
 
 def assistance_handler(update: Update, context: CallbackContext):
-    pass
+    pass # TODO
 
 
 def community_handler(update: Update, context: CallbackContext):
-    pass
+    pass # TODO
 
 
 def giocata_handler(update: Update, context: CallbackContext):
@@ -264,15 +258,30 @@ def giocata_handler(update: Update, context: CallbackContext):
         Exception: when there is an error sending the messages
     """
     text = update.effective_message.text
-    sport = utils.get_sport_from_giocata(text)
-    if not sport:
-        lgr.logger.error(f"Sport {sport=} not found")
-        raise custom_exceptions.SportNotFoundError(sport, update=update)
-    strategy = utils.get_strategy_from_giocata(text)
-    if strategy == "":
-        lgr.logger.error(f"Strategy {strategy=} not found")
-        raise custom_exceptions.StrategyNotFoundError(sport, strategy, update=update)
-    lgr.logger.debug(f"Received giocata {sport} - {strategy}")
+    # sport = utils.get_sport_from_giocata(text)
+    # if not sport:
+    #     lgr.logger.error(f"Sport {sport=} not found")
+    #     raise custom_exceptions.SportNotFoundError(sport, update=update)
+    # strategy = utils.get_strategy_from_giocata(text)
+    # if strategy == "":
+    #     lgr.logger.error(f"Strategy {strategy=} not found")
+    #     raise custom_exceptions.StrategyNotFoundError(sport, strategy, update=update)
+    parsed_giocata = utils.parse_giocata(text)
+    # if not parsed_giocata:
+    #     error_message = f"Cannot parse giocata from text {text}"
+    #     lgr.logger.error(error_message)
+    #     raise Exception(error_message)
+    # TODO send message to channel in case of error with parsing
+    created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
+    lgr.logger.debug(f"{created_giocata_id=} - {type(created_giocata_id)=}")
+    if not created_giocata_id:
+        error_message = f"Could not create giocata {parsed_giocata}, from text {text}"
+        lgr.logger.error(error_message)
+        raise Exception(error_message)
+        # TODO send message to channel
+    sport = parsed_giocata["sport"]
+    strategy = parsed_giocata["strategia"]
+    lgr.logger.info(f"Received giocata {sport} - {strategy}")
     if not send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True):
         lgr.logger.error(f"Error with sending giocata {text} for {sport} - {strategy}")
         raise custom_exceptions.SendMessageError(text, update=update)

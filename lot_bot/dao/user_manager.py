@@ -2,8 +2,6 @@ import datetime
 from json import dumps
 from typing import Dict, Optional, Union
 
-from telegram import user
-
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult

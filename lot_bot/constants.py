@@ -64,6 +64,7 @@ Seleziona un tasto oppure attendi una notifica dal bot !
 
 <b>Fatto in  🇮🇹  con </b>♥️"""
 
+RESOCONTI_MESSAGE = "Scegli il tipo di resoconto"
 
 ERROR_MESSAGE = """Abbiamo riscontrato un problema tecnico con il bot. 
 Si consiglia di riprovare più tardi, ci scusiamo per il disagio."""
@@ -72,3 +73,4 @@ Si consiglia di riprovare più tardi, ci scusiamo per il disagio."""
 COMMUNITY_BUTTON_TEXT = "🙋🏼‍♀️ Vai alla Community 🙋🏾"
 ASSISTANCE_BUTTON_TEXT = "👩🏾‍💻  Assistenza  🧑🏻"
 HOMEPAGE_BUTTON_TEXT = "📱 Homepage 📱"
+
