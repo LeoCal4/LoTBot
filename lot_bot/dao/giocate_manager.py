@@ -3,7 +3,7 @@ from typing import Dict, Optional, List
 
 from lot_bot import database as db
 from lot_bot import logger as lgr
-from pymongo.results import InsertOneResult
+from pymongo.results import InsertOneResult, UpdateResult
 
 
 def create_giocata(giocata: Dict) -> Optional[int]:
@@ -29,20 +29,19 @@ def create_giocata(giocata: Dict) -> Optional[int]:
         return None
 
 
-def retrieve_giocata(giocata: Dict) -> Optional[Dict]:
+def retrieve_giocata_by_num_and_sport(giocata_num: str, sport: str) -> Optional[Dict]:
     """Retrieves the giocata based on giocata's num and sport,
     since they are unique.
 
     Args:
-        giocata (Dict)
+        giocata_num: str
+        sport: str
 
     Returns:
         Dict: giocata
         None: in case of error or giocata not found
     """
-    giocata_num = giocata["giocata_num"]
-    sport = giocata["sport"]
-    lgr.logger.warning(f"{giocata_num=} - {sport=}")
+    lgr.logger.debug(f"Searching for giocata {giocata_num=} - {sport=}")
     try:
         return db.mongo.giocate.find_one({
             "giocata_num": giocata_num,
@@ -51,7 +50,7 @@ def retrieve_giocata(giocata: Dict) -> Optional[Dict]:
     except Exception as e:
         lgr.logger.error("Error during giocata retrieval")
         lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"Giocata data: {dumps(giocata)}")
+        lgr.logger.error(f"Giocata data: {giocata_num=} - {sport=}")
         return None
 
 
@@ -66,3 +65,20 @@ def retrieve_giocate_from_ids(ids_list: List[int]) -> List[Dict]:
         lgr.logger.error(f"Giocata data: {ids_list}")
         return None
 
+
+def update_giocata_outcome(sport: str, giocata_num: str, outcome: str) -> bool:
+    try:
+        update_result: UpdateResult =  db.mongo.giocate.update_one({
+                "sport": sport,
+                "giocata_num": giocata_num
+            },
+            {
+                "$set": {"outcome": outcome}
+            }
+        )
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error("Error during update giocata outcome")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"Giocata data: {sport=} - {giocata_num=} - {outcome=}")
+        return None

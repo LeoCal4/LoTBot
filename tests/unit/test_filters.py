@@ -100,3 +100,27 @@ def test_get_sport_channel_normal_message_filter(message_text, expected, monkeyp
     normal_message_filter = filters.get_sport_channel_normal_message_filter()
     assert bool(normal_message_filter(update)) == False
 
+
+@pytest.mark.parametrize(
+    "message_text,expected",
+    [
+        ("🟢 Calcio#83 Vincente +5,25% 🟢", True), 
+        ("🟢 Calcio # 83 Vincente +5,25% 🟢", True),
+        ("🟢 Calcio # 83 Vincente", True),
+        ("🔴 Calcio#80 Perdente -5,00%🔴", True),
+        ("messaggio normale", False),
+        ("Calcio#80 Perdente -5,00%🔴", False),
+        ("🟢 #83 Vincente +5,25% 🟢", False)
+    ]
+)
+def test_get_outcome_giocata_filter(message_text, expected, monkeypatch):
+    fake_exchange_channel_id = 123
+    monkeypatch.setitem(cfg.config.SPORTS_CHANNELS_ID, "exchange", fake_exchange_channel_id)
+    update = get_update_from_sports_channel(sports_channel_id=fake_exchange_channel_id)
+    update.message.text = message_text
+    outcome_giocata_filter = filters.get_outcome_giocata_filter()
+    assert bool(outcome_giocata_filter(update)) == expected
+    # wrong channel
+    update = get_update_from_sports_channel(sports_channel_id=-1)
+    update.message.text = message_text
+    assert bool(outcome_giocata_filter(update)) == False

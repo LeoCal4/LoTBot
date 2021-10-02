@@ -78,6 +78,7 @@ def add_handlers(dispatcher: Dispatcher):
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_outcome_giocata_filter(), message_handlers.outcome_giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.sport_channel_normal_message_handler))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     # this has to be the last one, since they are checked in the same order they are added

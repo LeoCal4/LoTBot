@@ -168,14 +168,14 @@ def extend_expiration_date(expiration_date_timestamp: float) -> float:
 
 ######################################## TESTING #############################################
 
-def get_giocata_num_from_giocata(giocata_text: str) -> int:
+def get_giocata_num_from_giocata(giocata_text: str) -> str:
     GIOCATA_NUM_EMOJI = "🖊"
     regex_match = re.search(fr"#\s*(\d+)\s*{GIOCATA_NUM_EMOJI}", giocata_text)
     if not regex_match:
         error_message = f"utils.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)
         raise Exception(error_message)
-    return int(regex_match.group(1))
+    return regex_match.group(1)
 
 
 def get_quota_from_giocata(giocata_text: str) -> int:
@@ -202,30 +202,42 @@ def get_stake_from_giocata(giocata_text: str) -> int:
     return int(regex_match.group(1))
 
 
-"""
-🏀 Exchange 🏀
-🇮🇹Supercoppa Serie A🇮🇹
-⚜️  MaxExchange  ⚜️
-
-Trieste 🆚 Trento
-🧮 1 inc overtime 🧮
-📈 Quota 1.55 📈
-
-Cremona 🆚 Sassari
-🧮 2 inc overtime 🧮
-📈 Quota 1.30 📈
-
-🧾 2.02 🧾 
-
-🕑 18:30 🕑 
-
-🏛 Stake 5% 🏛
-🖊 hockey #8🖊
-"""
 def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Optional[Dict]:
     """Parses the giocata found in giocata_text.
     In case message_sent_timestamp is not specified, the current date timestamp is used.
+    An example of a giocata is:
+        🏀 Exchange 🏀
+        🇮🇹Supercoppa Serie A🇮🇹
+        ⚜️ MaxExchange  ⚜️
 
+        Trieste 🆚 Trento
+        🧮 1 inc overtime 🧮
+        📈 Quota 1.55 📈
+
+        Cremona 🆚 Sassari
+        🧮 2 inc overtime 🧮
+        📈 Quota 1.30 📈
+
+        🧾 2.02 🧾 
+
+        🕑 18:30 🕑 
+
+        🏛 Stake 5% 🏛
+        🖊 Exchange #8🖊
+    
+    The structure is:
+        <sport emoji> <sport name> <sport emoji>
+        <emoji><campionato><emoji>
+        ⚜️ <strategy name> ⚜️
+
+        <One or more sport event with bet type and quota>
+
+        [🧾 <cumulative quota> 🧾](only in case of multiple events)
+
+        🕑 <sport event time> 🕑
+
+        🏛 Stake <stake %>% 🏛
+        🖊 <sport name> #<giocata number> 🖊
     Args:
         giocata_text (str): [description]
         message_sent_timestamp (float, optional): the timestamp of the giocata message. Defaults to None.
@@ -234,7 +246,6 @@ def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Opti
         dict: contains the giocata data
         None: in case there is an error parsing the giocata
     """
-    # giocata_rows = giocata_text.split("\n")
     try:
         sport = get_sport_from_giocata(giocata_text)
         strategy = get_strategy_from_giocata(giocata_text)
@@ -275,5 +286,5 @@ def create_resoconto_message(giocate: List[Dict]):
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
         parsed_quota = giocata["base_quota"] / 100
         sport_name = spr.sports_container.get_sport_from_string(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage}%\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage:.2f}%\n"
     return resoconto_message

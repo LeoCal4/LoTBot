@@ -300,7 +300,7 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     # if not parsed_giocata:
     #     lgr.logger.error("Could not parse giocata {giocata_text}")
     #     raise Exception(f"Could not parse giocata {giocata_text}")
-    retrieved_giocata = giocate_manager.retrieve_giocata(parsed_giocata) 
+    retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
     if not retrieved_giocata:
         lgr.logger.error(f"Giocata {parsed_giocata} not found")
         raise Exception(f"Giocata {parsed_giocata} not found")

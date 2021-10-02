@@ -96,7 +96,7 @@ def test_extend_expiration_date(exp_date_timestamp, expected):
 def test_get_giocata_num_from_giocata(correct_giocata):
     correct_giocata_text, giocata_data = correct_giocata
     giocata_num = utils.get_giocata_num_from_giocata(correct_giocata_text)
-    assert int(giocata_data["giocata_num"]) == giocata_num
+    assert giocata_data["giocata_num"] == giocata_num
 
 
 def test_get_quota_from_giocata(correct_giocata):

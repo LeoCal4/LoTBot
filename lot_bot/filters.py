@@ -64,7 +64,41 @@ def get_homepage_filter() -> Filters:
     return Filters.regex(cst.HOMEPAGE_BUTTON_TEXT)
 
 
+def get_outcome_giocata_filter() -> Filters:
+    """Creates the filter for all the text messages coming from
+    any of the sport channels which include a giocata outcome.
+    
+    An example giocata is:
+        🟢 PingPong#67 Vincente +8,50% 🟢
+
+    Returns:
+        Filters
+    """
+    sport_channels_filter = Filters.chat()
+    sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
+    return sport_channels_filter & Filters.regex(get_giocata_outcome_pattern())
+
 # ================================================ PATTERNS ================================================
+
+
+def get_giocata_outcome_pattern() -> str:
+    """Creates the regex pattern to identify a giocata outcome.
+    The structure of a giocata is:
+        <🟢/🔴> <sport name>#<giocata num> <Vincente/Perdente> <percentage> <🟢/🔴>
+    
+    The regex only checks up to <Vincente/Perdente> to determine if the 
+    message is a giocata or not.
+
+    The regex gathers the following groups:
+    group(1) = sport
+    group(2) = giocata_num
+    group(3) = outcome
+
+
+    Returns:
+        str: regex pattern
+    """
+    return r"[🟢🔴]\s*(\w+)\s*#\s*(\d+)\s*(\w+)"
 
 
 def get_explanation_pattern() -> str:

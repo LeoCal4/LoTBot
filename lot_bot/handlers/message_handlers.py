@@ -17,6 +17,7 @@ from lot_bot.dao import abbonamenti_manager, user_manager, giocate_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users as user_model
+from lot_bot.models import giocate as giocata_model
 from telegram import ParseMode, Update, User
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -287,6 +288,15 @@ def giocata_handler(update: Update, context: CallbackContext):
         raise custom_exceptions.SendMessageError(text, update=update)
     lgr.logger.debug("Finished sending giocate")
 
+
+def outcome_giocata_handler(update: Update, context: CallbackContext):
+    text = update.effective_message.text
+    sport, giocata_num, outcome = giocata_model.get_giocata_outcome_data(text)
+    giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
+    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
+    lgr.logger.debug(f"{updated_giocata=}")
+    send_message_to_all_abbonati(update, context, text, sport, updated_giocata["strategia"])
+    
 
 def sport_channel_normal_message_handler(update: Update, context: CallbackContext):
     """Sends a message coming from one of the sports channels to
