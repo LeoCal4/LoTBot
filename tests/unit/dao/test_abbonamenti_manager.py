@@ -13,7 +13,7 @@ def get_abbonamento_data(user_id=None, sport_name=None, strategy_name=None) -> d
         sport = random.choice(spr.sports_container.astuple())
         sport_name = sport.name
     if not strategy_name:
-        sport = sport if sport else spr.sports_container.get_sport_from_string(sport_name)
+        sport = sport if sport else spr.sports_container.get_sport(sport_name)
         strategy_name = random.choice(sport.strategies)
     return {
         "telegramID": user_id,
@@ -47,7 +47,8 @@ def test_create_abbonamento(monkeypatch, clear_abbonamenti):
     # db error
     abbonamento_data = get_abbonamento_data()
     monkeypatch.setattr(db, "mongo", None)
-    assert not abbonamenti_manager.create_abbonamento(abbonamento_data)
+    with pytest.raises(Exception):
+        abbonamenti_manager.create_abbonamento(abbonamento_data)
 
 
 def test_retrieve_abbonamenti(monkeypatch, new_abbonamento: dict, clear_abbonamenti):
@@ -66,7 +67,8 @@ def test_retrieve_abbonamenti(monkeypatch, new_abbonamento: dict, clear_abboname
     assert len(abbonamenti_manager.retrieve_abbonamenti({"sport": "non existent sport"})) == 0
     # db error
     monkeypatch.setattr(db, "mongo", None)
-    assert abbonamenti_manager.retrieve_abbonamenti({"sport": new_abbonamento["sport"]}) is None
+    with pytest.raises(Exception):
+        abbonamenti_manager.retrieve_abbonamenti({"sport": new_abbonamento["sport"]})
 
 
 def test_retrieve_abbonamento_sport_strategy_from_user_id(monkeypatch, new_abbonamento: dict, clear_abbonamenti):

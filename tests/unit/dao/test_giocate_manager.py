@@ -1,4 +1,6 @@
 import random
+
+import pytest
 from lot_bot.dao import giocate_manager
 from lot_bot.models import giocate as giocata_model
 
@@ -15,7 +17,8 @@ def test_create_giocata():
         assert empty_giocata[key] == retrieved_giocata[key]
     # inserting the same giocata for error
     del empty_giocata["_id"] # creating the giocata adds the _id field to the dict
-    assert not giocate_manager.create_giocata(empty_giocata)
+    with pytest.raises(Exception):
+        giocate_manager.create_giocata(empty_giocata)
 
 
 

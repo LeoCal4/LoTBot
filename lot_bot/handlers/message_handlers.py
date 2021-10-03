@@ -5,7 +5,7 @@ import html
 import json
 import os
 import traceback
-from typing import List
+from typing import Dict, List
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -25,44 +25,60 @@ from telegram.ext.dispatcher import CallbackContext
 ################################# HELPER METHODS #######################################
 
 
-def create_first_time_user(user: User, trial_expiration_timestamp: float) -> bool:
+def create_first_time_user(user: User) -> Dict:
     """Creates the user using the bot for the first time.
+
+    First, it creates the user itself, setting its expiration date to 7 days 
+    from now, then creates an abbonamento to calcio - piaquest and another
+    one to exchange - maxexchange. 
 
     Args:
         user (User)
-        trial_expiration_timestamp (float)
 
     Returns:
-        bool: True if the operation was successful, False otherwise
+        Dict: the created user data
     """
+    # * create user
+    user_data = user_model.create_base_user_data()
+    user_data["_id"] = user.id
+    user_data["nome"] = user.first_name
+    user_data["nomeUtente"] = user.username
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+    user_data["validoFino"] = trial_expiration_timestamp
+    user_manager.create_user(user_data)
+    # * create calcio - piaquest abbonamento
     abbonamenti_calcio_data = {
         "telegramID": user.id,
         "sport": spr.sports_container.CALCIO.name,
         "strategia": strat.strategies_container.PIAQUEST.name,
     }
-    abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_calcio_data)
-    if not abb_result:
-        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_calcio_data=}")
-        return False
+    abbonamenti_manager.create_abbonamento(abbonamenti_calcio_data)
+    # * create exchange - maxexchange abbonamento
     abbonamenti_exchange_data = {
         "telegramID": user.id,
         "sport": spr.sports_container.EXCHANGE.name,
         "strategia": strat.strategies_container.MAXEXCHANGE.name,  
     }
-    abb_result = abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
-    if not abb_result:
-        lgr.logger.error(f"Could not create abbonamento upon first message - {abbonamenti_exchange_data=}")
-        return False
-    user_data = user_model.create_base_user_data()
-    user_data["_id"] = user.id
-    user_data["nome"] = user.first_name
-    user_data["nomeUtente"] = user.username
-    user_data["validoFino"] = trial_expiration_timestamp
-    user_result = user_manager.create_user(user_data)
-    if not user_result:
-        lgr.logger.error(f"Could not create user upon first message - {user_data=}")
-        return False
-    return True
+    abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
+    return user_data
+
+
+def first_time_user_handler(update: Update):
+    """Sends welcome messages to the user, then creates two standard
+    abbonamenti for her/him and creates the user itself.
+
+    Args:
+        update (Update)
+    """
+    user = update.effective_user
+    first_time_user_data = create_first_time_user(update.effective_user)
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["validoFino"]) + datetime.timedelta(hours=2)
+    trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
+    welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date_string)
+    # the messages are sent only if the previous operations succeeded, this is fundamental
+    #   for the integration tests too
+    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="html")
+    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
 
 
 def send_messages_to_developers(context: CallbackContext, messages_to_send: List[str], parse_mode=None):
@@ -75,9 +91,12 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 lgr.logger.error(f"{str(e)}")
 
 
-def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False) -> bool:
+def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: spr.Sport, strategy: strat.Strategy, is_giocata: bool = False):
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
+
+    In case the number of messages sent is less than the number of abbonati, 
+    a message is sent to the developers. 
 
     Args:
         update (Update)
@@ -87,31 +106,26 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         strategy (str)
         is_giocata (bool, default = False): False if it is not a giocata, True otherwise.
 
-    Returns:
-        bool: True if at least one message was supposed to be sent and it was actually sent, False otherwise.
     """
-    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport, "strategia": strategy})
-    if abbonamenti is None:
-        lgr.logger.warning(f"DB error retrieving {sport} and strategy {strategy} while handling giocata")
-        return False
+    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport.name, "strategia": strategy.name})
     if abbonamenti == []:
-        lgr.logger.warning(f"There are not abbonamenti for {sport=} {strategy=}")
+        lgr.logger.warning(f"There are no abbonamenti for {sport.name=} {strategy.name=}")
+        return
     messages_sent = 0
     messages_to_be_sent = len(abbonamenti)
-    lgr.logger.debug(f"Found {messages_to_be_sent} abbonamenti for {sport} - {strategy}")
+    lgr.logger.info(f"Found {messages_to_be_sent} abbonamenti for {sport.name} - {strategy.name}")
     for abbonamento in abbonamenti:
-        lgr.logger.debug(f"Checking abbonamento {abbonamento}")
-        user_data = user_manager.retrieve_user_fields_by_user_id(abbonamento["telegramID"], ["validoFino"])
+        user_id = abbonamento["telegramID"]
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["validoFino"])
         if not user_data:
-            lgr.logger.warning(f"No user found with id {abbonamento['telegramID']} while handling giocata")
+            lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
             messages_to_be_sent -= 1
             continue
-        lgr.logger.debug(f"Retrieved user data from id {user_data['_id']}")
         if not user_manager.check_user_validity(update.effective_message.date, user_data):
-            lgr.logger.warning(f"User {user_data['_id']} is not active")
+            lgr.logger.warning(f"User {user_id} is not active")
             messages_to_be_sent -= 1
             continue
-        lgr.logger.debug(f"Sending message to {user_data['_id']}")
+        lgr.logger.debug(f"Sending message to {user_id}")
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
             text += "\n\nHai effettuato la giocata?"
@@ -122,31 +136,25 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
                 abbonamento["telegramID"], 
                 text, 
                 reply_markup=custom_reply_markup)
-            lgr.logger.debug(f"{result=}")
-            lgr.logger.debug(f"{type(result)=}")
             messages_sent += 1
         except Unauthorized:
-            lgr.logger.warning("Could not send message {text}: user {user_id} blocked the bot")
+            lgr.logger.warning(f"Could not send message {text}: user {user_id} blocked the bot")
+            messages_to_be_sent -= 1
         except Exception as e:
-            lgr.logger.error("Could not send message {text} to user {user_id}")
-            lgr.logger.error(f"{str(e)}")
+            lgr.logger.error(f"Could not send message {text} to user {user_id} - {str(e)}")
     if messages_sent < messages_to_be_sent:
-        error_text = f"{messages_sent} messages have been sent out of {messages_to_be_sent} for {sport} - {strategy}"
+        error_text = f"{messages_sent} messages have been sent out of {messages_to_be_sent} for {sport.name} - {strategy.name}"
         lgr.logger.warning(error_text)
         send_messages_to_developers(context, [error_text])
-    if messages_sent == 0 and messages_to_be_sent > 0:
-        return False
-    else:
-        return True
 
 
 ################################## COMMANDS ########################################
 
 
-def start_command(update: Update, context: CallbackContext):
-    """Sends the welcome message and the sports channel 
-        list message, updating the Update user's situazione
-        and message
+def start_command(update: Update, _):
+    """Checks wheter the user is a first timer or not, then,
+    in case it is, it creates it; otherwise, it opens the canali 
+    menu with a welcome back message.
 
     Args:
         update (Update): the Update containing the command message
@@ -156,16 +164,44 @@ def start_command(update: Update, context: CallbackContext):
     # from_user gets the user which sent the message
     user_id = update.effective_user.id
     lgr.logger.debug(f"Received /start command from {user_id}")
-    lista_canali_message = "Questa è la lista dei canali di cui è possibile ricevere le notifiche"
     if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
-        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-        if not create_first_time_user(update.effective_user, trial_expiration_timestamp):
-            lgr.logger.error("Could not create first time user upon /start")
-            raise Exception
+        # * the user does not exist yet
+        first_time_user_handler(update)
+        return
     # update.message.reply_text is equal to bot.send_message(update.effective_message.chat_id, ...)
-    bentornato_message = "Bentornato, puoi continuare ad utilizzare il bot"
-    update.message.reply_text(bentornato_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
-    update.message.reply_text(lista_canali_message, reply_markup=kyb.create_sports_inline_keyboard(update))
+    update.message.reply_text(cst.BENTORNATO_MESSAGE, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+    update.message.reply_text(cst.LISTA_CANALI_MESSAGE, reply_markup=kyb.create_sports_inline_keyboard(update))
+
+
+def normal_message_to_abbonati_handler(update: Update, context: CallbackContext):
+    """Sends a message coming from one of the sports channels to
+    all the users subscribed to the specified sport and strategy.
+    The structure of the message must be:
+    /messaggio_abbonati <sport> - <strategy>
+    <text>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    Raises:
+        Exception: in case the sport or the strategy do not exist or 
+            if there was an error sending the messages 
+    """
+    # TODO check if author is entitled to do so
+    text = update.effective_message.text
+    try:
+        sport, strategy = utils.get_sport_and_strategy_from_normal_message(text)
+    except custom_exceptions.NormalMessageParsingError as e:
+        update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè presenta un errore, si prega di controllare e rimandarlo.\nL'errore è:\n{str(e)}")
+        return
+    lgr.logger.debug(f"Received normal message")
+    # * remove first line
+    parsed_text = "\n".join(text.split("\n")[1:]).strip()
+    if parsed_text == "":
+        update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
+        return
+    send_message_to_all_abbonati(update, context, parsed_text, sport, strategy)
 
 
 def reset_command(update: Update, context: CallbackContext):
@@ -187,6 +223,7 @@ def reset_command(update: Update, context: CallbackContext):
 
 
 def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
+    # TODO ERASE AND DO IT DECENTLY
     """Responds to the command `/send_all_videos` and can be used only by the developers.
 
     This command is used in order to upload the videos for the first time and get 
@@ -231,7 +268,7 @@ def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
 ##################################### MESSAGE HANDLERS #####################################
 
 
-def homepage_handler(update: Update, context: CallbackContext):
+def homepage_handler(update: Update, _):
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
@@ -259,100 +296,48 @@ def giocata_handler(update: Update, context: CallbackContext):
         Exception: when there is an error sending the messages
     """
     text = update.effective_message.text
-    # sport = utils.get_sport_from_giocata(text)
-    # if not sport:
-    #     lgr.logger.error(f"Sport {sport=} not found")
-    #     raise custom_exceptions.SportNotFoundError(sport, update=update)
-    # strategy = utils.get_strategy_from_giocata(text)
-    # if strategy == "":
-    #     lgr.logger.error(f"Strategy {strategy=} not found")
-    #     raise custom_exceptions.StrategyNotFoundError(sport, strategy, update=update)
-    parsed_giocata = utils.parse_giocata(text)
-    # if not parsed_giocata:
-    #     error_message = f"Cannot parse giocata from text {text}"
-    #     lgr.logger.error(error_message)
-    #     raise Exception(error_message)
-    # TODO send message to channel in case of error with parsing
-    created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
-    lgr.logger.debug(f"{created_giocata_id=} - {type(created_giocata_id)=}")
-    if not created_giocata_id:
-        error_message = f"Could not create giocata {parsed_giocata}, from text {text}"
-        lgr.logger.error(error_message)
-        raise Exception(error_message)
-        # TODO send message to channel
+    # * parse giocata
+    try:
+        parsed_giocata = utils.parse_giocata(text)
+    except custom_exceptions.GiocataParsingError as e:
+        update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè presenta un errore, si prega di controllare e rimandarla.\nL'errore è:\n{str(e)}")
+        return
+    # * save giocata in db
+    try:
+        giocate_manager.create_giocata(parsed_giocata)
+    except custom_exceptions.GiocataCreationError:
+        update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè la combinazione '#{parsed_giocata['giocata_num']}' - '{parsed_giocata['sport']}' è già stata utilizzata.")
+        return
     sport = parsed_giocata["sport"]
     strategy = parsed_giocata["strategia"]
     lgr.logger.info(f"Received giocata {sport} - {strategy}")
-    if not send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True):
-        lgr.logger.error(f"Error with sending giocata {text} for {sport} - {strategy}")
-        raise custom_exceptions.SendMessageError(text, update=update)
-    lgr.logger.debug("Finished sending giocate")
+    send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True)
 
 
 def outcome_giocata_handler(update: Update, context: CallbackContext):
-    text = update.effective_message.text
-    sport, giocata_num, outcome = giocata_model.get_giocata_outcome_data(text)
-    giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
-    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
-    lgr.logger.debug(f"{updated_giocata=}")
-    send_message_to_all_abbonati(update, context, text, sport, updated_giocata["strategia"])
-    
-
-def sport_channel_normal_message_handler(update: Update, context: CallbackContext):
-    """Sends a message coming from one of the sports channels to
-    all the users subscribed to the specified sport and strategy.
-    The structure of the message must be:
-    <sport> <strategy>
-    <text>
+    """Sends the outcome of the giocata to all the abbonati of that
+    giocata sport and strategy.
 
     Args:
         update (Update)
         context (CallbackContext)
-
-    Raises:
-        Exception: in case the sport or the strategy do not exist or 
-            if there was an error sending the messages 
     """
     text = update.effective_message.text
-    first_row_tokens = text.split("\n")[0].split()
-    sport = first_row_tokens[0]
-    if not utils.check_sport_validity(sport):
-        lgr.logger.error(f"Could not send normal message: {sport} does not exist")
-        raise custom_exceptions.SportNotFoundError(sport)
-    strategy = first_row_tokens[1]
-    if not utils.check_sport_strategy_validity(sport, strategy):
-        lgr.logger.error(f"Could not send normal message: {strategy} does not exist for {sport}")
-        raise custom_exceptions.StrategyNotFoundError(sport, strategy)
-    lgr.logger.debug(f"Received normal message")
-    if not send_message_to_all_abbonati(update, context, text, sport, strategy):
-        lgr.logger.error(f"Error with sending normal message {text} for {sport} - {strategy}")
-        raise custom_exceptions.SendMessageError(text)
-
-
-def first_message_handler(update: Update, context: CallbackContext):
-    """Sends welcome messages to the user, then creates two standard
-    abbonamenti for her/him and creates the user itself.
-    In case the user already exists, the function just exits.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-
-    Raises:
-        Exception: in case any of the db operation fails
-    """
-    user = update.effective_user
-    if user_manager.retrieve_user_fields_by_user_id(user.id, ["_id"]):
-        lgr.logger.warning(f"User with id {user.id} already exists, not sending welcome messages")
+    try:
+        sport, giocata_num, outcome = giocata_model.get_giocata_outcome_data(text)
+    except custom_exceptions.GiocataOutcomeParsingError as e:
+        error_message = f"ATTENZIONE: il risultato non è stato inviato perchè presenta un errore. Si prega di ricontrollare e rimandarlo."
+        if e.message:
+            error_message += f"\nErrore: {e.message}"
+        update.effective_message.reply_text(error_message)
         return
-    trial_expiration_timestamp = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(trial_expiration_timestamp).strftime("%d/%m/%Y alle %H:%M")
-    welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date)
-    
-    # the messages are sent only if the previous operations succeeded, this is fundamental
-    #   for the integration tests too
-    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="html")
-    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
+    update_result = giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
+    if not update_result:
+        update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
+        return
+    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
+    strategy = strat.strategies_container.get_strategy(updated_giocata["strategia"])
+    send_message_to_all_abbonati(update, context, text, sport, strategy)
 
 
 def exchange_cashout_handler(update: Update, context: CallbackContext):
@@ -366,19 +351,14 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         Exception: when there is an error parsing the cashout or sending the messages
     """
     cashout_text = utils.create_cashout_message(update.effective_message.text)
-    lgr.logger.debug(f"Received cashout message {cashout_text}")
-    if cashout_text == "":
-        lgr.logger.error(f"Could not parse cashout text {update.effective_message.text}")
-        raise Exception(f"Could not parse cashout text {update.effective_message.text}")
-    if not send_message_to_all_abbonati(
+    lgr.logger.info(f"Received cashout message {cashout_text}")
+    send_message_to_all_abbonati(
         update, 
         context, 
         cashout_text, 
-        spr.sports_container.EXCHANGE.name, 
-        strat.strategies_container.MAXEXCHANGE.name
-    ):
-        lgr.logger.error(f"Error with sending cashout {cashout_text}")
-        raise custom_exceptions.SendMessageError(cashout_text)
+        spr.sports_container.EXCHANGE, 
+        strat.strategies_container.MAXEXCHANGE
+    )
 
 
 ############################################ ERROR HANDLERS ############################################

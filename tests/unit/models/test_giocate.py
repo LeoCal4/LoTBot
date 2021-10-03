@@ -34,7 +34,7 @@ def test_get_outcome_percentage():
 )
 def test_get_giocata_outcome_data(giocata_text, sport, num, outcome):
     sport_data, num_data, outcome_data = giocata_model.get_giocata_outcome_data(giocata_text)
-    assert sport == sport_data    
+    assert sport == sport_data.name  
     assert num == num_data
     assert outcome == outcome_data
 

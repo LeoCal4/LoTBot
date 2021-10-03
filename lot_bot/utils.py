@@ -1,11 +1,11 @@
 import datetime
-from logging import error
 import random
 import re
 import string
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta
+from telegram.ext import filters
 
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
@@ -16,18 +16,15 @@ from lot_bot.models import strategies as strat
 from lot_bot import custom_exceptions
 
 
-def check_sport_validity(sport_token: str) -> bool:
-    return sport_token and bool(spr.sports_container.get_sport_from_string(sport_token.lower().strip()))
+def check_sport_strategy_validity(sport: spr.Sport, strategy_token: str) -> bool:
+    strategy = strat.strategies_container.get_strategy(strategy_token.lower().strip())
+    if sport and strategy and strategy in sport.strategies:
+        return strategy
 
 
-def check_sport_strategy_validity(sport_token: str, strategy_token: str) -> bool:
-    sport = spr.sports_container.get_sport_from_string(sport_token.lower().strip())
-    strategy = strat.strategies_container.get_strategy_from_string(strategy_token.lower().strip())
-    return sport and strategy and strategy in sport.strategies
-
-
-def get_sport_from_giocata(text: str) -> str:
+def get_sport_name_from_giocata(text: str) -> str:
     """Extracts the sport name from a giocata message.
+    It checks if the sports exists.
 
     Args:
         text (str): a giocata message
@@ -36,40 +33,43 @@ def get_sport_from_giocata(text: str) -> str:
         str: the name of the sport
     
     Raises:
-        Exception: if the sport was not found
+        GiocataParsingError: if the sport was not found
     """
     sport_row = text.split("\n")[0].lower()
     # ? could be faster if we would just get the second token
     for sport in spr.sports_container:
         if sport.display_name.lower() in sport_row:
             return sport.name
-    error_message = f"utils.get_sport_from_giocata: Could not find in any sport in line {sport_row}"
+    error_message = f"utils.get_sport_name_from_giocata: Could not find in any sport in line {sport_row}"
     lgr.logger.error(error_message)
-    raise Exception(error_message)
+    raise custom_exceptions.GiocataParsingError(f"sport non trovato nella riga '{sport_row}'")
 
 
-def get_strategy_from_giocata(text: str) -> str:
+def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
     """Extracts the strategy name from a giocata message.
+    It checks if the strategy exists and if it is present in the sport's ones.
 
     Args:
         text (str): a giocata message
+        sport (str): the strategy's sport
 
     Returns:
         str: the name of the strategy
         
     Raises:
-        Exception: if the strategy is not found
+        GiocataParsingError: if the strategy is not found
     """
     STRATEGY_ROW = 2
     STRATEGY_INDEX = 1
     played_strategy = text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX]
-    sport = get_sport_from_giocata(text)
-    if check_sport_validity(sport) and check_sport_strategy_validity(sport, played_strategy):
-        return played_strategy.lower().strip()
+    strategy = strat.strategies_container.get_strategy(played_strategy)
+    sport = spr.sports_container.get_sport(sport)
+    if strategy and strategy in sport.strategies:
+        return strategy.name
     else:
-        error_message = f"utils.get_strategy_from_giocata: Strategy not found from {text}"
+        error_message = f"utils.get_strategy_name_from_giocata: Strategy not found from {text} for sport {sport.name}"
         lgr.logger.error(error_message)
-        raise Exception(error_message)
+        raise custom_exceptions.GiocataParsingError(f"strategia '{played_strategy}' non trovata per lo sport '{sport.name}'")
 
 
 def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
@@ -86,6 +86,9 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
         str: 🟢 for a non-negative cashout,  
             🔴 for a negative cashout,  
             an empty string in case of errors
+
+    Raises:
+        Exception: in case of errors in the parsing
     """
     if "," in percentage_text:
         percentage_text = percentage_text.replace(",", ".")
@@ -96,7 +99,6 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
             return "🔴"
     except Exception as e:
         lgr.logger.error(f"Could not parse the cashout percentage {percentage_text}")
-        lgr.logger.error(f"Exception: {e}")
         return ""
 
 
@@ -112,15 +114,12 @@ def create_cashout_message(message_text: str) -> str:
     Returns:
         str: the cashout message to be broadcasted,
             or an empty string in case of errors
-
     """
+    matches = re.search(filters.get_cashout_pattern(), message_text)
     message_tokens = message_text.split()
-    giocata_num = message_tokens[0]
-    cashout_percentage = message_tokens[1]
+    giocata_num = matches.group(1)
+    cashout_percentage = matches.group(2)
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
-    if emoji == "":
-        lgr.logger.error(f"Error parsing cashout message {message_text}")
-        return ""
     return f"{emoji} CASHOUT Exchange {giocata_num} {cashout_percentage}% {emoji}"
 
 
@@ -155,30 +154,58 @@ def create_valid_referral_code() -> str:
 
 
 def extend_expiration_date(expiration_date_timestamp: float) -> float:
-    """Adds one month to the expiration date timestamp.
+    """Adds one month to the expiration date timestamp in case it is in the future,
+    otherwise it adds one month to the current timestamp.
 
     Args:
         expiration_date_timestamp (float)
 
     Returns:
         float: the original timestamp + 1 month
-    """        
-    return (datetime.datetime.utcfromtimestamp(expiration_date_timestamp) + relativedelta(months=1)).timestamp()
+    """
+    now_timestamp = datetime.datetime.utcnow().timestamp()
+    if datetime.datetime.utcnow().timestamp() > expiration_date_timestamp:
+        base_timestamp = now_timestamp
+    else:
+        base_timestamp = expiration_date_timestamp
+    return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(months=1)).timestamp()
 
 
 ######################################## TESTING #############################################
 
 def get_giocata_num_from_giocata(giocata_text: str) -> str:
+    """Gets the number of the giocata from its text.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the giocata num cannot be found
+
+    Returns:
+        str
+    """
     GIOCATA_NUM_EMOJI = "🖊"
     regex_match = re.search(fr"#\s*(\d+)\s*{GIOCATA_NUM_EMOJI}", giocata_text)
     if not regex_match:
         error_message = f"utils.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)
-        raise Exception(error_message)
+        raise custom_exceptions.GiocataParsingError(f"numero della giocata non trovato")
     return regex_match.group(1)
 
 
 def get_quota_from_giocata(giocata_text: str) -> int:
+    """Gets the quota from a giocata text.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the quota cannot be found
+
+    Returns:
+        int: the quota as a integer number (1.10 => 110)
+    """
     MULTIPLE_QUOTA_EMOJI = "🧾"
     if MULTIPLE_QUOTA_EMOJI in giocata_text:
         regex_match = re.search(fr"{MULTIPLE_QUOTA_EMOJI}\s*(\d+\.\d+)\s*{MULTIPLE_QUOTA_EMOJI}", giocata_text)
@@ -188,17 +215,28 @@ def get_quota_from_giocata(giocata_text: str) -> int:
     if not regex_match:
         error_message = f"utils.get_quota_from_giocata: quota not found from {giocata_text}"
         lgr.logger.error(error_message)
-        raise Exception(error_message)
+        raise custom_exceptions.GiocataParsingError(f"quota non trovata")
     return int(float(regex_match.group(1))*100)
 
 
 def get_stake_from_giocata(giocata_text: str) -> int:
+    """Gets the stake from a giocata message.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the stake cannot be found
+
+    Returns:
+        int: the stake percentage value
+    """
     STAKE_EMOJI = "🏛"
     regex_match = re.search(fr"{STAKE_EMOJI}\s*Stake\s*(\d+)\s*%\s*{STAKE_EMOJI}", giocata_text)
     if not regex_match:
         error_message = f"utils.get_stake_from_giocata: stake not found from {giocata_text}"
         lgr.logger.error(error_message)
-        raise Exception(error_message)
+        raise custom_exceptions.GiocataParsingError(f"stake non trovato")
     return int(regex_match.group(1))
 
 
@@ -239,24 +277,18 @@ def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Opti
         🏛 Stake <stake %>% 🏛
         🖊 <sport name> #<giocata number> 🖊
     Args:
-        giocata_text (str): [description]
+        giocata_text (str)
         message_sent_timestamp (float, optional): the timestamp of the giocata message. Defaults to None.
 
     Returns:
         dict: contains the giocata data
         None: in case there is an error parsing the giocata
     """
-    try:
-        sport = get_sport_from_giocata(giocata_text)
-        strategy = get_strategy_from_giocata(giocata_text)
-        giocata_num = get_giocata_num_from_giocata(giocata_text)
-        giocata_quota = get_quota_from_giocata(giocata_text)
-        giocata_stake = get_stake_from_giocata(giocata_text)
-    except Exception as e:
-        error_message = f"Error parsing giocata {giocata_text}"
-        lgr.logger.error(error_message)
-        lgr.logger.error(str(e))
-        raise Exception(error_message)
+    sport = get_sport_name_from_giocata(giocata_text)
+    strategy = get_strategy_name_from_giocata(giocata_text, sport)
+    giocata_num = get_giocata_num_from_giocata(giocata_text)
+    giocata_quota = get_quota_from_giocata(giocata_text)
+    giocata_stake = get_stake_from_giocata(giocata_text)
     if not message_sent_timestamp:
         message_sent_timestamp = datetime.datetime.utcnow().timestamp()
     parsed_giocata = giocata_model.create_base_giocata()
@@ -285,6 +317,38 @@ def create_resoconto_message(giocate: List[Dict]):
     for index, giocata in enumerate(giocate, 1):
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
         parsed_quota = giocata["base_quota"] / 100
-        sport_name = spr.sports_container.get_sport_from_string(giocata['sport']).display_name
+        sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
         resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage:.2f}%\n"
     return resoconto_message
+
+
+def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport, strat.Strategy]:
+    """Gets the sport and the strategy from the first row of 
+    a /messaggio_abbonati command.
+
+    Args:
+        message (str): it has the form /messaggio_abbonati <sport> - <strategia>
+
+    Raises:
+        custom_exceptions.NormalMessageParsingError: in case the sport or the strategy are not valid
+
+    Returns:
+        Tuple[spr.Sport, strat.Strategy]: the sport and the strategy found
+    """
+    # text on the first line after the command
+    first_row = message.split("\n")[0]
+    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s*-\s*([\w\s]+)", first_row)
+    if not matches:
+        lgr.logger.error(f"Cannot parse {message} with {first_row=}")
+        raise custom_exceptions.NormalMessageParsingError("messaggio non analizzabile, assicurati che segua la struttura '/messaggio_abbonati nomesport - nomestrategia'")
+    sport_token = matches.group(1)
+    sport = spr.sports_container.get_sport(sport_token)
+    if not sport:
+        lgr.logger.error(f"Sport {sport_token} not valid from normal message {message} - {first_row=}")
+        raise custom_exceptions.NormalMessageParsingError(f"sport '{sport_token}' non valido")
+    strategy_token = matches.group(2)
+    strategy = strat.strategies_container.get_strategy(strategy_token)
+    if not strategy or strategy not in sport.strategies:
+        lgr.logger.error(f"Strategy {strategy_token} not valid from normal message {message} - {first_row=}")
+        raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport}'")
+    return sport, strategy

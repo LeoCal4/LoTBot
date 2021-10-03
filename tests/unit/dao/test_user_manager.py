@@ -1,13 +1,15 @@
 import datetime
 import random
 import string
-from typing import Dict, Tuple, Callable
+from typing import Callable, Dict, Tuple
 
+import pytest
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import user_manager, giocate_manager
+from lot_bot.dao import giocate_manager, user_manager
 from lot_bot.models import giocate as giocata_model
+
 
 def get_random_string(length: int):
     return "".join([random.choice(string.digits + string.ascii_lowercase) for _ in range(length)])
@@ -130,8 +132,8 @@ def test_get_discount_for_user(new_user: Dict, monkeypatch):
     assert discount == 0
     # db connection error
     monkeypatch.setattr(db, "mongo", None)
-    discount = user_manager.get_discount_for_user(user_id)
-    assert discount == 0    
+    with pytest.raises(Exception):
+        user_manager.get_discount_for_user(user_id)
 
 
 def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):
@@ -178,3 +180,6 @@ def test_retrieve_user_fields_by_user_id(new_user: Dict):
     retrieved_fields = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], random_fields)
     for field in random_fields:
         assert new_user[field] == retrieved_fields[field]  
+    # non-existent field
+    retrieved_only_id = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], "fake field")
+    assert list(retrieved_only_id.keys()) == ["_id"]

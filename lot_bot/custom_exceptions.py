@@ -1,3 +1,4 @@
+"""Module containing all the custom exceptions for lot_bot"""
 
 class SportNotFoundError(Exception):
     def __init__(self, sport_token: str, update=None):
@@ -45,4 +46,40 @@ class UserNotFound(Exception):
         string = f"Error finding user {self.user_id}"
         if self.update:
             string += f"\n{str(self.update)=}"
-        return string   
+        return string
+
+
+class GiocataParsingError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message
+
+
+class GiocataCreationError(Exception):
+    def __init__(self, message: str = ""):
+        self.message = message
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message
+
+
+class GiocataOutcomeParsingError(Exception):
+    def __init__(self, message: str = ""):
+        self.message = message
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message
+
+
+class NormalMessageParsingError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message

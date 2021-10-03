@@ -2,6 +2,9 @@ import re
 from typing import Tuple
 
 from lot_bot import filters
+from lot_bot import custom_exceptions
+from lot_bot import utils
+from lot_bot.models import sports as spr
 
 def create_base_giocata():
     return {
@@ -25,7 +28,7 @@ def create_user_giocata():
     }
 
 
-def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
+def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[spr.Sport, str, str]:
     """Finds sport, giocata number and outcome from a giocata outcome message.
 
     Args:
@@ -41,10 +44,13 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
     loss_keywords = ["perdente", "persa", "perdita", "sconfitta"]
     matches = re.search(filters.get_giocata_outcome_pattern(), giocata_outcome)
     if not matches:
-        raise Exception # TODO 
-    sport = matches.group(1).lower()
-    giocata_num = matches.group(2)
-    outcome = matches.group(3).lower()
+        raise custom_exceptions.GiocataOutcomeParsingError
+    sport_token = matches.group(1).lower()
+    sport = spr.sports_container.get_sport(sport_token)
+    if not sport:
+        raise custom_exceptions.GiocataOutcomeParsingError(message=f"sport {sport_token} non valido")
+    giocata_num = matches.group(2).strip()
+    outcome = matches.group(3).lower().strip()
     if outcome in win_keywords:
         outcome = "win"
     elif outcome in loss_keywords:

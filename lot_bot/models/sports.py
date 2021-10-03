@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Optional
 
 from lot_bot.models import strategies
 
@@ -36,7 +37,6 @@ class SportsContainer:
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.INSTAGRAM])
     SPECIALI : Sport = Sport("speciali", _base_strategies, show_in_menu=False)
     RUGBY : Sport = Sport("rugby", _base_strategies + [strats.TRILLED], show_in_menu=False)
-    SPORT2 : Sport = Sport("sport2", _base_strategies, show_in_menu=False)
     PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, show_in_menu=False)
     IPPICA : Sport = Sport("ippica", _base_strategies, show_in_menu=False)
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto")
@@ -51,10 +51,10 @@ class SportsContainer:
     def __contains__(self, item: Sport):
         return dataclasses.astuple(item) in dataclasses.astuple(self)
 
-    def get_sport_from_string(self, sport_string: str) -> Sport:
-        sport_string = sport_string.upper().strip()
-        if hasattr(self, sport_string):
-            return getattr(self, sport_string)
+    def get_sport(self, sport_string: str) -> Optional[Sport]:
+        parsed_sport_string = sport_string.upper().strip().replace(" ", "").replace("_", "")
+        if hasattr(self, parsed_sport_string):
+            return getattr(self, parsed_sport_string)
         else:
             return None
     

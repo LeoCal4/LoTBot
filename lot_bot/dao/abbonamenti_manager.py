@@ -1,3 +1,4 @@
+from _pytest.python_api import raises
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import InsertOneResult
@@ -12,18 +13,19 @@ def create_abbonamento(abbonamento_data : dict) -> bool:
     Returns:
         bool: True if the abbonamento was inserted,
             False otherwise
+    
+    Raises:
+        Exception: in case of errors
     """
     try:
         result: InsertOneResult = db.mongo.abbonamenti.insert_one(abbonamento_data)
         lgr.logger.debug(f"Created new abbonamento for user id {abbonamento_data['telegramID']} with data {abbonamento_data}")
         return bool(result.inserted_id)
     except Exception as e:
-        lgr.logger.error("Error during create abbonamenti")
-        lgr.logger.error(f"Exception: {str(e)}")
         if "_id" in abbonamento_data:
             abbonamento_data["_id"] = str(abbonamento_data["_id"])
-        lgr.logger.error(f"{abbonamento_data=}")
-        return False
+        lgr.logger.error(f"Error during create abbonamenti - {abbonamento_data=}")
+        raise e
 
 
 def retrieve_abbonamenti(abbonamenti_data: dict) -> list:
@@ -34,15 +36,15 @@ def retrieve_abbonamenti(abbonamenti_data: dict) -> list:
 
     Returns:
         list: the results obtained
-        None: in case of errors
+
+    Raises:
+        Exception: in case of errors with db
     """
     try:
         return list(db.mongo.abbonamenti.find(abbonamenti_data))
     except Exception as e:
-        lgr.logger.error("Error during retrieve abbonamenti")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"{abbonamenti_data=}")
-        return None 
+        lgr.logger.error(f"Error during retrieve abbonamenti - {abbonamenti_data=}")
+        raise e 
 
 
 def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, strategy: str) -> dict:
@@ -56,6 +58,9 @@ def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, s
     Returns:
         dict: the dict containing the dati of the abbonamento found (if there was any)
         None: if there was an error or if no abbonamento was found
+
+    Raises:
+        Exception: in case of db errors
     """
     try:
         return db.mongo.abbonamenti.find_one({
@@ -64,10 +69,8 @@ def retrieve_abbonamento_sport_strategy_from_user_id(user_id: int, sport: str, s
             "strategia": strategy,
         })
     except Exception as e:
-        lgr.logger.error("Error during retrieve sport strategy abbonamento for user id")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"{user_id=} - {sport=} - {strategy=}")
-        return None
+        lgr.logger.error(f"Error during retrieve sport strategy abbonamento for user id - {user_id=} - {sport=} - {strategy=}")
+        raise e
 
 
 def delete_abbonamento(abbonamento_data: dict) -> bool:

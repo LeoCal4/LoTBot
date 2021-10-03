@@ -85,7 +85,7 @@ def test_get_cashout_filter(message_text, expected, monkeypatch):
 
 @pytest.mark.parametrize(
     "message_text,expected",
-    [("normal message", True), ("sport strategia \n giocata error", True)]
+    [("normal message", False), ("/messaggio_abbonati sport - strategia \n normal message", True)]
 )
 def test_get_sport_channel_normal_message_filter(message_text, expected, monkeypatch):
     fake_exchange_channel_id = 123

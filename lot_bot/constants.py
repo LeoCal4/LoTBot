@@ -11,6 +11,11 @@ Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido opp
 PAYMENT_ADD_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
 
 
+BENTORNATO_MESSAGE = "Bentornato, puoi continuare ad utilizzare il bot"
+
+LISTA_CANALI_MESSAGE = "Questa è la lista dei canali di cui è possibile ricevere le notifiche"
+
+
 # {0}: first name of the user
 # {1}: subscription expiration date 
 WELCOME_MESSAGE_PART_ONE = """<b>Benvenuto/a {0}!</b> 👍

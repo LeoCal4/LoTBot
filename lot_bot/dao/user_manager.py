@@ -81,16 +81,17 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
 
     Returns:
         Dict: the user data 
-        None: if no user was found or if there was an error
+        None: if no user was found 
+    
+    Raises:
+        Exception: if there was an error
     """
     try:
         user_fields = {field: 1 for field in user_fields}
         return db.mongo.utenti.find_one({"_id": user_id}, user_fields)
     except Exception as e:
-        lgr.logger.error("Error during user fields retrieval")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"{user_id=} - {user_fields=}")
-        return None
+        lgr.logger.error(f"Error during user fields retrieval {user_id=} - {user_fields=}")
+        raise e
 
 
 def retrieve_all_user_giocate(user_id: int) -> Optional[Dict]:
@@ -104,6 +105,19 @@ def retrieve_all_user_giocate(user_id: int) -> Optional[Dict]:
 
 
 def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Optional[Dict]:
+    """Retrieves all the giocate for user user_id since the time
+    indicated by the timestamp.
+
+    Args:
+        user_id (int)
+        timestamp (float)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        Optional[Dict]: the giocate the user has made since timestamp, if any
+    """
     try:
         return list(db.mongo.utenti.aggregate([
             {
@@ -127,10 +141,8 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
             ])
         )
     except Exception as e:
-        lgr.logger.error("Error during user giocate retrieval")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        return None
+        lgr.logger.error(f"Error during user giocate retrieval - {user_id}")
+        raise e
 
 
 def update_user(user_id: int, user_data: Dict) -> bool:
@@ -165,8 +177,19 @@ def update_user(user_id: int, user_data: Dict) -> bool:
 
 
 def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
+    """Creates a personal user giocata for user_id.
+
+    Args:
+        giocata (Dict)
+        user_id (int)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True in case the giocata was added, False otherwise
+    """
     try:
-        # TODO check if it is already present
         lgr.logger.debug(f"Registering {giocata=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
             {
@@ -181,11 +204,10 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
-        lgr.logger.error("Error during giocata registration")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        lgr.logger.error(f"User data: {dumps(giocata)}")
-        return False
+        if "_id" in giocata:
+            del giocata["_id"]
+        lgr.logger.error(f"Error during giocata registration: {user_id} - {dumps(giocata)}")
+        raise e
 
 
 def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:

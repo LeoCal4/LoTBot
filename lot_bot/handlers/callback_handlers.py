@@ -51,7 +51,7 @@ def select_sport_strategies(update: Update, context: CallbackContext):
         Exception: raised in case the sport is not valid
     """
     sport_token = update.callback_query.data.replace("sport_", "")
-    sport = spr.sports_container.get_sport_from_string(sport_token)
+    sport = spr.sports_container.get_sport(sport_token)
     if not sport:
         lgr.logger.error(f"Could not open strategies for sport {sport_token}")
         raise custom_exceptions.SportNotFoundError(sport_token)
@@ -61,8 +61,6 @@ def select_sport_strategies(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_strategies_inline_keyboard(update, sport),
     )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
 def set_sport_strategy_state(update: Update, context: CallbackContext):
@@ -78,18 +76,18 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
         Exception: in case any among sport, strategy and state are invalid. 
     """
     sport_token, strategy_token, state = update.callback_query.data.split("_")
-    sport = spr.sports_container.get_sport_from_string(sport_token)
+    sport = spr.sports_container.get_sport(sport_token)
     if not sport:
         lgr.logger.error(f"Could not set strategies for sport {sport_token}")
         raise custom_exceptions.SportNotFoundError(sport_token)
-    strategy = strat.strategies_container.get_strategy_from_string(strategy_token)
+    strategy = strat.strategies_container.get_strategy(strategy_token)
     if not strategy or not strategy in sport.strategies:
         lgr.logger.error(f"Could not find {strategy} taken from {strategy_token} in sport {sport.name}")
         raise custom_exceptions.StrategyNotFoundError(sport_token, strategy_token)
     if state != "activate" and state != "disable":
-        lgr.logger.error(f"Invalid set strategy state {state}")
-        raise Exception(f"Invalid set strategy state {state}")
-
+        error_message = f"Invalid set strategy state {state}"
+        lgr.logger.error(error_message)
+        raise Exception(error_message)
     # ! check if the strategy is being set to the same state it is already in
     # (that would mean that we would edit the inline keyboard with an identical one
     #   and that would cause an error)
@@ -97,7 +95,6 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     lgr.logger.debug(f"Found abbonamenti {abb_results=}")
     if (not abb_results and state == "disable") or (abb_results and state == "activate"):
         # we are either trying to disable an already disabled strategy or activate an already active one
-        context.bot.answer_callback_query(update.callback_query.id, text="")
         return
     abbonamento_data = {
         "telegramID": update.callback_query.from_user.id,
@@ -116,8 +113,6 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_strategies_inline_keyboard(update, sport),
     )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
 def to_homepage(update: Update, context: CallbackContext):
@@ -170,8 +165,10 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["validoFino"])).strftime('%d/%m/%Y alle %H:%M')
-    tip_text = cst.TIP_MESSAGE.format(expiration_date)
+    # summing 2 hours for the UTC timezone
+    expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["validoFino"])) + datetime.timedelta(hours=2)
+    expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
+    tip_text = cst.TIP_MESSAGE.format(expiration_date_string)
     context.bot.edit_message_text(
         tip_text,
         chat_id=update.callback_query.message.chat_id,
@@ -195,13 +192,11 @@ def to_links(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USEFUL_LINKS_INLINE_KEYBOARD,
     )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
+
 
 def feature_to_be_added(update: Update, context: CallbackContext):
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
-    
+    return
+
 
 def to_explanations_menu(update: Update, context: CallbackContext):
     """Loads the strategies explanation menù.
@@ -218,8 +213,6 @@ def to_explanations_menu(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.EXPLANATION_TEST_INLINE_KEYBOARD,
     )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
 def strategy_explanation(update: Update, context: CallbackContext):
@@ -241,14 +234,12 @@ def strategy_explanation(update: Update, context: CallbackContext):
     """
     strategy_token = update.callback_query.data.split("_")[1]
     lgr.logger.debug(f"Received {strategy_token=} explanation")
-    strategy = strat.strategies_container.get_strategy_from_string(strategy_token)
-    if strategy and strategy.name not in cfg.config.VIDEO_FILE_IDS.keys():
-        lgr.logger.error(f"{strategy} cannot be found for explanation")
+    strategy = strat.strategies_container.get_strategy(strategy_token)
+    if not strategy or strategy.name not in cfg.config.VIDEO_FILE_IDS.keys():
+        lgr.logger.error(f"{strategy_token} cannot be found for explanation")
         raise Exception(f"Strategy {strategy} not found")
     # ! avoid reloading the same video strategy
     if update.effective_message.caption and strategy.display_name in update.effective_message.caption:
-        # must answer the callback query, even if it is useless
-        context.bot.answer_callback_query(update.callback_query.id, text="")
         return
     strategy_video_explanation_id = cfg.config.VIDEO_FILE_IDS[strategy.name]
     caption = f"Spiegazione di {strategy.display_name}"
@@ -272,8 +263,6 @@ def strategy_explanation(update: Update, context: CallbackContext):
             caption=caption,
             reply_markup=kyb.EXPLANATION_TEST_INLINE_KEYBOARD,
         )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
 ######################################### TESTING #########################################
@@ -292,13 +281,7 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Giocata effettuata 🟩"
     parsed_giocata = utils.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
-    # if not parsed_giocata:
-    #     lgr.logger.error("Could not parse giocata {giocata_text}")
-    #     raise Exception(f"Could not parse giocata {giocata_text}")
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
-    if not retrieved_giocata:
-        lgr.logger.error(f"Giocata {parsed_giocata} not found")
-        raise Exception(f"Giocata {parsed_giocata} not found")
     personal_user_giocata = giocata_model.create_user_giocata()
     personal_user_giocata["original_id"] = retrieved_giocata["_id"]
     personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
@@ -368,8 +351,6 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     chat_id = update.callback_query.from_user.id
     message_id = update.callback_query.message.message_id
     user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
-    if user_giocate_data is None:
-        raise Exception # TODO
     if user_giocate_data == []:
         context.bot.edit_message_text(
             "Nessuna giocata trovata.",
@@ -380,8 +361,6 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
         return
     user_giocate_ids = [giocata["original_id"] for giocata in user_giocate_data]
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
-    if giocate_full_data is None:
-        raise Exception # TODO
     resoconto_message = utils.create_resoconto_message(giocate_full_data)
     # edit last message with resoconto
     context.bot.edit_message_text(

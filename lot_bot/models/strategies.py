@@ -1,3 +1,4 @@
+from typing import Optional
 import dataclasses
 
 @dataclasses.dataclass
@@ -35,8 +36,8 @@ class StrategyContainer:
     def __contains__(self, item: Strategy):
         pass
 
-    def get_strategy_from_string(self, strategy_token: str) -> Strategy:
-        strategy_token = strategy_token.upper().strip()
+    def get_strategy(self, strategy_token: str) -> Optional[Strategy]:
+        strategy_token = strategy_token.upper().strip().replace(" ", "").replace("_", "")
         if hasattr(self, strategy_token):
             return getattr(self, strategy_token)
         else:

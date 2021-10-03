@@ -11,26 +11,26 @@ from lot_bot import utils
 
 def test_get_sport_from_correct_giocata(correct_giocata: Tuple[str, Dict]):
     giocata_text, giocata_data  = correct_giocata
-    sport = utils.get_sport_from_giocata(giocata_text)
+    sport = utils.get_sport_name_from_giocata(giocata_text)
     assert giocata_data["sport"] == sport
 
 
 def test_get_sport_from_wrong_giocata(wrong_giocata: Tuple[str, Dict]):
     giocata_text, _ = wrong_giocata
     with pytest.raises(Exception):
-        utils.get_sport_from_giocata(giocata_text)
+        utils.get_sport_name_from_giocata(giocata_text)
 
 
 def test_get_strategy_from_correct_giocata(correct_giocata: Tuple[str, Dict]):
     giocata_text, giocata_data = correct_giocata
-    strategy = utils.get_strategy_from_giocata(giocata_text)
+    strategy = utils.get_strategy_name_from_giocata(giocata_text, giocata_data["sport"])
     assert strategy == giocata_data["strategy"]
 
 
 def test_get_strategy_from_wrong_giocata(wrong_giocata: Tuple[str, Dict]):
     giocata_text, _ = wrong_giocata
     with pytest.raises(Exception):
-        utils.get_strategy_from_giocata(giocata_text)
+        utils.get_strategy_name_from_giocata(giocata_text, "")
 
 
 @pytest.mark.parametrize(
@@ -77,21 +77,41 @@ def test_create_valid_referral_code(monkeypatch, new_user: Dict):
     assert utils.create_valid_referral_code() == second_code
 
 
-# * for some reason it goes 1 hour back, the month is added correctly though 
+# * for some timezone reason it goes 1 hour back, the month is added correctly though 
 @pytest.mark.parametrize(
     "exp_date_timestamp,expected",
     [
-        (datetime.datetime(2020, 2, 28, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2020, 3, 28, tzinfo=datetime.timezone.utc).timestamp()),
+        (datetime.datetime(2050, 2, 28, 2, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2050, 3, 28, tzinfo=datetime.timezone.utc).timestamp()),
         # january to february to test a non-existing day in the next month
-        (datetime.datetime(2021, 1, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2021, 2, 28, tzinfo=datetime.timezone.utc).timestamp()),
+        (datetime.datetime(2051, 1, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2051, 2, 28, tzinfo=datetime.timezone.utc).timestamp()),
         # december to january test new year
-        (datetime.datetime(2020, 12, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2021, 1, 30, tzinfo=datetime.timezone.utc).timestamp()),
+        (datetime.datetime(2050, 12, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2051, 1, 30, tzinfo=datetime.timezone.utc).timestamp()),
     ]
 )
 def test_extend_expiration_date(exp_date_timestamp: float, expected: float):
     extended_timestamp = utils.extend_expiration_date(exp_date_timestamp)
-    assert extended_timestamp == expected
-    
+    extended_string = datetime.datetime.utcfromtimestamp(extended_timestamp).strftime("%d/%m/%Y - %H:%M")
+    expected_string = datetime.datetime.utcfromtimestamp(expected).strftime("%d/%m/%Y - %H:%M")
+    assert extended_string == expected_string
+
+
+@pytest.mark.parametrize(
+    "exp_date_timestamp",
+    [
+        (datetime.datetime(2010, 2, 28, 1, tzinfo=datetime.timezone.utc).timestamp()),
+        # january to february to test a non-existing day in the next month
+        (datetime.datetime(2011, 1, 30, 1, tzinfo=datetime.timezone.utc).timestamp()),
+        # december to january test new year
+        (datetime.datetime(2010, 12, 30, 1, tzinfo=datetime.timezone.utc).timestamp()),
+    ]
+)
+def test_extend_expiration_date_with_old_date(exp_date_timestamp: float):
+    extended_date_timestamp = utils.extend_expiration_date(exp_date_timestamp)
+    extended_date_string = datetime.datetime.utcfromtimestamp(extended_date_timestamp).strftime("%d/%m/%Y")
+    extended_now_timestamp = utils.extend_expiration_date(datetime.datetime.utcnow().timestamp())
+    extended_now_string = datetime.datetime.utcfromtimestamp(extended_now_timestamp).strftime("%d/%m/%Y")
+    assert extended_date_string == extended_now_string
+
 
 def test_get_giocata_num_from_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
