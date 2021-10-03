@@ -85,11 +85,12 @@ def test_retrieve_abbonamento_sport_strategy_from_user_id(monkeypatch, new_abbon
     ) is None
     # db error
     monkeypatch.setattr(db, "mongo", None)
-    assert abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(
+    with pytest.raises(Exception):
+        abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(
         new_abbonamento["telegramID"], 
         new_abbonamento["sport"], 
         new_abbonamento["strategia"]
-    ) is None
+    )
 
 
 def test_delete_abbonamento(monkeypatch, new_abbonamento: dict, clear_abbonamenti):
