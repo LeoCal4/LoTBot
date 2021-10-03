@@ -162,17 +162,14 @@ def to_sports_menu(update: Update, context: CallbackContext):
         Exception: in case the user cannot be found
     """
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user(user_id)
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "validoFino"])
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
         context.bot.send_message(
             user_id,
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
-        # must answer the callback query, even if it is useless
-        context.bot.answer_callback_query(update.callback_query.id, text="")
         return
-        # raise custom_exceptions.UserNotFound(user_id)
     expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["validoFino"])).strftime('%d/%m/%Y alle %H:%M')
     tip_text = cst.TIP_MESSAGE.format(expiration_date)
     context.bot.edit_message_text(
@@ -181,8 +178,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_sports_inline_keyboard(update)
     )
-    # must answer the callback query, even if it is useless
-    context.bot.answer_callback_query(update.callback_query.id, text="")
 
 
 def to_links(update: Update, context: CallbackContext):

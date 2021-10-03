@@ -1,6 +1,6 @@
 import datetime
 from json import dumps
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
 
 from lot_bot import database as db
 from lot_bot import logger as lgr
@@ -69,6 +69,27 @@ def retrieve_user_by_referral(referral_code: str) -> Optional[Dict]:
         lgr.logger.error("Error during user retrieval by ref code")
         lgr.logger.error(f"Exception: {str(e)}")
         lgr.logger.error(f"Referral code: {referral_code}")
+        return None
+
+
+def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Optional[Dict]:
+    """Retrieve the user fields from the user specified by user_id.
+
+    Args:
+        user_id (int)
+        user_fields (List[str])
+
+    Returns:
+        Dict: the user data 
+        None: if no user was found or if there was an error
+    """
+    try:
+        user_fields = {field: 1 for field in user_fields}
+        return db.mongo.utenti.find_one({"_id": user_id}, user_fields)
+    except Exception as e:
+        lgr.logger.error("Error during user fields retrieval")
+        lgr.logger.error(f"Exception: {str(e)}")
+        lgr.logger.error(f"{user_id=} - {user_fields=}")
         return None
 
 
@@ -242,8 +263,8 @@ def get_discount_for_user(user_id: int) -> float:
     Returns:
         float [1.0, 0.0]: decimal number representing the discount percentage 
     """
-    retrieved_user = retrieve_user(user_id)
+    retrieved_user_payments = retrieve_user_fields_by_user_id(user_id, ["payments"])
     discount = 0
-    if retrieved_user and len(retrieved_user["payments"]) == 0:
+    if retrieved_user_payments and len(retrieved_user_payments["payments"]) == 0:
         discount = 0.5
     return discount

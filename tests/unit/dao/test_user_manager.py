@@ -25,11 +25,11 @@ def get_random_payment() -> Dict:
 
 def test_create_user(monkeypatch):
     user_data = {
-        "_id": 0,
+        "_id": 999,
         "name": "Franco",
         "surname": "Rossi"
     }
-    user_manager.create_user(user_data)
+    assert user_manager.create_user(user_data)
     user = user_manager.retrieve_user(user_data["_id"])
     assert len(user_data.keys()) == len(user.keys())
     for key in user.keys():
@@ -61,7 +61,6 @@ def test_update_user(new_user: Dict, monkeypatch):
     user_manager.update_user(user_id, {"name": new_name})
     updated_user = user_manager.retrieve_user(user_id)
     assert updated_user["name"] == new_name
-    assert updated_user["surname"] == new_user["surname"]
     # wrong id
     assert not user_manager.update_user(-1, {"name": new_name})
     # db connection error
@@ -168,3 +167,14 @@ def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_f
     assert len(giocate) == len(recent_giocate)
     for giocata, original_giocata in zip(giocate, recent_giocate):
         assert giocata["original_id"] == original_giocata["original_id"]
+
+
+def test_retrieve_user_fields_by_user_id(new_user: Dict):
+    # TODO test for missing fields
+    random_fields = []
+    user_fields = list(new_user.keys())
+    for _ in range(random.randint(1, 4)):
+        random_fields.append(random.choice(user_fields))
+    retrieved_fields = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], random_fields)
+    for field in random_fields:
+        assert new_user[field] == retrieved_fields[field]  

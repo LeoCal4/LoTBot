@@ -5,7 +5,7 @@ import mongomock
 import pytest
 from lot_bot import database as db
 from lot_bot.dao import user_manager
-from lot_bot import utils
+from lot_bot.models import users as user_model
 
 
 # scope="session" is used to call this fixture only once for the whole test session
@@ -29,13 +29,9 @@ def new_user() -> Dict:
     Yields:
         dict: the user data
     """
-    user_data = {
-        "_id": random.randint(0, 999),
-        "name": "Mario",
-        "surname": "Rossi",
-        "payments": [],
-        "referral_code": utils.generate_referral_code()
-    }
+    user_data = user_model.create_base_user_data()
+    user_data["_id"] = random.randint(0, 999)
+    user_data["name"] = "Mario"
     user_manager.create_user(user_data)
     yield user_data
     user_manager.delete_user(user_data["_id"])

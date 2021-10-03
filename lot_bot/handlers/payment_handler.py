@@ -36,13 +36,13 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
         int: the REFERRAL state for the ConversationHandler
     """
     chat_id = update.callback_query.message.chat_id
-    retrieved_user = user_manager.retrieve_user(chat_id)
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(chat_id, ["linked_referral_code"])
     if not retrieved_user:
         lgr.logger.error(f"Could not find update user {chat_id} to get its external referral code")
         raise custom_exceptions.UserNotFound(chat_id, update=update)
         # TODO the conversation dies without exiting
     linked_referral_code = retrieved_user["linked_referral_code"]
-    if retrieved_user["linked_referral_code"] != "":
+    if linked_referral_code != "":
         referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_code)
     else:
         referral_text = cst.PAYMENT_ADD_REFERRAL_CODE_TEXT
@@ -175,7 +175,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     """
     user_id = update.effective_user.id
     update.message.reply_text("Grazie per aver acquistato il nostro servizio!")
-    retrieved_user = user_manager.retrieve_user(user_id)
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["validoFino", "linked_referral_code"])
     if not retrieved_user:
         lgr.logger.error("Cannot retrieve user {user_id} to save its payment")
         raise custom_exceptions.UserNotFound(user_id, update=update)

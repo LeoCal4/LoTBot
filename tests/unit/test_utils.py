@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Dict
+from typing import Dict, Tuple
 
 import pytest
 from lot_bot import constants as cst
@@ -9,25 +9,25 @@ from lot_bot.dao import user_manager
 from lot_bot import utils
 
 
-def test_get_sport_from_correct_giocata(correct_giocata):
+def test_get_sport_from_correct_giocata(correct_giocata: Tuple[str, Dict]):
     giocata_text, giocata_data  = correct_giocata
     sport = utils.get_sport_from_giocata(giocata_text)
     assert giocata_data["sport"] == sport
 
 
-def test_get_sport_from_wrong_giocata(wrong_giocata):
+def test_get_sport_from_wrong_giocata(wrong_giocata: Tuple[str, Dict]):
     giocata_text, _ = wrong_giocata
     with pytest.raises(Exception):
         utils.get_sport_from_giocata(giocata_text)
 
 
-def test_get_strategy_from_correct_giocata(correct_giocata):
+def test_get_strategy_from_correct_giocata(correct_giocata: Tuple[str, Dict]):
     giocata_text, giocata_data = correct_giocata
     strategy = utils.get_strategy_from_giocata(giocata_text)
     assert strategy == giocata_data["strategy"]
 
 
-def test_get_strategy_from_wrong_giocata(wrong_giocata):
+def test_get_strategy_from_wrong_giocata(wrong_giocata: Tuple[str, Dict]):
     giocata_text, _ = wrong_giocata
     with pytest.raises(Exception):
         utils.get_strategy_from_giocata(giocata_text)
@@ -37,7 +37,7 @@ def test_get_strategy_from_wrong_giocata(wrong_giocata):
     "percentage_text,expected",
     [("-999.00", "🔴"), ("+999,00", "🟢"), ("0", "🟢"), ("/start", "")]
 )
-def test_get_emoji_for_cashout_percentage(percentage_text, expected):
+def test_get_emoji_for_cashout_percentage(percentage_text: str, expected: str):
     emoji = utils.get_emoji_for_cashout_percentage(percentage_text)
     assert emoji == expected
 
@@ -48,7 +48,7 @@ def test_generate_referral_code():
     assert not re.match(r"(\w|-)+-lot$", referral_code) is None
 
 
-def test_check_referral_code_availability(new_user):
+def test_check_referral_code_availability(new_user: Dict):
     assert not utils.check_referral_code_availability(new_user["referral_code"])
     assert utils.check_referral_code_availability("random code")
 
@@ -88,35 +88,45 @@ def test_create_valid_referral_code(monkeypatch, new_user: Dict):
         (datetime.datetime(2020, 12, 30, 1, tzinfo=datetime.timezone.utc).timestamp(), datetime.datetime(2021, 1, 30, tzinfo=datetime.timezone.utc).timestamp()),
     ]
 )
-def test_extend_expiration_date(exp_date_timestamp, expected):
+def test_extend_expiration_date(exp_date_timestamp: float, expected: float):
     extended_timestamp = utils.extend_expiration_date(exp_date_timestamp)
     assert extended_timestamp == expected
     
 
-def test_get_giocata_num_from_giocata(correct_giocata):
+def test_get_giocata_num_from_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
     giocata_num = utils.get_giocata_num_from_giocata(correct_giocata_text)
     assert giocata_data["giocata_num"] == giocata_num
 
 
-def test_get_quota_from_giocata(correct_giocata):
+def test_get_quota_from_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
     quota = utils.get_quota_from_giocata(correct_giocata_text)
     assert  quota == int(float(giocata_data["quota"])*100)
 
 
-def test_get_stake_from_giocata(correct_giocata):
+def test_get_stake_from_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
     stake = utils.get_stake_from_giocata(correct_giocata_text)
     assert stake == int(giocata_data["stake"])
 
 
-def test_parse_giocata(correct_giocata):
+def test_get_quota_from_giocata(correct_giocata: Tuple[str, Dict], correct_giocata_multipla: Tuple[str, Dict]):
+    correct_giocata_text, giocata_data = correct_giocata
+    single_quota = utils.get_quota_from_giocata(correct_giocata_text)
+    assert single_quota == int(float(giocata_data["quota"])*100)
+    multiple_giocata_text, multiple_giocata_data = correct_giocata_multipla
+    multiple_quota = utils.get_quota_from_giocata(multiple_giocata_text)
+    assert multiple_quota == int(float(multiple_giocata_data["quota"])*100)
+
+
+
+def test_parse_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
     parsed_giocata = utils.parse_giocata(correct_giocata_text)
     assert parsed_giocata["sport"] == giocata_data["sport"]
-    assert parsed_giocata["strategia"] == giocata_data["strategy"] 
-    assert parsed_giocata["giocata_num"] == int(giocata_data["giocata_num"]) 
-    assert parsed_giocata["base_quota"] == int(float(giocata_data["quota"])*100) 
-    assert parsed_giocata["base_stake"] == int(giocata_data["stake"]) 
+    assert parsed_giocata["strategia"] == giocata_data["strategy"]
+    assert parsed_giocata["giocata_num"] == giocata_data["giocata_num"]
+    assert parsed_giocata["base_quota"] == int(float(giocata_data["quota"])*100)
+    assert parsed_giocata["base_stake"] == int(giocata_data["stake"])
     assert parsed_giocata["raw_text"] == correct_giocata_text

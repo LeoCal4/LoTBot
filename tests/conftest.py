@@ -36,14 +36,19 @@ def set_test_env(monkeysession):
 
 
 
-def create_giocata(sport: spr.Sport, strategy: strat.Strategy) -> str:
+def create_giocata(sport: spr.Sport, strategy: strat.Strategy, is_multipla: bool = False) -> str:
     stake = random.randint(1, 100)
     giocata_num = random.randint(0, 9999)
     quota = random.uniform(0.1, 100.0)
+
     giocata = f"""🏀 {sport.display_name} 🏀
 🇮🇹 Supercoppa Serie A 🇮🇹
 ⚜️  {strategy.display_name} ⚜️
 
+"""
+
+    if is_multipla:
+        sport_event = f"""
 Trieste 🆚 Trento
 🧮 1 inc overtime 🧮
 📈 Quota 1.55 📈
@@ -52,7 +57,16 @@ Cremona 🆚 Sassari
 🧮 2 inc overtime 🧮
 📈 Quota 1.30 📈
 
-🧾 {quota:.2f} 🧾 
+🧾 {quota:.2f} 🧾"""
+    else:
+        sport_event = f"""
+Trieste 🆚 Trento
+🧮 1 inc overtime 🧮
+📈 Quota {quota:.2f} 📈"""
+
+
+    giocata += sport_event
+    giocata += f"""
 
 🕑 18:30 🕑 
 
@@ -68,15 +82,19 @@ Cremona 🆚 Sassari
     return giocata, giocata_data
 
 
-def correct_giocata_function() -> Tuple[str, Dict]:
+def correct_giocata_function(is_multipla: bool = False) -> Tuple[str, Dict]:
     random_sport : str.Sport = random.choice(spr.sports_container.astuple())
     random_strategy =  random.choice(random_sport.strategies)
-    return create_giocata(random_sport, random_strategy)
+    return create_giocata(random_sport, random_strategy, is_multipla)
 
 
 @pytest.fixture
 def correct_giocata() -> Tuple[str, Dict]:
     return correct_giocata_function()
+
+@pytest.fixture
+def correct_giocata_multipla() -> Tuple[str, Dict]:
+    return correct_giocata_function(is_multipla=True)
 
 
 @pytest.fixture

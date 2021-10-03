@@ -184,7 +184,7 @@ def get_quota_from_giocata(giocata_text: str) -> int:
         regex_match = re.search(fr"{MULTIPLE_QUOTA_EMOJI}\s*(\d+\.\d+)\s*{MULTIPLE_QUOTA_EMOJI}", giocata_text)
     else:
         SINGLE_QUOTA_EMOJI = "📈"
-        regex_match = re.search(fr"{SINGLE_QUOTA_EMOJI}\s*Quota(\d+\.\d+)\s*{SINGLE_QUOTA_EMOJI}", giocata_text)
+        regex_match = re.search(fr"{SINGLE_QUOTA_EMOJI}\s*Quota\s*(\d+\.\d+)\s*{SINGLE_QUOTA_EMOJI}", giocata_text)
     if not regex_match:
         error_message = f"utils.get_quota_from_giocata: quota not found from {giocata_text}"
         lgr.logger.error(error_message)

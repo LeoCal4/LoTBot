@@ -101,7 +101,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     lgr.logger.debug(f"Found {messages_to_be_sent} abbonamenti for {sport} - {strategy}")
     for abbonamento in abbonamenti:
         lgr.logger.debug(f"Checking abbonamento {abbonamento}")
-        user_data = user_manager.retrieve_user(abbonamento["telegramID"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(abbonamento["telegramID"], ["validoFino"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {abbonamento['telegramID']} while handling giocata")
             messages_to_be_sent -= 1
@@ -157,7 +157,7 @@ def start_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     lgr.logger.debug(f"Received /start command from {user_id}")
     lista_canali_message = "Questa è la lista dei canali di cui è possibile ricevere le notifiche"
-    if not user_manager.retrieve_user(user_id):
+    if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
         trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
         if not create_first_time_user(update.effective_user, trial_expiration_timestamp):
             lgr.logger.error("Could not create first time user upon /start")
@@ -342,7 +342,7 @@ def first_message_handler(update: Update, context: CallbackContext):
         Exception: in case any of the db operation fails
     """
     user = update.effective_user
-    if user_manager.retrieve_user(user.id):
+    if user_manager.retrieve_user_fields_by_user_id(user.id, ["_id"]):
         lgr.logger.warning(f"User with id {user.id} already exists, not sending welcome messages")
         return
     trial_expiration_timestamp = (datetime.datetime.utcnow() + datetime.timedelta(days=7)).timestamp()
