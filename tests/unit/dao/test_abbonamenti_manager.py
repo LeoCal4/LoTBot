@@ -1,7 +1,6 @@
 import random
 
 import pytest
-from lot_bot import constants as cst
 from lot_bot import database as db
 from lot_bot.dao import abbonamenti_manager
 from lot_bot.models import sports as spr

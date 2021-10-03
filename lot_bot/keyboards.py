@@ -84,28 +84,23 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
 
     chat_id = update.effective_chat.id
     abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id})
-    sport_attivi = [entry["sport"].lower() for entry in abbonamenti]
-    emoji_sport = {sport.name: "🔴" for sport in spr.sports_container if sport.show_in_menu}
-    for sport in sport_attivi:
+    subscribed_sports = [entry["sport"].lower() for entry in abbonamenti]
+    sports_in_menu = [sport for sport in spr.sports_container if sport.show_in_menu]
+    emoji_sport = {sport.name: "🔴" for sport in sports_in_menu}
+    for sport in subscribed_sports:
         emoji_sport[sport] = "🟢"
     SPORT_STRING_MENU_LEN = 19
     # ljust appends " " at the end of the string, until the specified length is reached
-    # capitalize makes the first letter uppercase and the rest lowercase
-    # TODO try without ljust
     sport_menu_entries = [
         sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
-        for sport in spr.sports_container 
-        if sport.show_in_menu
+        for sport in sports_in_menu
     ]
     inline_buttons = {
         sport.name: entry 
-        for sport, entry in zip(spr.sports_container, sport_menu_entries) 
-        if sport.show_in_menu
+        for sport, entry in zip(sports_in_menu, sport_menu_entries) 
     }
     keyboard_sport = []
-    for i, sport in enumerate(spr.sports_container):
-        if not sport.show_in_menu:
-            continue
+    for i, sport in enumerate(sports_in_menu):
         sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport.name], callback_data=f"sport_{sport.name}")
         if i % 2 == 0:
             keyboard_sport.append([sport_keyboard_button])
@@ -113,7 +108,6 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
             keyboard_sport[(i-1)//2].append(sport_keyboard_button)
     keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_homepage")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_sport)
-     
 
 
 def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> InlineKeyboardMarkup:
