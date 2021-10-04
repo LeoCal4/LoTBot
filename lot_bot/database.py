@@ -15,14 +15,13 @@ class MongoDatabase:
         try:
             self.client = MongoClient(
                 cfg.config.MONGO_DB_URL,
-                maxPoolsize=4 # TODO check this
             )
             # The ping command is cheap and does not require auth, 
             #   so it is run to check if the db is active
             self.client.admin.command("ping")
         except Exception as e:
             lgr.logger.error(f"Error creating DB: {str(e)} - {cfg.config.MONGO_DB_URL=}")
-            raise Exception
+            raise e
         lgr.logger.info("Connected to db") 
         db = self.client[cfg.config.MONGO_DB_NAME]
         self.abbonamenti = db["abbonamenti"]

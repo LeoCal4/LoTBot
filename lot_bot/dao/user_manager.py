@@ -17,9 +17,6 @@ def create_user(user_data: Dict) -> Union[Dict, bool]:
         bool: True if the user was created,
             False otherwise
     """
-    # TODO add user data validation
-    #   https://docs.mongodb.com/manual/core/schema-validation/
-    #   https://stackoverflow.com/questions/46569262/does-pymongo-have-validation-rules-built-in/51520384
     try:
         result: InsertOneResult = db.mongo.utenti.insert_one(user_data)
         # checks if the inserted id is the one that was passed
@@ -153,12 +150,14 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         user_id (int)
         user_data (Dict)
     
+    Raises:
+        Exception: in case of db errors
+    
     Returns:
         bool: True if the user was updated,
             False otherwise
     """
     try:
-        # TODO add document fields validation 
         update_result: UpdateResult = db.mongo.utenti.update_one({
             "_id": user_id,
             },
@@ -169,11 +168,10 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
-        lgr.logger.error("Error during user update")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        lgr.logger.error(f"User data: {dumps(user_data)}")
-        return False
+        if "_id" in user_data:
+            del user_data["_id"]
+        lgr.logger.error(f"Error during user update - {user_id} - {dumps(user_data)}")
+        raise e
 
 
 def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:

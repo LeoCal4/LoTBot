@@ -67,7 +67,8 @@ def test_update_user(new_user: Dict, monkeypatch):
     assert not user_manager.update_user(-1, {"name": new_name})
     # db connection error
     monkeypatch.setattr(db, "mongo", None)
-    assert not user_manager.update_user(user_id, {"name": new_name})
+    with pytest.raises(Exception):
+        user_manager.update_user(user_id, {"name": new_name})
 
 
 def test_delete_user(new_user: Dict, monkeypatch):

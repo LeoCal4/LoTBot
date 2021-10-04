@@ -37,10 +37,6 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
     """
     chat_id = update.callback_query.message.chat_id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(chat_id, ["linked_referral_code"])
-    if not retrieved_user:
-        lgr.logger.error(f"Could not find update user {chat_id} to get its external referral code")
-        raise custom_exceptions.UserNotFound(chat_id, update=update)
-        # TODO the conversation dies without exiting
     linked_referral_code = retrieved_user["linked_referral_code"]
     if linked_referral_code != "":
         referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_code)
@@ -56,7 +52,7 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
     return REFERRAL
 
 
-def received_referral(update: Update, _: CallbackContext) -> int:
+def received_referral(update: Update, _) -> int:
     """Checks the referral code specified by the user in order to know if the 
     code exists and if it is not the current user's one. If the referral code was 
     valid, it is added to its data.
@@ -66,7 +62,7 @@ def received_referral(update: Update, _: CallbackContext) -> int:
     
     Args:
         update (Update)
-        _ (CallbackContext)
+        _
 
     Returns:
         int: the REFERRAL state for the ConversationHandler
@@ -120,22 +116,21 @@ def to_payments(update: Update, context: CallbackContext):
     currency = "EUR"
     price = 7999 # cents
     discount = user_manager.get_discount_for_user(chat_id)
-    discounted_prince = price - int(price * discount) # TODO check if right
+    discounted_prince = price - int(price * discount)
     prices = [LabeledPrice("LoT Abbonamento", discounted_prince)]
 
     try:
         callback_handlers.delete_message_if_possible(update, context)
     except Exception as e:
-        lgr.logger.warning("Could not delete previous message before sending invoice")
-        lgr.logger.warning(f"{str(e)}")
+        lgr.logger.warning(f"Could not delete previous message before sending invoice - {str(e)}")
     context.bot.send_invoice(
         chat_id, title, description, payload, cfg.config.PAYMENT_TOKEN, currency, prices,
         need_email=True, need_name=True, start_parameter="Paga"
-    ) # TODO add photo for abbonamento
+    )
     return ConversationHandler.END
 
 
-def pre_checkout_handler(update: Update, _: CallbackContext):
+def pre_checkout_handler(update: Update, _):
     """This handler is called when the user has clicked on 
     an invoice and has inserted all the needed payment info.
 
@@ -146,7 +141,6 @@ def pre_checkout_handler(update: Update, _: CallbackContext):
         update (Update)
         _ (CallbackContext)
     """
-    # TODO check if the user has already payed (?)
     PAYLOAD_TIMESTAMP_INDEX = 2
     query = update.pre_checkout_query
     payload = query.invoice_payload
@@ -176,9 +170,6 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     update.message.reply_text("Grazie per aver acquistato il nostro servizio!")
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["validoFino", "linked_referral_code"])
-    if not retrieved_user:
-        lgr.logger.error("Cannot retrieve user {user_id} to save its payment")
-        raise custom_exceptions.UserNotFound(user_id, update=update)
     # * extend the user's subscription up to the same day of the next month
     new_expiration_date: float = utils.extend_expiration_date(retrieved_user["validoFino"])
     # * reset user successful referrals
@@ -201,9 +192,11 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         })
         if not update_result:
             lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")
+            # TODO 
     # * register the user's payment
     payment_data = update.message.successful_payment.to_dict()
     payment_data["datetime"] = datetime.datetime.utcnow().timestamp()
+    payment_data["payment_id"] = str(user_id) + "-" + str(payment_data["datetime"])
     referred_by_id = ""
     if linked_user:
         referred_by_id = linked_user["_id"]
