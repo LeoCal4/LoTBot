@@ -16,7 +16,7 @@ TEST_CHANNEL_NAME = "lot_test_channel1"
 # =============================== HELPER FUNCTIONS ===============================
 
 def user_exists_and_is_valid(user_id: int) -> bool:
-    ret_user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "validoFino"])
+    ret_user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
     if not ret_user_data:
         assert False, f"User does not exist: {ret_user_data=}"
     validity = user_manager.check_user_validity(datetime.datetime.now(), ret_user_data)
@@ -62,7 +62,7 @@ class TestHandlers:
     #     client_me = await client.get_me()
     #     assert user_exists_and_is_valid(client_me.id)
     #     # the start messages sets calcio and exchange
-    #     assert len(list(sport_subscriptions_manager.retrieve_sport_subscriptions({"telegramID": client_me.id}))) == 2
+    #     assert len(list(sport_subscriptions_manager.retrieve_sport_subscriptions({"user_id": client_me.id}))) == 2
     #     delete_user_and_sport_subscriptions(client_me.id)
 
 
@@ -94,7 +94,7 @@ class TestHandlers:
         client_me = await client.get_me()
         assert user_exists_and_is_valid(client_me.id)
         sport_subscriptions_data = {
-            "telegramID": client_me.id,
+            "user_id": client_me.id,
             "sport": giocata_data["sport"],
             "strategy": giocata_data["strategy"],
         }
@@ -129,7 +129,7 @@ class TestHandlers:
         exchange_name = spr.sports_container.EXCHANGE.name
         maxexchange_name = strat.strategies_container.MAXEXCHANGE.name
         # sport_subscriptions_exchange_data = {
-        #     "telegramID": client_me.id,
+        #     "user_id": client_me.id,
         #     "sport": exchange_name,
         #     "strategy": maxexchange_name,
         # }

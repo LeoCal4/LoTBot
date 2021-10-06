@@ -3,10 +3,12 @@
 - name: str
 - username: str
 - email: str
-- subscription_validity: timestamp
+- lot_subscription_expiration: timestamp
+- role: str TODO
 - referral_code: str
 - linked_referral_code: str
-- succesful_referrals: int
+- succesful_referrals: int -> succesful_referrals_since_last_payment TODO
+- referred_payments: List[str]
 - giocate: []
     - original_id
     - personal_stake: int
@@ -21,13 +23,11 @@
     - order_info:
         - email: str
 - sport_subscriptions: []
+    - sport: str
+    - strategies: List[str]
+- available_sports: [] TODO
     - sport_name: str
-    - strategies: []
-        - strat_name: str
-- available_sports: []
-    - sport_name: str
-    - strategies: []
-        - strat_name: str
+    - strategies: List[str]
 
 
 # Giocate model

@@ -100,7 +100,7 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
         lgr.logger.debug(f"Trying to disable a non-active strategy or activate an already subscribed strat")
         return
     sport_sub_data = {
-        "telegramID": update.callback_query.from_user.id,
+        "user_id": update.callback_query.from_user.id,
         "sport": sport.name,
         "strategy": strategy.name
     }
@@ -160,7 +160,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         Exception: in case the user cannot be found
     """
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "validoFino"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
         context.bot.send_message(
@@ -169,7 +169,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         )
         return
     # summing 2 hours for the UTC timezone
-    expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["validoFino"])) + datetime.timedelta(hours=2)
+    expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=2)
     expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.TIP_MESSAGE.format(expiration_date_string)
     context.bot.edit_message_text(
@@ -365,14 +365,14 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     user_giocate_ids = [giocata["original_id"] for giocata in user_giocate_data]
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
     resoconto_message = utils.create_resoconto_message(giocate_full_data)
-    # edit last message with resoconto
+    # * edit last message with resoconto
     context.bot.edit_message_text(
         resoconto_message,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=None,
     )
-    # send new message with menu
+    # * send new message with menu
     context.bot.send_message(
         chat_id,
         cst.RESOCONTI_MESSAGE,

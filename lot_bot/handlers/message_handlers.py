@@ -41,21 +41,21 @@ def create_first_time_user(user: User) -> Dict:
     # * create user
     user_data = user_model.create_base_user_data()
     user_data["_id"] = user.id
-    user_data["nome"] = user.first_name
-    user_data["nomeUtente"] = user.username
+    user_data["name"] = user.first_name
+    user_data["username"] = user.username
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    user_data["validoFino"] = trial_expiration_timestamp
+    user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio - piaquest sport_subscription
     sport_subscriptions_calcio_data = {
-        "telegramID": user.id,
+        "user_id": user.id,
         "sport": spr.sports_container.CALCIO.name,
         "strategy": strat.strategies_container.PIAQUEST.name,
     }
     sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_data)
     # * create exchange - maxexchange sport_subscription
     sport_subscriptions_exchange_data = {
-        "telegramID": user.id,
+        "user_id": user.id,
         "sport": spr.sports_container.EXCHANGE.name,
         "strategy": strat.strategies_container.MAXEXCHANGE.name,  
     }
@@ -72,7 +72,7 @@ def first_time_user_handler(update: Update):
     """
     user = update.effective_user
     first_time_user_data = create_first_time_user(update.effective_user)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["validoFino"]) + datetime.timedelta(hours=2)
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date_string)
     # the messages are sent only if the previous operations succeeded, this is fundamental
@@ -88,7 +88,7 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 context.bot.send_message(chat_id=dev_chat_id, text=msg, parse_mode=parse_mode)
             except Exception as e:
                 lgr.logger.error(f"Could not send message {msg} to developer {dev_chat_id}")
-                lgr.logger.error(f"{str(e)}")
+                lgr.logger.error(f"{str(e)}") # cannot raise e since it would loop with the error handler
 
 
 def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False):
@@ -115,7 +115,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     messages_to_be_sent = len(sub_user_ids)
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["validoFino"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
             messages_to_be_sent -= 1

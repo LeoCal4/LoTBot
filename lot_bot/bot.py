@@ -51,7 +51,9 @@ def add_handlers(dispatcher: Dispatcher):
     """
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
-    dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
+    # dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
+    dispatcher.add_handler(CommandHandler("send_file_id", message_handlers.send_file_id))
+    dispatcher.add_handler(CommandHandler("set_user_role", message_handlers.set_user_role))
 
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"

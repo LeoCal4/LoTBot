@@ -20,7 +20,7 @@ def get_sport_sub_data(user_id=None, sport_name=None, strategy_name=None) -> dic
         sport = sport if sport else spr.sports_container.get_sport(sport_name)
         strategy_name = random.choice(sport.strategies).name
     return {
-        "telegramID": user_id,
+        "user_id": user_id,
         "sport": sport_name,
         "strategy": strategy_name,
     }
@@ -41,7 +41,7 @@ def test_create_sport_subscription(monkeypatch, new_user: Dict): #):
     sport_sub_data = get_sport_sub_data(user_id=new_user["_id"])
     sport_subscriptions_manager.create_sport_subscription(sport_sub_data)
     ret_sport_subscription = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        sport_sub_data["telegramID"],
+        sport_sub_data["user_id"],
         sport_sub_data["sport"]
     )
     assert ret_sport_subscription, "Abbonamento was not created"
@@ -53,7 +53,7 @@ def test_create_sport_subscription(monkeypatch, new_user: Dict): #):
         sport_sub_data2 = get_sport_sub_data(user_id=new_user["_id"], sport_name=sport_sub_data["sport"])
     sport_subscriptions_manager.create_sport_subscription(sport_sub_data2)
     ret_sport_subscription2 = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        sport_sub_data["telegramID"],
+        sport_sub_data["user_id"],
         sport_sub_data["sport"]
     )
     assert len(ret_sport_subscription2) == 2
@@ -65,7 +65,7 @@ def test_create_sport_subscription(monkeypatch, new_user: Dict): #):
         sport_sub_data3 = get_sport_sub_data(user_id=new_user["_id"])
     sport_subscriptions_manager.create_sport_subscription(sport_sub_data3)
     ret_sport_subscription2 = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        sport_sub_data3["telegramID"],
+        sport_sub_data3["user_id"],
         sport_sub_data3["sport"]
     )
     # * clear db
@@ -79,7 +79,7 @@ def test_create_sport_subscription(monkeypatch, new_user: Dict): #):
 
 def test_retrieve_sport_subscriptions_from_user_id(monkeypatch, new_sport_subscription: dict):
     sport_subscription = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(
-        new_sport_subscription["telegramID"]
+        new_sport_subscription["user_id"]
     )[0]
     assert sport_subscription != []
     assert sport_subscription["sport"] ==  new_sport_subscription["sport"]
@@ -93,7 +93,7 @@ def test_retrieve_sport_subscriptions_from_user_id(monkeypatch, new_sport_subscr
     sports_idx[sport_subscription["sport"]] = idx
     idx += 1
     for _ in range(random.randint(2, 10)):
-        sport_sub_data = get_sport_sub_data(user_id=new_sport_subscription["telegramID"])
+        sport_sub_data = get_sport_sub_data(user_id=new_sport_subscription["user_id"])
         creation_result = sport_subscriptions_manager.create_sport_subscription(sport_sub_data)
         if creation_result:
             if sport_sub_data["sport"] in sports_idx:
@@ -107,7 +107,7 @@ def test_retrieve_sport_subscriptions_from_user_id(monkeypatch, new_sport_subscr
                 subscriptions.append({"sport": sport_sub_data["sport"], "strategies": [sport_sub_data["strategy"]]})
                 sports_idx[sport_sub_data["sport"]] = idx
                 idx += 1
-    ret_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(new_sport_subscription["telegramID"])
+    ret_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(new_sport_subscription["user_id"])
     assert len(ret_subscriptions) == len(subscriptions)
     for sub in subscriptions:
         assert sub in ret_subscriptions
@@ -118,12 +118,12 @@ def test_retrieve_sport_subscriptions_from_user_id(monkeypatch, new_sport_subscr
     # db error
     monkeypatch.setattr(db, "mongo", None)
     with pytest.raises(Exception):
-        sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(new_sport_subscription["telegramID"])
+        sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(new_sport_subscription["user_id"])
 
 
 def test_retrieve_subscribed_strats_from_user_id_and_sport(monkeypatch, new_sport_subscription: dict):
     sport_subscription = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        new_sport_subscription["telegramID"], 
+        new_sport_subscription["user_id"], 
         new_sport_subscription["sport"]
     )
     assert sport_subscription != []
@@ -139,7 +139,7 @@ def test_retrieve_subscribed_strats_from_user_id_and_sport(monkeypatch, new_spor
     monkeypatch.setattr(db, "mongo", None)
     with pytest.raises(Exception):
         sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        new_sport_subscription["telegramID"], 
+        new_sport_subscription["user_id"], 
         new_sport_subscription["sport"]
     )
 
@@ -150,7 +150,7 @@ def test_retrieve_all_user_ids_sub_to_sport_and_strategy(monkeypatch, new_sport_
         new_sport_subscription["strategy"]
     )
     assert ret_user != []
-    assert ret_user [-1] ==  new_sport_subscription["telegramID"]
+    assert ret_user [-1] ==  new_sport_subscription["user_id"]
     # retrieve multiple
     user_ids = []
     for _ in range(random.randint(2, 10)):
@@ -199,12 +199,12 @@ def test_retrieve_all_user_ids_sub_to_sport_and_strategy(monkeypatch, new_sport_
 
 
 def test_delete_sport_subscription(monkeypatch, new_sport_subscription: dict):
-    assert sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(new_sport_subscription["telegramID"], new_sport_subscription["sport"])
+    assert sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(new_sport_subscription["user_id"], new_sport_subscription["sport"])
     assert sport_subscriptions_manager.delete_sport_subscription(new_sport_subscription)
     assert sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(
-        new_sport_subscription["telegramID"], new_sport_subscription["sport"]) == []
+        new_sport_subscription["user_id"], new_sport_subscription["sport"]) == []
     # * inexistent delete
-    fake_sport_subscription = get_sport_sub_data(user_id=new_sport_subscription["telegramID"])
+    fake_sport_subscription = get_sport_sub_data(user_id=new_sport_subscription["user_id"])
     delete_result = sport_subscriptions_manager.delete_sport_subscription(fake_sport_subscription)
     assert not delete_result
     # * clean db
@@ -216,14 +216,14 @@ def test_delete_sport_subscription(monkeypatch, new_sport_subscription: dict):
 
 
 # def test_delete_sport_subscriptions_for_user_id(monkeypatch, new_sport_subscription: dict):
-#     user_id = new_sport_subscription["telegramID"]
+#     user_id = new_sport_subscription["user_id"]
 #     sport_sub_data = get_sport_sub_data(user_id=user_id)
 #     sport_subscriptions_manager.create_sport_subscription(sport_sub_data)
 #     assert sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
-#     assert sport_subscriptions_manager.retrieve_sport_subscriptions({"telegramID": user_id}) == []
+#     assert sport_subscriptions_manager.retrieve_sport_subscriptions({"user_id": user_id}) == []
 #     # inexistent delete (still true)
 #     fake_sport_subscription = get_sport_sub_data()
-#     assert sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(fake_sport_subscription["telegramID"])
+#     assert sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(fake_sport_subscription["user_id"])
 #     # db error
 #     monkeypatch.setattr(db, "mongo", None)
-#     assert not sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(new_sport_subscription["telegramID"])
+#     assert not sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(new_sport_subscription["user_id"])

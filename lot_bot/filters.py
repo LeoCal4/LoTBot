@@ -58,7 +58,8 @@ def get_sport_channel_normal_message_filter() -> Filters:
 
 
 def get_homepage_filter() -> Filters:
-    return Filters.regex(cst.HOMEPAGE_BUTTON_TEXT)
+    # return Filters.regex(cst.HOMEPAGE_BUTTON_TEXT)
+    return Filters.regex(r"[hH]omepage")
 
 
 def get_outcome_giocata_filter() -> Filters:

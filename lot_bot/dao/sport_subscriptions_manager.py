@@ -17,7 +17,7 @@ def create_sport_subscription(sport_sub_data : dict) -> bool:
     Raises:
         Exception: in case of errors
     """
-    user_id = sport_sub_data['telegramID']
+    user_id = sport_sub_data['user_id']
     try:
         # db.mongo.utenti.update_one(
         #     { "_id": user_id },
@@ -112,7 +112,7 @@ def delete_sport_subscription(sport_sub_data: dict) -> bool:
         bool: True if the operation was successful,
             Falso otherwise
     """
-    user_id = sport_sub_data["telegramID"]
+    user_id = sport_sub_data["user_id"]
     try:
         query_results = db.mongo.utenti.find_one({ "_id": user_id }, { "sport_subscriptions": 1 })
         if not query_results:
@@ -147,7 +147,7 @@ def delete_sport_subscriptions_for_user_id(user_id: int) -> bool:
             False otherwise
     """
     try:
-        db.mongo.sport_subscriptions.delete_many({"telegramID": user_id})
+        db.mongo.sport_subscriptions.delete_many({"user_id": user_id})
         # there may be a case in which a user has no sport_subscriptions,
         #   so we don't do any check on the result of the operation 
         return True

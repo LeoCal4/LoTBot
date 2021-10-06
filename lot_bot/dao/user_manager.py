@@ -279,7 +279,7 @@ def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> boo
         bool: True if the the user's subscription is still valid, 
             False otherwise
     """
-    return float(user_data["validoFino"]) > message_date.timestamp()
+    return float(user_data["lot_subscription_expiration"]) > message_date.timestamp()
 
 
 def get_discount_for_user(user_id: int) -> float:
