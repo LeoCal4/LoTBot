@@ -3,7 +3,8 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
 
 from lot_bot import constants as cst
 from lot_bot.models import sports as spr
-from lot_bot.dao import abbonamenti_manager
+from lot_bot.dao import sport_subscriptions_manager
+from lot_bot import logger as lgr
 
 _startup_buttons = [
     [KeyboardButton(text=cst.HOMEPAGE_BUTTON_TEXT)],
@@ -83,8 +84,8 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """
 
     chat_id = update.effective_chat.id
-    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id})
-    subscribed_sports = [entry["sport"].lower() for entry in abbonamenti]
+    sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(chat_id)
+    subscribed_sports = [entry["sport"].lower() for entry in sport_subscriptions]
     sports_in_menu = [sport for sport in spr.sports_container if sport.show_in_menu]
     emoji_sport = {sport.name: "🔴" for sport in sports_in_menu}
     for sport in subscribed_sports:
@@ -126,8 +127,8 @@ def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> Inlin
         InlineKeyboardMarkup
     """
     chat_id = update.effective_chat.id
-    abbonamento_sport = abbonamenti_manager.retrieve_abbonamenti({"telegramID": chat_id, "sport": sport.name})
-    active_strategies = [entry["strategia"] for entry in abbonamento_sport]
+    active_strategies = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(chat_id, sport.name)
+    lgr.logger.debug(f"User active strategies: {active_strategies=}")
     emoji_strategies = {strategy.name: "🔴" for strategy in sport.strategies}
     for strategy in active_strategies:
         emoji_strategies[strategy] = "🟢"

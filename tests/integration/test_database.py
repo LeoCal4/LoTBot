@@ -12,5 +12,5 @@ def test_database(monkeypatch):
     monkeypatch.setattr(cfg.config, "MONGO_DB_URL", real_mongo_db_url)
     db.create_db()
     assert db.mongo
-    assert db.mongo.abbonamenti
+    assert db.mongo.sport_subscriptions
     assert db.mongo.utenti

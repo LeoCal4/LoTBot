@@ -7,7 +7,7 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import abbonamenti_manager, user_manager, giocate_manager
+from lot_bot.dao import sport_subscriptions_manager, user_manager, giocate_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import giocate as giocata_model
@@ -75,6 +75,7 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     Raises:
         Exception: in case any among sport, strategy and state are invalid. 
     """
+    lgr.logger.debug(f"Received callback {update.callback_query.data}")
     sport_token, strategy_token, state = update.callback_query.data.split("_")
     sport = spr.sports_container.get_sport(sport_token)
     if not sport:
@@ -91,22 +92,24 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     # ! check if the strategy is being set to the same state it is already in
     # (that would mean that we would edit the inline keyboard with an identical one
     #   and that would cause an error)
-    abb_results = abbonamenti_manager.retrieve_abbonamento_sport_strategy_from_user_id(update.effective_user.id, sport.name, strategy.name)
-    lgr.logger.debug(f"Found abbonamenti {abb_results=}")
-    if (not abb_results and state == "disable") or (abb_results and state == "activate"):
+    abb_results = sport_subscriptions_manager.retrieve_subscribed_strats_from_user_id_and_sport(update.effective_user.id, sport.name)
+    has_strategy = strategy.name in abb_results
+    lgr.logger.debug(f"Found sport_subscriptions {abb_results=}")
+    if (not has_strategy and state == "disable") or (has_strategy and state == "activate"):
         # we are either trying to disable an already disabled strategy or activate an already active one
+        lgr.logger.debug(f"Trying to disable a non-active strategy or activate an already subscribed strat")
         return
-    abbonamento_data = {
+    sport_sub_data = {
         "telegramID": update.callback_query.from_user.id,
         "sport": sport.name,
-        "strategia": strategy.name
+        "strategy": strategy.name
     }
     if state == "activate":
-        if not abbonamenti_manager.create_abbonamento(abbonamento_data):
-            lgr.logger.error(f"Could not create abbonamento with data {abbonamento_data}")
+        if not sport_subscriptions_manager.create_sport_subscription(sport_sub_data):
+            lgr.logger.error(f"Could not create sport_subscription with data {sport_sub_data}")
     else:
-        if not abbonamenti_manager.delete_abbonamento(abbonamento_data):
-            lgr.logger.error(f"Could not disable abbonamento with data {abbonamento_data}")
+        if not sport_subscriptions_manager.delete_sport_subscription(sport_sub_data):
+            lgr.logger.error(f"Could not disable sport_subscription with data {sport_sub_data}")
     
     context.bot.edit_message_reply_markup(
         chat_id=update.callback_query.message.chat_id,

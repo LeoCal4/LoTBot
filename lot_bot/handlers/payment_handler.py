@@ -95,7 +95,7 @@ def received_referral(update: Update, _) -> int:
     
 
 def to_payments(update: Update, context: CallbackContext):
-    """Sends an invoice so that the user can buy LoT's abbonamento. 
+    """Sends an invoice so that the user can buy LoT's sport_subscription. 
     The invoice has a timeout of 120 seconds "hardcoded" in the payload, and the price
     receives a discout that is calculated based on the user.
     Before sending the invoice, the last message sent by the bot (supposedly the 
@@ -112,7 +112,7 @@ def to_payments(update: Update, context: CallbackContext):
     # ! since there is no way to know when the invoice has been sent 
     # !     once we reach the pre-checkout, we add a timestamp to the base payload
     # !     so that we can check it during the pre-checkout
-    payload = "pagamento_abbonamento_" + f"{(datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()}"
+    payload = "pagamento_sport_subscription_" + f"{(datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()}"
     currency = "EUR"
     price = 7999 # cents
     discount = user_manager.get_discount_for_user(chat_id)
@@ -147,7 +147,7 @@ def pre_checkout_handler(update: Update, _):
     payload_tokens = payload.split("_")
     payload_base = "_".join(payload_tokens[0:PAYLOAD_TIMESTAMP_INDEX])
     payload_timestamp = payload_tokens[PAYLOAD_TIMESTAMP_INDEX]
-    if payload_base != "pagamento_abbonamento":
+    if payload_base != "pagamento_sport_subscription":
         query.answer(ok=False, error_message="Qualcosa è andato storto...")
     elif float(payload_timestamp) < datetime.datetime.utcnow().timestamp():
         query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")

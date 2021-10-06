@@ -24,9 +24,6 @@ class MongoDatabase:
             raise e
         lgr.logger.info("Connected to db") 
         db = self.client[cfg.config.MONGO_DB_NAME]
-        self.abbonamenti = db["abbonamenti"]
-        # ensures the uniqueness of the abbonamenti
-        self.abbonamenti.create_index([("telegramID", 1), ("sport", 1), ("strategia", 1)], unique=True)
         self.utenti = db["utenti"]
         # ensures the uniqueness of the users' referral codes
         self.utenti.create_index([("referral_code", 1)], unique=True)

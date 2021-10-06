@@ -5,7 +5,7 @@ from lot_bot import config as cfg
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import abbonamenti_manager, user_manager
+from lot_bot.dao import sport_subscriptions_manager, user_manager
 from telethon import TelegramClient, functions
 from telethon.tl.custom.message import Message
 from lot_bot.models import sports as spr, strategies as strat

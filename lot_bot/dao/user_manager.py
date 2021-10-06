@@ -194,7 +194,7 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
                 "_id": user_id,
             },
             {
-                "$push": {
+                "$addToSet": {
                     "giocate": giocata
                 }
             }
@@ -225,7 +225,7 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
                 "_id": user_id,
             },
             {
-                "$push": {
+                "$addToSet": {
                     "payments": payment
                 }
             }
@@ -257,6 +257,15 @@ def delete_user(user_id: int) -> bool:
         lgr.logger.error(f"Exception: {str(e)}")
         lgr.logger.error(f"User id: {user_id}")
         return False
+
+
+def delete_all_users():
+    try:
+        db.mongo.utenti.delete_many({})
+        return True
+    except Exception as e:
+        lgr.logger.error(f"Error during deletion of all users")
+        raise e
 
 
 def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> bool:

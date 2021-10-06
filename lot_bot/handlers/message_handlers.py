@@ -13,7 +13,7 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import abbonamenti_manager, user_manager, giocate_manager
+from lot_bot.dao import sport_subscriptions_manager, user_manager, giocate_manager
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users as user_model
@@ -29,7 +29,7 @@ def create_first_time_user(user: User) -> Dict:
     """Creates the user using the bot for the first time.
 
     First, it creates the user itself, setting its expiration date to 7 days 
-    from now, then creates an abbonamento to calcio - piaquest and another
+    from now, then creates an sport_subscription to calcio - piaquest and another
     one to exchange - maxexchange. 
 
     Args:
@@ -46,26 +46,26 @@ def create_first_time_user(user: User) -> Dict:
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
     user_data["validoFino"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
-    # * create calcio - piaquest abbonamento
-    abbonamenti_calcio_data = {
+    # * create calcio - piaquest sport_subscription
+    sport_subscriptions_calcio_data = {
         "telegramID": user.id,
         "sport": spr.sports_container.CALCIO.name,
-        "strategia": strat.strategies_container.PIAQUEST.name,
+        "strategy": strat.strategies_container.PIAQUEST.name,
     }
-    abbonamenti_manager.create_abbonamento(abbonamenti_calcio_data)
-    # * create exchange - maxexchange abbonamento
-    abbonamenti_exchange_data = {
+    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_data)
+    # * create exchange - maxexchange sport_subscription
+    sport_subscriptions_exchange_data = {
         "telegramID": user.id,
         "sport": spr.sports_container.EXCHANGE.name,
-        "strategia": strat.strategies_container.MAXEXCHANGE.name,  
+        "strategy": strat.strategies_container.MAXEXCHANGE.name,  
     }
-    abbonamenti_manager.create_abbonamento(abbonamenti_exchange_data)
+    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_exchange_data)
     return user_data
 
 
 def first_time_user_handler(update: Update):
     """Sends welcome messages to the user, then creates two standard
-    abbonamenti for her/him and creates the user itself.
+    sport_subscriptions for her/him and creates the user itself.
 
     Args:
         update (Update)
@@ -91,7 +91,7 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 lgr.logger.error(f"{str(e)}")
 
 
-def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: spr.Sport, strategy: strat.Strategy, is_giocata: bool = False):
+def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False):
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
 
@@ -107,15 +107,14 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         is_giocata (bool, default = False): False if it is not a giocata, True otherwise.
 
     """
-    abbonamenti = abbonamenti_manager.retrieve_abbonamenti({"sport": sport.name, "strategia": strategy.name})
-    if abbonamenti == []:
-        lgr.logger.warning(f"There are no abbonamenti for {sport.name=} {strategy.name=}")
+    sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
+    if sub_user_ids == []:
+        lgr.logger.warning(f"There are no sport_subscriptions for {sport=} {strategy=}")
         return
     messages_sent = 0
-    messages_to_be_sent = len(abbonamenti)
-    lgr.logger.info(f"Found {messages_to_be_sent} abbonamenti for {sport.name} - {strategy.name}")
-    for abbonamento in abbonamenti:
-        user_id = abbonamento["telegramID"]
+    messages_to_be_sent = len(sub_user_ids)
+    lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
+    for user_id in sub_user_ids:
         user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["validoFino"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
@@ -133,7 +132,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
         try:
             result = context.bot.send_message(
-                abbonamento["telegramID"], 
+                user_id, 
                 text, 
                 reply_markup=custom_reply_markup)
             messages_sent += 1
@@ -143,7 +142,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         except Exception as e:
             lgr.logger.error(f"Could not send message {text} to user {user_id} - {str(e)}")
     if messages_sent < messages_to_be_sent:
-        error_text = f"{messages_sent} messages have been sent out of {messages_to_be_sent} for {sport.name} - {strategy.name}"
+        error_text = f"{messages_sent} messages have been sent out of {messages_to_be_sent} for {sport} - {strategy}"
         lgr.logger.warning(error_text)
         send_messages_to_developers(context, [error_text])
 
@@ -201,11 +200,11 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
     if parsed_text == "":
         update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
         return
-    send_message_to_all_abbonati(update, context, parsed_text, sport, strategy)
+    send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
 
 
 def reset_command(update: Update, context: CallbackContext):
-    """Resets giocate, utenti and abbonamenti for the command sender,
+    """Resets giocate, utenti and sport_subscriptions for the command sender,
         only if he/she is an admin
 
     Args:
@@ -218,7 +217,7 @@ def reset_command(update: Update, context: CallbackContext):
     # if user_id != ID_MANUEL and user_id != ID_MASSI:
     #     return
     # user_manager.delete_user(user_id)
-    # abbonamenti_manager.delete_abbonamenti_for_user_id(user_id)
+    # sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
     return
 
 
@@ -309,7 +308,7 @@ def giocata_handler(update: Update, context: CallbackContext):
         update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè la combinazione '#{parsed_giocata['giocata_num']}' - '{parsed_giocata['sport']}' è già stata utilizzata.")
         return
     sport = parsed_giocata["sport"]
-    strategy = parsed_giocata["strategia"]
+    strategy = parsed_giocata["strategy"]
     lgr.logger.info(f"Received giocata {sport} - {strategy}")
     send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True)
 
@@ -336,8 +335,8 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
         update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
         return
     updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
-    strategy = strat.strategies_container.get_strategy(updated_giocata["strategia"])
-    send_message_to_all_abbonati(update, context, text, sport, strategy)
+    strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
+    send_message_to_all_abbonati(update, context, text, sport, strategy.name)
 
 
 def exchange_cashout_handler(update: Update, context: CallbackContext):
@@ -356,8 +355,8 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         update, 
         context, 
         cashout_text, 
-        spr.sports_container.EXCHANGE, 
-        strat.strategies_container.MAXEXCHANGE
+        spr.sports_container.EXCHANGE.name, 
+        strat.strategies_container.MAXEXCHANGE.name
     )
 
 

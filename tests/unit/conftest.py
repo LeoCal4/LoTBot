@@ -15,8 +15,7 @@ def mock_db(monkeysession):
     monkeysession.setattr(db, "mongo", mongomock.MongoClient().client)
     db.mongo.utenti.create_index([("referral_code", 1)], unique=True)
     db.mongo.giocate.create_index([("giocata_num", 1), ("sport", 1)], unique=True)
-    db.mongo.abbonamenti.create_index([("telegramID", 1), ("sport", 1), ("strategia", 1)], unique=True)
-    
+    db.mongo.sport_subscriptions.create_index([("telegramID", 1), ("sport", 1), ("strategy", 1)], unique=True)
 
 
 # if no scope is defined, it will be "function", hence it will last 

@@ -3,13 +3,13 @@ from typing import Tuple
 
 from lot_bot import filters
 from lot_bot import custom_exceptions
-from lot_bot import utils
+from lot_bot import logger as lgr
 from lot_bot.models import sports as spr
 
 def create_base_giocata():
     return {
         "sport": "",
-        "strategia": "",
+        "strategy": "",
         "giocata_num": "",
         "base_quota": 0, # [quota (float) * 100] => (int)
         "base_stake": 0, # %
@@ -28,7 +28,7 @@ def create_user_giocata():
     }
 
 
-def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[spr.Sport, str, str]:
+def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
     """Finds sport, giocata number and outcome from a giocata outcome message.
 
     Args:
@@ -57,13 +57,15 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[spr.Sport, str, str]
         outcome = "loss"
     else:
         outcome = "?"
-    return sport, giocata_num, outcome
+    return sport.name, giocata_num, outcome
 
 
 def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     # TODO handle outcomes Exchange
+    lgr.logger.debug(f"Calculating outcome percentage on {outcome} - {stake} - {quota}")
     if outcome == "win":
         outcome_percentage = stake * (quota - 100) / 100
+        lgr.logger.debug(f"{outcome_percentage=}")
     elif outcome == "loss":
         outcome_percentage = float(-stake)
     else:

@@ -293,7 +293,7 @@ def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Opti
         message_sent_timestamp = datetime.datetime.utcnow().timestamp()
     parsed_giocata = giocata_model.create_base_giocata()
     parsed_giocata["sport"] = sport
-    parsed_giocata["strategia"] = strategy
+    parsed_giocata["strategy"] = strategy
     parsed_giocata["giocata_num"] = giocata_num
     parsed_giocata["base_quota"] = giocata_quota
     parsed_giocata["base_stake"] = giocata_stake
@@ -313,12 +313,14 @@ def get_giocate_since_timestamp(giocate: List[Dict], giocate_since_timestamp: fl
 def create_resoconto_message(giocate: List[Dict]):
     # Resoconto 24-09-2021
     # 1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
+    lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
     resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     for index, giocata in enumerate(giocate, 1):
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
+        outcome_emoji = "🟢" if outcome_percentage >= 0 else "🔴"
         parsed_quota = giocata["base_quota"] / 100
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage:.2f}%\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
     return resoconto_message
 
 
@@ -327,7 +329,7 @@ def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport,
     a /messaggio_abbonati command.
 
     Args:
-        message (str): it has the form /messaggio_abbonati <sport> - <strategia>
+        message (str): it has the form /messaggio_abbonati <sport> - <strategy>
 
     Raises:
         custom_exceptions.NormalMessageParsingError: in case the sport or the strategy are not valid

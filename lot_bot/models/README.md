@@ -20,7 +20,7 @@
     - currency: str
     - order_info:
         - email: str
-- abbonamenti: []
+- sport_subscriptions: []
     - sport_name: str
     - strategies: []
         - strat_name: str

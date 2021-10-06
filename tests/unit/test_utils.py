@@ -145,7 +145,7 @@ def test_parse_giocata(correct_giocata: Tuple[str, Dict]):
     correct_giocata_text, giocata_data = correct_giocata
     parsed_giocata = utils.parse_giocata(correct_giocata_text)
     assert parsed_giocata["sport"] == giocata_data["sport"]
-    assert parsed_giocata["strategia"] == giocata_data["strategy"]
+    assert parsed_giocata["strategy"] == giocata_data["strategy"]
     assert parsed_giocata["giocata_num"] == giocata_data["giocata_num"]
     assert parsed_giocata["base_quota"] == int(float(giocata_data["quota"])*100)
     assert parsed_giocata["base_stake"] == int(giocata_data["stake"])

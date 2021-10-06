@@ -12,6 +12,6 @@ def create_base_user_data():
         "successful_referrals": 0,
         "giocate": [],
         "payments": [],
-        "abbonamenti": [],
+        "sport_subscriptions": [],
         "available_sports": [],
     }

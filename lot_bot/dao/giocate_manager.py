@@ -76,9 +76,9 @@ def retrieve_giocate_from_ids(ids_list: List[int]) -> List[Dict]:
         List[Dict]: the retrieved giocate
     """
     try:
-        return db.mongo.giocate.find({
+        return list(db.mongo.giocate.find({
             "_id": { "$in" : ids_list }
-        })
+        }))
     except Exception as e:
         lgr.logger.error(f"Error during giocate by ids list retrieval - {ids_list=}")
         raise e
