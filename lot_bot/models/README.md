@@ -4,10 +4,10 @@
 - username: str
 - email: str
 - lot_subscription_expiration: timestamp
-- role: str TODO
+- role: str
 - referral_code: str
 - linked_referral_code: str
-- succesful_referrals: int -> succesful_referrals_since_last_payment TODO
+- succesful_referrals: int -> successful_referrals_since_last_payment TODO
 - referred_payments: List[str]
 - giocate: []
     - original_id
@@ -26,7 +26,7 @@
     - sport: str
     - strategies: List[str]
 - available_sports: [] TODO
-    - sport_name: str
+    - sport: str
     - strategies: List[str]
 
 

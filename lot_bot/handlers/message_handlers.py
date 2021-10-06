@@ -18,7 +18,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users as user_model
 from lot_bot.models import giocate as giocata_model
-from telegram import ParseMode, Update, User
+from telegram import ParseMode, Update, User, user
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
 
@@ -263,6 +263,73 @@ def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
             f"Video file_id: {video_sent_update.video.file_id}",
         )
 
+def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
+    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
+    permitted = True
+    if not permitted_roles is None:
+        permitted = user_role in permitted_roles
+    if not forbidden_roles is None:
+        permitted = not user_role in forbidden_roles 
+    return permitted
+
+
+def set_user_role(update: Update, _):
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    text : str = update.effective_message.text
+    text_tokens = text.strip().split(" ")
+    if len(text_tokens) != 3:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username e il ruolo ")
+        return
+    _, target_user_id, role = text.strip().split(" ")
+    if role not in user_model.ROLES and role != "admin":
+        update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
+        return
+    lgr.logger.debug(f"Received /set_user_role with {target_user_id} and {role}")
+    user_role = {"role": role}
+    # * check whetever the specified user identification is a Telegram ID or a username
+    try:
+        target_user_id = int(target_user_id)
+    except ValueError:
+        lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+    # * an actual user_id was sent
+    if type(target_user_id) is int:
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_role}")
+        update_result = user_manager.update_user(target_user_id, user_role)
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_id} with role {user_role}")
+        update_result = user_manager.update_user_by_username(target_user_id, user_role)
+    if update_result:
+        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} è un {user_role['role']}"
+    else:
+        reply_message = f"Nessun utente specificato da {target_user_id} è stato trovato"
+    update.effective_message.reply_text(reply_message)
+
+
+def send_file_id(update: Update, _):
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    file_id = None
+    if not update.effective_message.document is None:
+        file_id = update.effective_message.document.file_id
+    elif not update.effective_message.photo is None:
+    # elif hasattr(update.effective_message, "photo"):
+        file_id = update.effective_message.photo[-1].file_id
+    elif not update.effective_message.video is None:
+    # elif hasattr(update.effective_message, "video"):
+        file_id = update.effective_message.video.file_id
+    if file_id is None:
+        reply_message = "Impossibile ottenere il file_id dal media inviato"
+    else:
+        reply_message = f"{file_id}"
+    update.effective_message.reply_text(reply_message)
+    
 
 ##################################### MESSAGE HANDLERS #####################################
 

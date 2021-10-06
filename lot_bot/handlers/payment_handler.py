@@ -177,7 +177,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_email = update.message.successful_payment.order_info.email
     user_data = {
         "lot_subscription_expiration": new_expiration_date,
-        "successful_referrals": 0,
+        "successful_referrals_since_last_payment": 0,
         "email": user_email,
     }
     user_manager.update_user(user_id, user_data)
@@ -188,7 +188,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         lgr.logger.debug(f"Updating referred user {linked_referral_code} after successful payment by {user_id}")
         linked_user = user_manager.retrieve_user_by_referral(linked_referral_code)
         update_result = user_manager.update_user(linked_user["_id"], {
-            "successful_referrals": int(linked_user["successful_referrals"]) + 1 # TODO change with payment infos?
+            "successful_referrals_since_last_payment": int(linked_user["successful_referrals_since_last_payment"]) + 1 # TODO change with payment infos?
         })
         if not update_result:
             lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")

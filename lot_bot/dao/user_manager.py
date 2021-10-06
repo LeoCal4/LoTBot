@@ -2,6 +2,8 @@ import datetime
 from json import dumps
 from typing import Dict, Optional, Union, List
 
+from telegram import user
+
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
@@ -28,7 +30,6 @@ def create_user(user_data: Dict) -> Union[Dict, bool]:
             user_data["_id"] = str(user_data["_id"])
         lgr.logger.error(f"User data: {dumps(user_data)}")
         return False
-
 
 
 def retrieve_user(user_id: int) -> Optional[Dict]:
@@ -66,7 +67,7 @@ def retrieve_user_by_referral(referral_code: str) -> Optional[Dict]:
         lgr.logger.error("Error during user retrieval by ref code")
         lgr.logger.error(f"Exception: {str(e)}")
         lgr.logger.error(f"Referral code: {referral_code}")
-        return None
+        return None # TODO
 
 
 def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Optional[Dict]:
@@ -78,7 +79,6 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
 
     Returns:
         Dict: the user data 
-        None: if no user was found 
     
     Raises:
         Exception: if there was an error
@@ -89,16 +89,6 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
     except Exception as e:
         lgr.logger.error(f"Error during user fields retrieval {user_id=} - {user_fields=}")
         raise e
-
-
-def retrieve_all_user_giocate(user_id: int) -> Optional[Dict]:
-    try:
-        return db.mongo.utenti.find_one({"_id": user_id}, { "giocate": 1, "_id": 0})
-    except Exception as e:
-        lgr.logger.error("Error during user giocate retrieval")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        return None
 
 
 def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Optional[Dict]:
@@ -158,12 +148,9 @@ def update_user(user_id: int, user_data: Dict) -> bool:
             False otherwise
     """
     try:
-        update_result: UpdateResult = db.mongo.utenti.update_one({
-            "_id": user_id,
-            },
-            {
-                "$set": user_data
-            }
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            {"_id": user_id},
+            {"$set": user_data}
         )
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
@@ -171,6 +158,28 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         if "_id" in user_data:
             del user_data["_id"]
         lgr.logger.error(f"Error during user update - {user_id} - {dumps(user_data)}")
+        raise e
+
+
+def update_user_by_username(username: str, user_data: Dict) -> bool:
+    """Updates the user specified by the username.
+
+    Args:
+        username (str)
+        user_data (Dict) # TODO add check for user_data validation
+
+    Returns:
+        bool: True if the user was updated,
+            False otherwise
+    """
+    try:
+        result: UpdateResult = db.mongo.utenti.update_one(
+            {"username": username},
+            {"$set": user_data}
+        )
+        return bool(result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during user retrieval by username -  {username=}")
         raise e
 
 

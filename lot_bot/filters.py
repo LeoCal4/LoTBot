@@ -1,3 +1,4 @@
+from logging import Filter
 from telegram.ext.filters import Filters
 
 from lot_bot import config as cfg
@@ -75,6 +76,11 @@ def get_outcome_giocata_filter() -> Filters:
     sport_channels_filter = Filters.chat()
     sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
     return sport_channels_filter & Filters.regex(get_giocata_outcome_pattern())
+
+
+def get_send_file_id_filter() -> Filters:
+    return Filters.caption(["/file_id"])
+
 
 # ================================================ PATTERNS ================================================
 

@@ -12,5 +12,5 @@
 - `<cashout message>`: the cashout message is parsed and sent to all the users subscribed to MaxExchange
 
 ## Admin
-- **TODO** `/send_file_id` with <media> attached: sends a message containing the file_id of the sent media
-- **TODO** `/set_user_role <user id> <role>`: changes the role of a user to be either _base_ or _analyst_
+- `/set_user_role <user id|username> <role>`: changes the role of a user to be either _base_ or _analyst_
+- `/send_file_id` with <media> attached: sends a message containing the file_id of the sent media
