@@ -155,9 +155,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
     Args:
         update (Update)
         context (CallbackContext)
-
-    Raises:
-        Exception: in case the user cannot be found
     """
     user_id = update.effective_user.id
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])

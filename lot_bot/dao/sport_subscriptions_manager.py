@@ -15,7 +15,7 @@ def create_sport_subscription(sport_sub_data : dict) -> bool:
             False otherwise
     
     Raises:
-        Exception: in case of errors
+        e (Exception): in case of errors
     """
     user_id = sport_sub_data['user_id']
     try:
@@ -85,7 +85,7 @@ def retrieve_subscribed_strats_from_user_id_and_sport(user_id: int, sport: str) 
         List: the list containing the subscribed strategies of the sport found (if there was any)
     
     Raises:
-        Exception: in case of db errors
+        e (Exception): in case of db errors
     """
     lgr.logger.debug(f"Retrieving sub strats for {user_id} and sport {sport}")
     try:

@@ -8,6 +8,7 @@
 - referral_code: str
 - linked_referral_code: str
 - succesful_referrals: int -> successful_referrals_since_last_payment TODO
+- is_og_user: bool = False
 - referred_payments: List[str]
 - giocate: []
     - original_id
@@ -18,7 +19,7 @@
     - invoice_payload: str
     - telegram_payment_charge_id: str
     - provider_payment_charge_id: str
-    - total_amount: float 
+    - total_amount: float
     - currency: str
     - order_info:
         - email: str

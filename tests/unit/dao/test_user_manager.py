@@ -42,7 +42,8 @@ def test_create_user(monkeypatch):
         "name": "Franco",
         "surname": "Rossi"
     }
-    assert not user_manager.create_user(user_data2)
+    with pytest.raises(Exception):
+        user_manager.create_user(user_data2)
 
 
 # new_user is specified in the params of the funcion,
@@ -95,13 +96,14 @@ def test_check_user_expired_validity():
     assert validity == False
 
 
-def test_retrieve_user_by_referral(new_user: Dict, monkeypatch):
+def test_retrieve_user_id_by_referral(new_user: Dict, monkeypatch):
     user_ref_code = new_user["referral_code"]
-    user_from_db = user_manager.retrieve_user_by_referral(user_ref_code)
+    user_from_db = user_manager.retrieve_user_id_by_referral(user_ref_code)
     assert new_user["_id"] == user_from_db["_id"]
-    assert user_manager.retrieve_user_by_referral("fake code") is None
+    assert user_manager.retrieve_user_id_by_referral("fake code") is None
     monkeypatch.setattr(db, "mongo", None)
-    assert user_manager.retrieve_user_by_referral(user_ref_code) is None
+    with pytest.raises(Exception):
+        user_manager.retrieve_user_id_by_referral(user_ref_code)
 
 
 def test_register_payment_for_user_id(new_user: Dict, monkeypatch):
@@ -118,7 +120,8 @@ def test_register_payment_for_user_id(new_user: Dict, monkeypatch):
     assert not user_manager.register_payment_for_user_id(payment, -1)
     # db connection error
     monkeypatch.setattr(db, "mongo", None)
-    assert not user_manager.register_payment_for_user_id(payment, user_id)
+    with pytest.raises(Exception):
+        user_manager.register_payment_for_user_id(payment, user_id)
 
 
 def test_get_discount_for_user(new_user: Dict, monkeypatch):

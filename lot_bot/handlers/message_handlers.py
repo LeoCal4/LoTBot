@@ -182,10 +182,7 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
     Args:
         update (Update)
         context (CallbackContext)
-
-    Raises:
-        Exception: in case the sport or the strategy do not exist or 
-            if there was an error sending the messages 
+        
     """
     # TODO check if author is entitled to do so
     text = update.effective_message.text

@@ -88,7 +88,7 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
             an empty string in case of errors
 
     Raises:
-        Exception: in case of errors in the parsing
+        e (Exception): in case of errors in the parsing
     """
     if "," in percentage_text:
         percentage_text = percentage_text.replace(",", ".")
@@ -135,7 +135,7 @@ def generate_referral_code() -> str:
 
 
 def check_referral_code_availability(new_referral: str) -> bool:
-    return user_manager.retrieve_user_by_referral(new_referral) is None
+    return user_manager.retrieve_user_id_by_referral(new_referral) is None
 
 
 def create_valid_referral_code() -> str:

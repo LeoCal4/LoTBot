@@ -69,7 +69,7 @@ def received_referral(update: Update, _) -> int:
     """
     chat_id = update.effective_user.id
     referral_text = update.effective_message.text
-    referral_user = user_manager.retrieve_user_by_referral(referral_text)
+    referral_user = user_manager.retrieve_user_id_by_referral(referral_text)
     is_referral_valid = True
     message_text = ""
     retry_text = "Prova di nuovo ad inviare un messaggio con un codice di referral oppure premi il bottone sottostante per procedere."
@@ -141,7 +141,7 @@ def pre_checkout_handler(update: Update, _):
         update (Update)
         _ (CallbackContext)
     """
-    PAYLOAD_TIMESTAMP_INDEX = 2
+    PAYLOAD_TIMESTAMP_INDEX = 3
     query = update.pre_checkout_query
     payload = query.invoice_payload
     payload_tokens = payload.split("_")
@@ -167,8 +167,8 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     Raises:
         custom_exceptions.UserNotFound: in case the update's user is not found
     """
+    payment_final_message = f"Grazie per aver acquistato il nostro servizio!"
     user_id = update.effective_user.id
-    update.message.reply_text("Grazie per aver acquistato il nostro servizio!")
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_code"])
     # * extend the user's subscription up to the same day of the next month
     new_expiration_date: float = utils.extend_expiration_date(retrieved_user["lot_subscription_expiration"])
@@ -177,35 +177,61 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_email = update.message.successful_payment.order_info.email
     user_data = {
         "lot_subscription_expiration": new_expiration_date,
-        "successful_referrals_since_last_payment": 0,
+        "successful_referrals_since_last_payment": [],
         "email": user_email,
     }
-    user_manager.update_user(user_id, user_data)
-    # * update the referred user's successful referrals, if there is a referral code
-    linked_referral_code = retrieved_user["linked_referral_code"]
-    linked_user = None
-    if linked_referral_code != "":
-        lgr.logger.debug(f"Updating referred user {linked_referral_code} after successful payment by {user_id}")
-        linked_user = user_manager.retrieve_user_by_referral(linked_referral_code)
-        update_result = user_manager.update_user(linked_user["_id"], {
-            "successful_referrals_since_last_payment": int(linked_user["successful_referrals_since_last_payment"]) + 1 # TODO change with payment infos?
-        })
-        if not update_result:
-            lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")
-            # TODO 
-    # * register the user's payment
+    try:
+        user_update_result = user_manager.update_user(user_id, user_data)
+    except:
+        user_update_result = False
+    if not user_update_result:
+        lgr.logger.error(f"Could not update data after payment for user {user_id} - {user_data=}")
     payment_data = update.message.successful_payment.to_dict()
     payment_data["datetime"] = datetime.datetime.utcnow().timestamp()
     payment_data["payment_id"] = str(user_id) + "-" + str(payment_data["datetime"])
     referred_by_id = ""
+    # * get linked referral user
+    linked_referral_code = retrieved_user["linked_referral_code"]
+    linked_user = None
+    if linked_referral_code != "":
+        lgr.logger.debug(f"Updating referred user {linked_referral_code} after successful payment by {user_id}")
+        linked_user = user_manager.retrieve_user_id_by_referral(linked_referral_code)
     if linked_user:
         referred_by_id = linked_user["_id"]
     payment_data["referred_by"] = referred_by_id
+    # * registering payment
     lgr.logger.debug(f"Registering payment {str(payment_data)} for {user_id}")
-    register_result = user_manager.register_payment_for_user_id(payment_data, user_id)
-    if not register_result:
+    try:
+        register_result = user_manager.register_payment_for_user_id(payment_data, user_id)
+    except:
+        # this gets both db errors and other issues related to missing users
+        register_result = False
+    # * handle data registration errors
+    if not register_result or not user_update_result:
         lgr.logger.error(f"Could not register payment {str(payment_data)} for user {user_id}")
-    # * send homepage
+        payment_final_message = f"ERRORE: il pagamento è stato effettuato con successo, ma non siamo riusciti a registrarlo correttamente.\n"
+        payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
+        dev_message = "ERRORE: pagamento non registrato per l'utente {user_id}.\n"
+        dev_message += f"Update dati utente: {user_update_result=} - registrazione pagamento: {register_result=}\n"
+        dev_message += f"Dati pagamento:\n {str(payment_data)}"
+        message_handlers.send_messages_to_developers(context, [dev_message])
+    # * update the referred user's successful referrals, if there is a referral code
+    if linked_user:
+        try:
+            update_result = user_manager.update_user_succ_referrals_since_last_payment(linked_user["_id"], payment_data["payment_id"])
+        except:
+            # this gets both db errors and other issues related to missing users
+            update_result = False
+        # * handle referral errors
+        if not update_result:
+            lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")
+            payment_final_message = f"ERRORE: il pagamento è stato effettuato correttamente, ma non siamo riusciti a registrarlo per l'affiliazione.\n"
+            payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
+            dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_user['_id']}. Dati pagamento:\n"
+            dev_message += f"{str(payment_data)}"
+            message_handlers.send_messages_to_developers(context, [dev_message])
+    # * send final payment message and homepage
+    update.message.reply_text(payment_final_message)
     message_handlers.homepage_handler(update, context)
 
 

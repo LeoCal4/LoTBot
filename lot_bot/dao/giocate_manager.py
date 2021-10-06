@@ -19,7 +19,7 @@ def create_giocata(giocata: Dict) -> Optional[int]:
 
     Raises:
         GiocataCreationError: in case of a DuplicateKeyError
-        Exception: in case there was another error with the db
+        e (Exception): in case there was another error with the db
     """
     try:
         result: InsertOneResult = db.mongo.giocate.insert_one(giocata)
@@ -50,7 +50,7 @@ def retrieve_giocata_by_num_and_sport(giocata_num: str, sport: str) -> Optional[
         None: in case of  giocata not found
 
     Raises:
-        Exception: in case of db errors
+        e (Exception): in case of db errors
     """
     lgr.logger.debug(f"Searching for giocata {giocata_num=} - {sport=}")
     try:

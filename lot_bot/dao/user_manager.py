@@ -1,6 +1,6 @@
 import datetime
 from json import dumps
-from typing import Dict, Optional, Union, List
+from typing import Dict, Optional, List
 
 from telegram import user
 
@@ -9,11 +9,14 @@ from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 
-def create_user(user_data: Dict) -> Union[Dict, bool]:
+def create_user(user_data: Dict) -> bool:
     """Creates a user using the data found in user_data
 
     Args:
         user_data (Dict)
+
+    Raises:
+        e (Exception): in case there is a db error
 
     Returns:
         bool: True if the user was created,
@@ -21,19 +24,17 @@ def create_user(user_data: Dict) -> Union[Dict, bool]:
     """
     try:
         result: InsertOneResult = db.mongo.utenti.insert_one(user_data)
-        # checks if the inserted id is the one that was passed
         return result.inserted_id == user_data["_id"]
     except Exception as e:
-        lgr.logger.error("Error during user creation")
-        lgr.logger.error(f"Exception: {str(e)}")
         if "_id" in user_data:
             user_data["_id"] = str(user_data["_id"])
-        lgr.logger.error(f"User data: {dumps(user_data)}")
-        return False
+        lgr.logger.error(f"Error during user creation - {dumps(user_data)=}")
+        raise e
 
 
 def retrieve_user(user_id: int) -> Optional[Dict]:
     """Retrieve the user specified by user_id
+    # TODO kill method, used only in tests
 
     Args:
         user_id (int)
@@ -51,23 +52,27 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
         return None
 
 
-def retrieve_user_by_referral(referral_code: str) -> Optional[Dict]:
-    """Retrives the user specified by referral_code.
+def retrieve_user_id_by_referral(referral_code: str) -> Optional[Dict]:
+    """Retrives the id of the user specified by referral_code.
 
     Args:
         referral_code (str)
 
+    Raises:
+        e (Exception): in case of db errors
+
     Returns:
         Dict: the user data
-        None: if no user was found or if there was an error
+        None: if no user was found
     """
     try:
-        return db.mongo.utenti.find_one({"referral_code": referral_code})
+        return db.mongo.utenti.find_one(
+            {"referral_code": referral_code},
+            {"_id": 1}
+        )
     except Exception as e:
-        lgr.logger.error("Error during user retrieval by ref code")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"Referral code: {referral_code}")
-        return None # TODO
+        lgr.logger.error(f"Error during user retrieval by ref code - {referral_code=}")
+        raise e
 
 
 def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Optional[Dict]:
@@ -75,13 +80,14 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
 
     Args:
         user_id (int)
-        user_fields (List[str])
+        user_fields (List[str]): the list of the fields that will be retrieved
+    
+    Raises:
+        Exception: if there was a db error
 
     Returns:
         Dict: the user data 
-    
-    Raises:
-        Exception: if there was an error
+
     """
     try:
         user_fields = {field: 1 for field in user_fields}
@@ -91,7 +97,7 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
         raise e
 
 
-def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Optional[Dict]:
+def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Optional[List]:
     """Retrieves all the giocate for user user_id since the time
     indicated by the timestamp.
 
@@ -103,7 +109,7 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
         e: in case of db errors
 
     Returns:
-        Optional[Dict]: the giocate the user has made since timestamp, if any
+        Optional[List]: the giocate the user has made since timestamp, if any
     """
     try:
         return list(db.mongo.utenti.aggregate([
@@ -128,7 +134,7 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
             ])
         )
     except Exception as e:
-        lgr.logger.error(f"Error during user giocate retrieval - {user_id}")
+        lgr.logger.error(f"Error during user giocate retrieval - {user_id=}")
         raise e
 
 
@@ -141,7 +147,7 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         user_data (Dict)
     
     Raises:
-        Exception: in case of db errors
+        e (Exception): in case of db errors
     
     Returns:
         bool: True if the user was updated,
@@ -157,7 +163,7 @@ def update_user(user_id: int, user_data: Dict) -> bool:
     except Exception as e:
         if "_id" in user_data:
             del user_data["_id"]
-        lgr.logger.error(f"Error during user update - {user_id} - {dumps(user_data)}")
+        lgr.logger.error(f"Error during user update - {user_id=} - {dumps(user_data)=}")
         raise e
 
 
@@ -213,7 +219,7 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
     except Exception as e:
         if "_id" in giocata:
             del giocata["_id"]
-        lgr.logger.error(f"Error during giocata registration: {user_id} - {dumps(giocata)}")
+        lgr.logger.error(f"Error during giocata registration: {user_id=} - {dumps(giocata)=}")
         raise e
 
 
@@ -223,6 +229,9 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
     Args:
         payment (Dict): the dict containing the payment info
         user_id (str)
+    
+    Raises:
+        e (Exception): in case of db errors
 
     Returns:
         bool: True if the operation was successful, False otherwise
@@ -242,12 +251,22 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
-        lgr.logger.error("Error during giocata registration")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        lgr.logger.error(f"User data: {str(payment)}")
-        return False
+        lgr.logger.error(f"Error during payment registration - {user_id=} - {str(payment)=}")
+        raise e
 
+
+def update_user_succ_referrals_since_last_payment(user_id: int, payment_id: str) -> bool:
+    try:
+        lgr.logger.debug(f"Adding {payment_id=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            { "_id": user_id },
+            {"$addToSet": { "successful_referrals_since_last_payment": payment_id }}
+        )
+        # this will be true if there was at least a match
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {payment_id=}")
+        raise e
 
 def delete_user(user_id: int) -> bool:
     """Deletes the user specified by user_id
@@ -293,7 +312,7 @@ def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> boo
 
 def get_discount_for_user(user_id: int) -> float:
     """Calculates the discount for the user specified by user_id.
-    As of now, for a first timer, the discount is 50%
+    As of now, for a first timer and for LoT's first ever users, the discount is 50%.
 
     Args:
         user_id (int)
@@ -301,8 +320,11 @@ def get_discount_for_user(user_id: int) -> float:
     Returns:
         float [1.0, 0.0]: decimal number representing the discount percentage 
     """
-    retrieved_user_payments = retrieve_user_fields_by_user_id(user_id, ["payments"])
+    retrieved_user_data = retrieve_user_fields_by_user_id(user_id, ["payments", "is_og_user", "successful_referrals_since_last_payment"])
     discount = 0
-    if retrieved_user_payments and len(retrieved_user_payments["payments"]) == 0:
-        discount = 0.5
+    if len(retrieved_user_data["payments"]) == 0 or bool(retrieved_user_data["is_og_user"]):
+        # TODO ask about this
+        return 0.5
+    discount_per_ref = 0.33
+    discount = discount_per_ref * len(retrieved_user_data["successful_referrals_since_last_payment"])
     return discount

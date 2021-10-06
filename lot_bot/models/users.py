@@ -13,6 +13,7 @@ def create_base_user_data():
         "role": "user",
         "referral_code": utils.create_valid_referral_code(),
         "linked_referral_code": "",
+        "is_og_user": False,
         "successful_referrals_since_last_payment": [],
         "giocate": [],
         "payments": [],
