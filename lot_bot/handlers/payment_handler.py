@@ -171,7 +171,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_code"])
     # * extend the user's subscription up to the same day of the next month
-    new_expiration_date: float = utils.extend_expiration_date(retrieved_user["lot_subscription_expiration"])
+    new_expiration_date: float = utils.extend_expiration_date(retrieved_user["lot_subscription_expiration"],30)
     # * reset user successful referrals
     # * add email to user data
     user_email = update.message.successful_payment.order_info.email
