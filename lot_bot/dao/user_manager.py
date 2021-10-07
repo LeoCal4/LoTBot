@@ -255,12 +255,16 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
         raise e
 
 
-def update_user_succ_referrals_since_last_payment(user_id: int, payment_id: str) -> bool:
+def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
     try:
         lgr.logger.debug(f"Adding {payment_id=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
             { "_id": user_id },
-            {"$addToSet": { "successful_referrals_since_last_payment": payment_id }}
+            {"$addToSet": 
+                { "successful_referrals_since_last_payment": payment_id, 
+                    "referred_payments": payment_id
+                }
+            }
         )
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
@@ -310,21 +314,29 @@ def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> boo
     return float(user_data["lot_subscription_expiration"]) > message_date.timestamp()
 
 
-def get_discount_for_user(user_id: int) -> float:
-    """Calculates the discount for the user specified by user_id.
-    As of now, for a first timer and for LoT's first ever users, the discount is 50%.
+def get_subscription_price_for_user(user_id: int) -> float:
+    """Calculates the price for the user specified by user_id.
+    As of now, for a first timer and for LoT's first ever users, the base price is halved.
+    For each referred user, the base price is discounted by 33%.
 
     Args:
         user_id (int)
 
     Returns:
-        float [1.0, 0.0]: decimal number representing the discount percentage 
+        int: the final price, with discount applied 
     """
     retrieved_user_data = retrieve_user_fields_by_user_id(user_id, ["payments", "is_og_user", "successful_referrals_since_last_payment"])
     discount = 0
+    base_price = 7999
+    # * set base price
     if len(retrieved_user_data["payments"]) == 0 or bool(retrieved_user_data["is_og_user"]):
-        # TODO ask about this
-        return 0.5
+        base_price = base_price // 2
+    # * calculate discount
     discount_per_ref = 0.33
-    discount = discount_per_ref * len(retrieved_user_data["successful_referrals_since_last_payment"])
-    return discount
+    successful_refs = len(retrieved_user_data["successful_referrals_since_last_payment"])
+    if successful_refs == 3:
+        return 0
+    elif successful_refs > 0:
+        discount = discount_per_ref * len(retrieved_user_data["successful_referrals_since_last_payment"])
+    final_price = base_price - int(base_price * discount)
+    return final_price

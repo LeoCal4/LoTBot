@@ -114,10 +114,9 @@ def to_payments(update: Update, context: CallbackContext):
     # !     so that we can check it during the pre-checkout
     payload = "pagamento_sport_subscription_" + f"{(datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()}"
     currency = "EUR"
-    price = 7999 # cents
-    discount = user_manager.get_discount_for_user(chat_id)
-    discounted_prince = price - int(price * discount)
-    prices = [LabeledPrice("LoT Abbonamento", discounted_prince)]
+    
+    price = user_manager.get_subscription_price_for_user(chat_id)
+    prices = [LabeledPrice("LoT Abbonamento", price)]
 
     try:
         callback_handlers.delete_message_if_possible(update, context)
@@ -187,8 +186,8 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     if not user_update_result:
         lgr.logger.error(f"Could not update data after payment for user {user_id} - {user_data=}")
     payment_data = update.message.successful_payment.to_dict()
-    payment_data["datetime"] = datetime.datetime.utcnow().timestamp()
-    payment_data["payment_id"] = str(user_id) + "-" + str(payment_data["datetime"])
+    payment_data["datetime_timestamp"] = datetime.datetime.utcnow().timestamp()
+    payment_data["payment_id"] = str(user_id) + "-" + str(payment_data["datetime_timestamp"])
     referred_by_id = ""
     # * get linked referral user
     linked_referral_code = retrieved_user["linked_referral_code"]
@@ -218,7 +217,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     # * update the referred user's successful referrals, if there is a referral code
     if linked_user:
         try:
-            update_result = user_manager.update_user_succ_referrals_since_last_payment(linked_user["_id"], payment_data["payment_id"])
+            update_result = user_manager.update_user_succ_referrals(linked_user["_id"], payment_data["payment_id"])
         except:
             # this gets both db errors and other issues related to missing users
             update_result = False

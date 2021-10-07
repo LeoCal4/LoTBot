@@ -13,8 +13,9 @@ def create_base_user_data():
         "role": "user",
         "referral_code": utils.create_valid_referral_code(),
         "linked_referral_code": "",
-        "is_og_user": False,
+        "is_og_user": True, # TODO remember to switch this off
         "successful_referrals_since_last_payment": [],
+        "referred_payments": [],
         "giocate": [],
         "payments": [],
         "sport_subscriptions": [],

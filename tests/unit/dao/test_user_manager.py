@@ -17,6 +17,8 @@ def get_random_string(length: int):
 
 def get_random_payment() -> Dict:
     return {
+        "payment_id": get_random_string(16),
+        "datetime_timestamp": 0.0,
         "invoice_payload": "payload_test",
         "telegram_payment_charge_id": get_random_string(12),
         "provider_payment_charge_id": get_random_string(12),
@@ -124,20 +126,49 @@ def test_register_payment_for_user_id(new_user: Dict, monkeypatch):
         user_manager.register_payment_for_user_id(payment, user_id)
 
 
-def test_get_discount_for_user(new_user: Dict, monkeypatch):
+def test_update_user_succ_referrals(new_user: Dict):
     user_id = new_user["_id"]
-    # new user 50% discount
-    discount = user_manager.get_discount_for_user(user_id)
-    assert discount == 0.5
-    # normal no discount
+    payment_ids = []
+    for _ in range(2, 10):
+        payment_id = get_random_string(16)
+        payment_ids.append(payment_id)
+        assert user_manager.update_user_succ_referrals(user_id, payment_id)
+    payment_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["successful_referrals_since_last_payment", "referred_payments"])
+    assert len(payment_data["successful_referrals_since_last_payment"]) == len(payment_ids)
+    assert len(payment_data["referred_payments"]) == len(payment_ids)
+    for succ_refs, normal_refs in zip(payment_data["successful_referrals_since_last_payment"], payment_data["referred_payments"]):
+        assert succ_refs in payment_ids
+        assert normal_refs in payment_ids
+
+
+def test_get_subscription_price_for_user(new_user: Dict, monkeypatch):
+    user_id = new_user["_id"]
+    # * new user 50% discount
+    price = user_manager.get_subscription_price_for_user(user_id)
+    assert price == 3999
+    # * price with one referral and og user
+    user_manager.update_user_succ_referrals(user_id, get_random_string(12))
+    price = user_manager.get_subscription_price_for_user(user_id)
+    assert price == 3999 - int(3999 * 0.33)
+    # * price with 3 referrals
+    user_manager.update_user_succ_referrals(user_id, get_random_string(12))
+    user_manager.update_user_succ_referrals(user_id, get_random_string(12))
+    price = user_manager.get_subscription_price_for_user(user_id)
+    assert price == 0
+    # * normal no discount
+    user_manager.update_user(user_id, {"is_og_user": False, "successful_referrals_since_last_payment": []})
     payment = get_random_payment()
     user_manager.register_payment_for_user_id(payment, user_id)
-    discount = user_manager.get_discount_for_user(user_id)
-    assert discount == 0
-    # db connection error
+    price = user_manager.get_subscription_price_for_user(user_id)
+    assert price == 7999
+    # * normal with referral
+    user_manager.update_user_succ_referrals(user_id, get_random_string(12))
+    price = user_manager.get_subscription_price_for_user(user_id)
+    assert price == 7999 - int(7999 * 0.33)
+    # * db connection error
     monkeypatch.setattr(db, "mongo", None)
     with pytest.raises(Exception):
-        user_manager.get_discount_for_user(user_id)
+        user_manager.get_subscription_price_for_user(user_id)
 
 
 def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):

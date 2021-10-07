@@ -147,6 +147,17 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         send_messages_to_developers(context, [error_text])
 
 
+def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
+    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
+    permitted = True
+    if not permitted_roles is None:
+        permitted = user_role in permitted_roles
+    if not forbidden_roles is None:
+        permitted = not user_role in forbidden_roles 
+    return permitted
+
+
 ################################## COMMANDS ########################################
 
 
@@ -184,7 +195,6 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
         context (CallbackContext)
         
     """
-    # TODO check if author is entitled to do so
     text = update.effective_message.text
     try:
         sport, strategy = utils.get_sport_and_strategy_from_normal_message(text)
@@ -198,77 +208,6 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
         update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
         return
     send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
-
-
-def reset_command(update: Update, context: CallbackContext):
-    """Resets giocate, utenti and sport_subscriptions for the command sender,
-        only if he/she is an admin
-
-    Args:
-        update (Update): the Update containing the reset command
-        context (CallbackContext)
-    """
-    # user_id = update.effective_user.id
-    # lgr.logger.info(f"Received /reset command from {user_id}")
-    # # ! TODO check for admin rights set on the DB, not for specific ID
-    # if user_id != ID_MANUEL and user_id != ID_MASSI:
-    #     return
-    # user_manager.delete_user(user_id)
-    # sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
-    return
-
-
-def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
-    # TODO ERASE AND DO IT DECENTLY
-    """Responds to the command `/send_all_videos` and can be used only by the developers.
-
-    This command is used in order to upload the videos for the first time and get 
-    their `file_id`, so that those can be used instead of sending the real files.
-
-    Sends either the videos listed in `VIDEO_FILE_NAMES` (if they exist) and found in the dir `VIDEO_BASE_PATH`
-    or all the videos in `VIDEO_BASE_PATH`, in case `VIDEO_FILE_NAMES` is empty.
-
-    In addition to the videos, a message specifiying the `file_id` of each video is sent.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    # ! command accessible only by developers
-    if not update.effective_user.id in cfg.config.DEVELOPER_CHAT_IDS:
-        return
-    # ! check whetever to use the whole dir or just some files of it
-    if cfg.config.VIDEO_FILE_NAMES and cfg.config.VIDEO_FILE_NAMES != []:
-        video_file_names = cfg.config.VIDEO_FILE_NAMES
-    else:
-        video_file_names = os.listdir(cfg.config.VIDEO_BASE_PATH)
-    video_file_paths = [
-        os.path.join(cfg.config.VIDEO_BASE_PATH, file_name) 
-        for file_name in video_file_names 
-        if os.path.isfile(os.path.join(cfg.config.VIDEO_BASE_PATH, file_name)) and \
-            file_name.lower().endswith(cfg.config.VIDEO_FILE_EXTENSIONS)
-    ]
-    for video_file_path in video_file_paths:
-        update.message.reply_text(f"Sending {video_file_path}")
-        video_to_send = open(video_file_path, "rb")
-        video_sent_update = context.bot.send_video(
-            update.effective_message.chat_id,
-            video_to_send
-        )
-        context.bot.send_message(
-            update.effective_message.chat_id,
-            f"Video file_id: {video_sent_update.video.file_id}",
-        )
-
-def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
-    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
-    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
-    permitted = True
-    if not permitted_roles is None:
-        permitted = user_role in permitted_roles
-    if not forbidden_roles is None:
-        permitted = not user_role in forbidden_roles 
-    return permitted
 
 
 def set_user_role(update: Update, _):

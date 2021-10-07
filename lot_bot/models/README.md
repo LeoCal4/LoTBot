@@ -7,22 +7,26 @@
 - role: str
 - referral_code: str
 - linked_referral_code: str
-- succesful_referrals: int -> successful_referrals_since_last_payment TODO
+- successful_referrals_since_last_payment: List[str]
 - is_og_user: bool = False
 - referred_payments: List[str]
 - giocate: []
-    - original_id
+    - original_id: str
     - personal_stake: int
     - personal_quota: int
     - acceptance_timestamp: float
 - payments: []
+    - payment_id: str
+    - datetime_timestamp: timestamp (float)
+    - referred_by: str
     - invoice_payload: str
     - telegram_payment_charge_id: str
     - provider_payment_charge_id: str
-    - total_amount: float
+    - total_amount: int
     - currency: str
     - order_info:
         - email: str
+        - name: str
 - sport_subscriptions: []
     - sport: str
     - strategies: List[str]
@@ -38,4 +42,4 @@
 - base_stake: int
 - base_quota: int
 - sent_date: float
-- outcome: bool
+- outcome: str
