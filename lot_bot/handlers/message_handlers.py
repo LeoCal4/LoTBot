@@ -3,7 +3,6 @@
 import datetime
 import html
 import json
-import os
 import traceback
 from typing import Dict, List
 
@@ -18,7 +17,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users as user_model
 from lot_bot.models import giocate as giocata_model
-from telegram import ParseMode, Update, User, user
+from telegram import ParseMode, Update, User
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
 
@@ -74,11 +73,12 @@ def first_time_user_handler(update: Update):
     first_time_user_data = create_first_time_user(update.effective_user)
     trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
-    welcome_message = cst.WELCOME_MESSAGE_PART_ONE.format(user.first_name, trial_expiration_date_string)
+    # TODO 
+    parsed_first_name = user.first_name.replace("_", "\_").replace(".", "\.").replace("(", "\(").replace(")", "\)").replace("*", "\*")
+    welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
     # the messages are sent only if the previous operations succeeded, this is fundamental
     #   for the integration tests too
-    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="html")
-    update.message.reply_text(cst.WELCOME_MESSAGE_PART_TWO, parse_mode="html")
+    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="MarkdownV2")
 
 
 def send_messages_to_developers(context: CallbackContext, messages_to_send: List[str], parse_mode=None):
@@ -177,10 +177,9 @@ def start_command(update: Update, _):
     if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
         # * the user does not exist yet
         first_time_user_handler(update)
-        return
-    # update.message.reply_text is equal to bot.send_message(update.effective_message.chat_id, ...)
-    update.message.reply_text(cst.BENTORNATO_MESSAGE, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
-    update.message.reply_text(cst.LISTA_CANALI_MESSAGE, reply_markup=kyb.create_sports_inline_keyboard(update))
+    homepage_handler(update, _)
+    # update.message.reply_text(cst.BENTORNATO_MESSAGE, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+    # update.message.reply_text(cst.LISTA_CANALI_MESSAGE, reply_markup=kyb.create_sports_inline_keyboard(update))
 
 
 def normal_message_to_abbonati_handler(update: Update, context: CallbackContext):
@@ -274,16 +273,30 @@ def homepage_handler(update: Update, _):
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-        parse_mode="HTML"
+        parse_mode="MarkdownV2"
     )
 
 
-def assistance_handler(update: Update, context: CallbackContext):
-    pass # TODO
+def bot_configuration_handler(update: Update, _: CallbackContext):
+    # update.message.edit_reply_markup(
+    #     reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+    # )
+    update.message.reply_text(
+        cst.HOMEPAGE_MESSAGE,
+        reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+        parse_mode="MarkdownV2"
+    )
 
 
-def community_handler(update: Update, context: CallbackContext):
-    pass # TODO
+def experience_settings_handler(update: Update, _: CallbackContext):
+    # update.message.edit_reply_markup(
+    #     reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+    # )
+    update.message.reply_text(
+        cst.HOMEPAGE_MESSAGE,
+        reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="MarkdownV2"
+    )
 
 
 def giocata_handler(update: Update, context: CallbackContext):

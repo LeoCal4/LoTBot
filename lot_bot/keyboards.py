@@ -7,45 +7,40 @@ from lot_bot.dao import sport_subscriptions_manager
 from lot_bot import logger as lgr
 
 _startup_buttons = [
-    [KeyboardButton(text=cst.HOMEPAGE_BUTTON_TEXT)],
-    [KeyboardButton(text=cst.COMMUNITY_BUTTON_TEXT)],
-    [KeyboardButton(text=cst.ASSISTANCE_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT)],
+    # [KeyboardButton(text=cst.ASSISTANCE_BUTTON_TEXT)],
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
 
 _homepage_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Sport  📖", callback_data="to_sports_menu")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  TEST Spiegazione Strategie  📖", callback_data="to_explanation_menu")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️ TEST pagamenti  📖", callback_data="to_add_referral")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️ TEST resoconto  📖", callback_data="to_resoconti")], 
-    [InlineKeyboardButton(text="👩🏾‍💻  Assistenza  🧑🏻", url="https://t.me/LegacyOfTipstersBot")], 
-    [InlineKeyboardButton(text="🙋🏼‍♀️  Community e Team LoT 🙋🏾", url="https://t.me/LoTVerse")],
-    [InlineKeyboardButton(text ="📲 Link Utili e Reportistica 📚", callback_data="links")], 
+    [InlineKeyboardButton(text="⚙️ Configurazione Bot 🤖", callback_data="to_bot_config_menu")],
+    [InlineKeyboardButton(text="🚥 Gestione Esperienza 🚥", callback_data="to_experience_menu")],
 ]
 HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
 
+# ===================================== CONFIGURAZIONE BOT MENU =====================================
+
+
+_bot_configuration_buttons = [
+    [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
+    [InlineKeyboardButton(text="📖  Spiegazione Strategie 🧭", callback_data="to_explanation_menu")],
+    [InlineKeyboardButton(text="🏗  Gestione Budget (IN ARRIVO) 📈", callback_data="new")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+]
+BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_configuration_buttons)
+
+
+# ===================================== CONFIGURAZIONE BOT SUBMENU =====================================
 
 _explanation_test_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Singola  📖", callback_data="explanation_singola")], 
     [InlineKeyboardButton(text="⛹🏿‍♂️  Multiple 📖", callback_data="explanation_multiple")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
-_useful_links_buttons = [
-    [InlineKeyboardButton(text="📉 Tracciabilità Produzione LoT +24h 📉 ", url="t.me/LoT_Tracciabilita")],
-    [InlineKeyboardButton(text="📊 Report e Rendimenti 📊 ", url = "t.me/LoT_ReportGiornalieri")],
-    [InlineKeyboardButton(text="📱 Pagina Instagram 📱 ", url="https://www.instagram.com/lot.official")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
-]
-USEFUL_LINKS_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_useful_links_buttons, resize_keyboard=True)
-
-
-_assistance_buttons = [
-    [InlineKeyboardButton(text="Premi qui", url="https://t.me/LegacyOfTipstersBot")],
-]
-ASSISTANCE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_assistance_buttons)
 
 _register_giocata_buttons = [
     [InlineKeyboardButton(text="Sì", callback_data= "register_giocata_yes")],
@@ -53,19 +48,50 @@ _register_giocata_buttons = [
 ]
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
+# ===================================== GESTIONE ESPERIENZA MENU =====================================
+
+_experience_buttons = [
+    [InlineKeyboardButton(text="🌟  Status Servizio 📶 (IN ARRIVO)", callback_data="new")], # TODO
+    [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
+    [InlineKeyboardButton(text="🏷  Codice Referral 🔗 (IN ARRIVO)", callback_data="new")], # TODO
+    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
+    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")], # TODO
+    [InlineKeyboardButton(text="🗓  Tracciabilità LoT  🗃", url="t.me/LoT_Tracciabilita")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
+]
+EXPERIENCE_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_experience_buttons)
+
+# ===================================== GESTIONE ESPERIENZA SUBMENU =====================================
+
+_to_resoconti_buttons = [
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖 (IN ARRIVO)", callback_data="resoconto_7_days")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖 (IN ARRIVO)", callback_data="resoconto_30_hours")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
+]
+RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
+
+
+_social_buttons = [
+    [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")],   
+    [InlineKeyboardButton(text="💻 Pagina Instagram 📱", url="https://www.instagram.com/lot.official")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
+]
+SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_buttons)
+
+
+
+# ===================================== STATUS SERVIZIO SUBMENU =====================================
+
 _proceed_to_payments_buttons = [
     [InlineKeyboardButton(text="Procedi al pagamento", callback_data= "to_payments")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage_from_referral")]
 ]
 PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_payments_buttons)
 
-_to_resoconti_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖", callback_data="resoconto_7_days")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖", callback_data="resoconto_30_hours")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
-]
-RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
 
 
 def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:

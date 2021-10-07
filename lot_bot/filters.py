@@ -1,9 +1,8 @@
-from logging import Filter
 from telegram.ext.filters import Filters
 
 from lot_bot import config as cfg
-from lot_bot import constants as cst
 from lot_bot.models import strategies as strat
+
 
 def get_giocata_filter() -> Filters:
     """Creates the filter for the giocate. It checks if the
@@ -59,8 +58,19 @@ def get_sport_channel_normal_message_filter() -> Filters:
 
 
 def get_homepage_filter() -> Filters:
-    # return Filters.regex(cst.HOMEPAGE_BUTTON_TEXT)
     return Filters.regex(r"[hH]omepage")
+
+
+def get_bot_config_filter() -> Filters:
+    return Filters.regex(r"[Cc]onfigurazione [Bb]o[Tt]")
+
+
+def get_experience_settings_filter() -> Filters:
+    return Filters.regex(r"[Gg]estione [Ee]sperienza")
+
+
+def get_assistance_filter() -> Filters:
+    return Filters.regex(r"[Aa]ssistenza")
 
 
 def get_outcome_giocata_filter() -> Filters:

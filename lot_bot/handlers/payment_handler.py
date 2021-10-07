@@ -48,6 +48,7 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
         chat_id=chat_id, 
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.PROCEED_TO_PAYMENTS_KEYBOARD,
+        parse_mode="MarkdownV2"
     )
     return REFERRAL
 

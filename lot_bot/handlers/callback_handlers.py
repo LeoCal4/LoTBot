@@ -136,7 +136,7 @@ def to_homepage(update: Update, context: CallbackContext):
             chat_id=chat_id,
             message_id=message_id,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="HTML"
+            parse_mode="MarkdownV2"
         )
     else:
         delete_message_if_possible(update, context)
@@ -144,9 +144,28 @@ def to_homepage(update: Update, context: CallbackContext):
             chat_id,
             cst.HOMEPAGE_MESSAGE,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="HTML"
+            parse_mode="MarkdownV2"
         )
     
+
+def to_bot_config_menu(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    message_id = update.callback_query.message.message_id
+    context.bot.edit_message_reply_markup(
+        chat_id=chat_id,
+        message_id=message_id,
+        reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+    )
+
+def to_experience_menu(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    message_id = update.callback_query.message.message_id
+    context.bot.edit_message_reply_markup(
+        chat_id=chat_id,
+        message_id=message_id,
+        reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+    )
+
 
 def to_sports_menu(update: Update, context: CallbackContext):
     """Loads the sports menù.
@@ -166,36 +185,30 @@ def to_sports_menu(update: Update, context: CallbackContext):
         )
         return
     # summing 2 hours for the UTC timezone
-    expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=2)
-    expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
-    tip_text = cst.TIP_MESSAGE.format(expiration_date_string)
+    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=2)
+    # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
+    tip_text = cst.SPORT_MENU_MESSAGE
     context.bot.edit_message_text(
         tip_text,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.create_sports_inline_keyboard(update)
+        reply_markup=kyb.create_sports_inline_keyboard(update),
+        parse_mode="MarkdownV2"
     )
 
 
-def to_links(update: Update, context: CallbackContext):
-    """Loads the link menù.
-
-    The callback for this is: to_links
-
-    Args:
-        update (Update): [description]
-        context (CallbackContext): [description]
-    """
-    context.bot.edit_message_text(
-        "💥 Qui trovi tutti i tasti per muoverti nelle varie aree del LoTVerse ! 💥",
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.USEFUL_LINKS_INLINE_KEYBOARD,
-    )
-
-
-def feature_to_be_added(update: Update, context: CallbackContext):
+def feature_to_be_added(_: Update, __: CallbackContext):
     return
+
+
+def to_social_menu(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    message_id = update.callback_query.message.message_id
+    context.bot.edit_message_reply_markup(
+        chat_id=chat_id,
+        message_id=message_id,
+        reply_markup=kyb.SOCIAL_MENU_INLINE_KEYBOARD,
+    )
 
 
 def to_explanations_menu(update: Update, context: CallbackContext):
