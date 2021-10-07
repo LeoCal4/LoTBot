@@ -54,6 +54,10 @@ def add_handlers(dispatcher: Dispatcher):
     # dispatcher.add_handler(CommandHandler("send_all_videos", message_handlers.send_all_videos_for_file_ids))
     dispatcher.add_handler(CommandHandler("set_user_role", message_handlers.set_user_role))
 
+    #da controllare
+    dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
+
+
     # ======= CALLBACK QUERIES HANDLERS =======
     # matches any callback with pattern "sport_<...>"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))

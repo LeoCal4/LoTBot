@@ -271,6 +271,50 @@ def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbi
     return permitted
 
 
+#da controllare
+def aggiungi_giorni(update: Update, context: CallbackContext, _):
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["admin"]): #aggiungere l' altro ruolo accettato, (analista o consulente)?
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    text : str = update.effective_message.text
+    text_tokens = text.strip().split(" ")
+    if len(text_tokens) != 3:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id (o @username) e giorni di prova da aggiungere")
+        return
+    _, target_user_id, giorni_aggiuntivi = text.strip().split(" ")
+    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_id} and {giorni_aggiuntivi}")
+
+    # * check whetever the specified user identification is a Telegram ID or a username
+    try:
+        target_user_id = int(target_user_id)
+    except ValueError:
+        lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+    # * an actual user_id was sent
+    if type(target_user_id) is int: 
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with {giorni_aggiuntivi}")
+        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}
+        update_result = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_id} adding {giorni_aggiuntivi} days to its subscription expiration date")
+        user_data = user_manager.retrieve_user_fields_by_username(user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}        
+        update_result = user_manager.update_user_by_username(target_user_id, giorni_aggiuntivi) #bisognerebbe utilizzare "$inc" invece di "$set"
+    if update_result:
+        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} ha {giorni_aggiuntivi} giorni aggiuntivi"
+        message_to_user = f"Hai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti"
+        if type(target_user_id) is int:
+            context.bot.send_message(target_user_id,message_to_user)
+        else:
+            target_from_username = user_manager.retrieve_user_fields_by_username(username, ["_id"])["_id"]
+            context.bot.send_message(target_from_username,message_to_user)
+    else:
+        reply_message = f"Nessun utente specificato da {target_user_id} è stato trovato"
+    update.effective_message.reply_text(reply_message)
+
+
+
 def set_user_role(update: Update, _):
     user_id = update.effective_user.id
     if not check_user_permission(user_id, permitted_roles=["admin"]):
@@ -326,6 +370,8 @@ def send_file_id(update: Update, _):
     else:
         reply_message = f"{file_id}"
     update.effective_message.reply_text(reply_message)
+
+
     
 
 ##################################### MESSAGE HANDLERS #####################################
