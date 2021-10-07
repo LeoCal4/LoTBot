@@ -209,6 +209,121 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
     send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
 
 
+
+def reset_command(update: Update, context: CallbackContext):
+    """Resets giocate, utenti and sport_subscriptions for the command sender,
+        only if he/she is an admin
+
+    Args:
+        update (Update): the Update containing the reset command
+        context (CallbackContext)
+    """
+    # user_id = update.effective_user.id
+    # lgr.logger.info(f"Received /reset command from {user_id}")
+    # # ! TODO check for admin rights set on the DB, not for specific ID
+    # if user_id != ID_MANUEL and user_id != ID_MASSI:
+    #     return
+    # user_manager.delete_user(user_id)
+    # sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
+    return
+
+
+def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
+    # TODO ERASE AND DO IT DECENTLY
+    """Responds to the command `/send_all_videos` and can be used only by the developers.
+
+    This command is used in order to upload the videos for the first time and get 
+    their `file_id`, so that those can be used instead of sending the real files.
+
+    Sends either the videos listed in `VIDEO_FILE_NAMES` (if they exist) and found in the dir `VIDEO_BASE_PATH`
+    or all the videos in `VIDEO_BASE_PATH`, in case `VIDEO_FILE_NAMES` is empty.
+
+    In addition to the videos, a message specifiying the `file_id` of each video is sent.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    # ! command accessible only by developers
+    if not update.effective_user.id in cfg.config.DEVELOPER_CHAT_IDS:
+        return
+    # ! check whetever to use the whole dir or just some files of it
+    if cfg.config.VIDEO_FILE_NAMES and cfg.config.VIDEO_FILE_NAMES != []:
+        video_file_names = cfg.config.VIDEO_FILE_NAMES
+    else:
+        video_file_names = os.listdir(cfg.config.VIDEO_BASE_PATH)
+    video_file_paths = [
+        os.path.join(cfg.config.VIDEO_BASE_PATH, file_name) 
+        for file_name in video_file_names 
+        if os.path.isfile(os.path.join(cfg.config.VIDEO_BASE_PATH, file_name)) and \
+            file_name.lower().endswith(cfg.config.VIDEO_FILE_EXTENSIONS)
+    ]
+    for video_file_path in video_file_paths:
+        update.message.reply_text(f"Sending {video_file_path}")
+        video_to_send = open(video_file_path, "rb")
+        video_sent_update = context.bot.send_video(
+            update.effective_message.chat_id,
+            video_to_send
+        )
+        context.bot.send_message(
+            update.effective_message.chat_id,
+            f"Video file_id: {video_sent_update.video.file_id}",
+        )
+
+def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
+    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
+    permitted = True
+    if not permitted_roles is None:
+        permitted = user_role in permitted_roles
+    if not forbidden_roles is None:
+        permitted = not user_role in forbidden_roles 
+    return permitted
+
+
+#da controllare
+def aggiungi_giorni(update: Update, context: CallbackContext, _):
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["admin"]): #aggiungere l' altro ruolo accettato, (analista o consulente)?
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    text : str = update.effective_message.text
+    text_tokens = text.strip().split(" ")
+    if len(text_tokens) != 3:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id (o @username) e giorni di prova da aggiungere")
+        return
+    _, target_user_id, giorni_aggiuntivi = text.strip().split(" ")
+    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_id} and {giorni_aggiuntivi}")
+
+    # * check whetever the specified user identification is a Telegram ID or a username
+    try:
+        target_user_id = int(target_user_id)
+    except ValueError:
+        lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+    # * an actual user_id was sent
+    if type(target_user_id) is int: 
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with {giorni_aggiuntivi}")
+        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}
+        update_result = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_id} adding {giorni_aggiuntivi} days to its subscription expiration date")
+        user_data = user_manager.retrieve_user_fields_by_username(user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}        
+        update_result = user_manager.update_user_by_username(target_user_id, giorni_aggiuntivi) #bisognerebbe utilizzare "$inc" invece di "$set"
+    if update_result:
+        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} ha {giorni_aggiuntivi} giorni aggiuntivi"
+        message_to_user = f"Hai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti"
+        if type(target_user_id) is int:
+            context.bot.send_message(target_user_id,message_to_user)
+        else:
+            target_from_username = user_manager.retrieve_user_fields_by_username(username, ["_id"])["_id"]
+            context.bot.send_message(target_from_username,message_to_user)
+    else:
+        reply_message = f"Nessun utente specificato da {target_user_id} è stato trovato"
+    update.effective_message.reply_text(reply_message)
+
+
 def set_user_role(update: Update, _):
     user_id = update.effective_user.id
     if not check_user_permission(user_id, permitted_roles=["admin"]):
@@ -264,6 +379,8 @@ def send_file_id(update: Update, _):
     else:
         reply_message = f"{file_id}"
     update.effective_message.reply_text(reply_message)
+
+
     
 
 ##################################### MESSAGE HANDLERS #####################################

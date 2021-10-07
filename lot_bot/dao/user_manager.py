@@ -74,6 +74,27 @@ def retrieve_user_id_by_referral(referral_code: str) -> Optional[Dict]:
         lgr.logger.error(f"Error during user retrieval by ref code - {referral_code=}")
         raise e
 
+#da controllare
+def retrieve_user_fields_by_username(username: str, user_fields: List[str]) -> Optional[Dict]:
+    """Retrieve the user fields from the user specified by username.
+
+    Args:
+        username (str)
+        user_fields (List[str]): the list of the fields that will be retrieved
+    
+    Raises:
+        Exception: if there was a db error
+
+    Returns:
+        Dict: the user data 
+
+    """
+    try:
+        user_fields = {field: 1 for field in user_fields}
+        return db.mongo.utenti.find_one({"username": username}, user_fields)
+    except Exception as e:
+        lgr.logger.error(f"Error during user fields retrieval {username=} - {user_fields=}")
+        raise e
 
 def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Optional[Dict]:
     """Retrieve the user fields from the user specified by user_id.

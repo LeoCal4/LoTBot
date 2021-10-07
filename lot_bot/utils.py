@@ -45,6 +45,7 @@ def get_sport_name_from_giocata(text: str) -> str:
     raise custom_exceptions.GiocataParsingError(f"sport non trovato nella riga '{sport_row}'")
 
 
+
 def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
     """Extracts the strategy name from a giocata message.
     It checks if the strategy exists and if it is present in the sport's ones.
@@ -152,23 +153,24 @@ def create_valid_referral_code() -> str:
             break
     return new_referral
 
-
-def extend_expiration_date(expiration_date_timestamp: float) -> float:
-    """Adds one month to the expiration date timestamp in case it is in the future,
-    otherwise it adds one month to the current timestamp.
+#da controllare
+def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: int) -> float:
+    """Adds giorni_aggiuntivi to the expiration date timestamp in case it is in the future,
+    otherwise it adds giorni_aggiuntivi to the current timestamp.
 
     Args:
         expiration_date_timestamp (float)
+        giorni_aggiuntivi (int)
 
     Returns:
-        float: the original timestamp + 1 month
+        float: the original timestamp + giorni_aggiuntivi
     """
     now_timestamp = datetime.datetime.utcnow().timestamp()
     if datetime.datetime.utcnow().timestamp() > expiration_date_timestamp:
         base_timestamp = now_timestamp
     else:
         base_timestamp = expiration_date_timestamp
-    return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(months=1)).timestamp()
+    return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
 
 ######################################## TESTING #############################################

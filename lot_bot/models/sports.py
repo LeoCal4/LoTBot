@@ -20,18 +20,31 @@ _base_strategies = [
     strats.SINGOLA,
     strats.MULTIPLE, 
     strats.RADDOPPIO, 
-    strats.LIVE, 
-    strats.INSTAGRAM, 
+    strats.SPECIALI,
+]
+_tutto_strategies = [
+    strats.HOCKEY,
+    strats.IPPICA,
+    strats.PALLAVOLO,
+    strats.AUTO,
+    strats.MOTO,
+    strats.RUGBY,
+    strats.FOOTBALLAMERICANO,
+    strats.ESPORTS,
+    strats.PALLAMANO,
+    strats.FRECCETTE,
+    strats.SHOWTELEVISIVI,
+    strats.MAXEXCHANGE,
 ]
 
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", _base_strategies + [strats.TRILLED, strats.PIAQUEST])
-    BASKET : Sport = Sport("basket", _base_strategies + [strats.TRILLED])
-    TENNIS : Sport = Sport("tennis", _base_strategies + [strats.TRILLED])
-    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.INSTAGRAM])
-    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto")
+    CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD])
+    BASKET : Sport = Sport("basket", _base_strategies)
+    TENNIS : Sport = Sport("tennis", _base_strategies)
+    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE])
+    TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
     # PINGPONG : Sport = Sport("pingpong", _base_strategies + [strats.TRILLED], display_name="Ping Pong")
     # FRECCETTE : Sport = Sport("freccette", _base_strategies + [strats.TRILLED], show_in_menu=False)
     # HOCKEY : Sport  = Sport("hockey", _base_strategies + [strats.TRILLED], show_in_menu=False)
