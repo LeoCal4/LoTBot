@@ -18,7 +18,7 @@ class Sport:
 strats = strategies.StrategyContainer()
 _base_strategies = [
     strats.SINGOLA,
-    strats.MULTIPLE, 
+    strats.MULTIPLA, 
     strats.RADDOPPIO, 
     strats.SPECIALI,
 ]
@@ -26,6 +26,7 @@ _tutto_strategies = [
     strats.HOCKEY,
     strats.IPPICA,
     strats.PALLAVOLO,
+    strats.PINGPONG,
     strats.AUTO,
     strats.MOTO,
     strats.RUGBY,
@@ -34,7 +35,6 @@ _tutto_strategies = [
     strats.PALLAMANO,
     strats.FRECCETTE,
     strats.SHOWTELEVISIVI,
-    #strats.MAXEXCHANGE,
 ]
 
 # ! important: no _ in .name nor in var names

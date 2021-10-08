@@ -353,6 +353,28 @@ def last_24_hours_resoconto(update: Update, context: CallbackContext):
     send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
 
 
+def last_7_days_resoconto(update: Update, context: CallbackContext):
+    """
+    Callback data: resoconto_7_days
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).timestamp()
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+
+
+def last_30_days_resoconto(update: Update, context: CallbackContext):
+    """
+    Callback data: resoconto_30_days
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=30)).timestamp()
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+
+
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float):
     """[summary]
 

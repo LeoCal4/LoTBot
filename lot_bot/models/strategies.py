@@ -14,8 +14,9 @@ class Strategy:
 @dataclasses.dataclass
 class StrategyContainer:
     RADDOPPIO : Strategy = Strategy("raddoppio")
-    MULTIPLE : Strategy = Strategy("multiple")
+    MULTIPLA : Strategy = Strategy("multipla")
     SINGOLA : Strategy = Strategy("singola")
+    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong")
     SPECIALI : Strategy = Strategy("speciali")
     PDRRADDOPPI : Strategy = Strategy("pdrraddoppi", display_name="PDR Raddoppi")
     PDRHIGHODD : Strategy = Strategy("pdrhighodd", display_name="PDS High Odd")

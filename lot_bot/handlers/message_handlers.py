@@ -26,9 +26,8 @@ from telegram.ext.dispatcher import CallbackContext
 
 def create_first_time_user(user: User) -> Dict:
     """Creates the user using the bot for the first time.
-
     First, it creates the user itself, setting its expiration date to 7 days 
-    from now, then creates an sport_subscription to calcio - piaquest and another
+    from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
     one to exchange - maxexchange. 
 
     Args:
@@ -51,20 +50,33 @@ def create_first_time_user(user: User) -> Dict:
         "sport": spr.sports_container.CALCIO.name,
         "strategy": strat.strategies_container.RADDOPPIO.name,
     }
-    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_raddoppio_data)
+    sub_creation_result = False
+    try:
+        sub_creation_result = sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_raddoppio_data)
+    except Exception as e:
+        lgr.logger.error(f"Could not create subscription {sport_subscriptions_calcio_raddoppio_data} for new user {user_data['_id']} - {str(e)}")
     sport_subscriptions_calcio_multiple_data = {
         "user_id": user.id,
         "sport": spr.sports_container.CALCIO.name,
         "strategy": strat.strategies_container.MULTIPLE.name,
     }
-    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_multiple_data)
+    try:
+        sub_creation_result = sub_creation_result and sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_multiple_data)
+    except Exception as e:
+        lgr.logger.error(f"Could not create subscription {sport_subscriptions_calcio_multiple_data} for new user {user_data['_id']} - {str(e)}")
     # * create exchange - maxexchange sport_subscription
     sport_subscriptions_exchange_data = {
         "user_id": user.id,
         "sport": spr.sports_container.EXCHANGE.name,
         "strategy": strat.strategies_container.MAXEXCHANGE.name,  
     }
-    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_exchange_data)
+    try:
+        sub_creation_result = sub_creation_result and sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_exchange_data)
+    except Exception as e:
+        lgr.logger.error(f"Could not create subscription {sport_subscriptions_exchange_data} for new user {user_data['_id']} - {str(e)}")
+    if not sub_creation_result:
+        # send_messages_to_developers(context, [error_message]) # TODO decide if this is the right approach or not
+        pass
     return user_data
 
 
@@ -89,7 +101,12 @@ def first_time_user_handler(update: Update, context: CallbackContext):
         update.effective_user.first_name, 
         update.effective_user.username
     )
-    context.bot.send_message(cfg.config.NEW_USERS_CHANNEL_ID, new_user_channel_message)
+    try:
+        context.bot.send_message(cfg.config.NEW_USERS_CHANNEL_ID, new_user_channel_message)
+    except Exception as e:
+        lgr.logger.error(f"Could not send new user message to relative channel {cfg.config.NEW_USERS_CHANNEL_ID=} - {e=}")
+        error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
+        send_messages_to_developers(context, [error_message])
     update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="HTML")
 
 
@@ -126,6 +143,8 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     messages_sent = 0
     messages_to_be_sent = len(sub_user_ids)
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
+    if is_giocata:
+        text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
         user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration"])
         if not user_data:
@@ -139,7 +158,6 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         lgr.logger.debug(f"Sending message to {user_id}")
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
-            text += "\n\nHai effettuato la giocata?"
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
         try:

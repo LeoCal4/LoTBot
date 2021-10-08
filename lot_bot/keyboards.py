@@ -25,7 +25,7 @@ HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_button
 
 _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
-    [InlineKeyboardButton(text="📖  Spiegazione Strategie 🧭", callback_data="to_explanation_menu")],
+    [InlineKeyboardButton(text="📖  Spiegazione Strategie (IN ARRIVO) 🧭", callback_data="new")], # to_explanation_menu
     [InlineKeyboardButton(text="🏗  Gestione Budget (IN ARRIVO) 📈", callback_data="new")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
@@ -68,8 +68,8 @@ EXPERIENCE_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_experien
 
 _to_resoconti_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖 (IN ARRIVO)", callback_data="resoconto_7_days")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖 (IN ARRIVO)", callback_data="resoconto_30_hours")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖", callback_data="resoconto_7_days")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖", callback_data="resoconto_30_days")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
 ]
 RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)

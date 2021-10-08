@@ -61,11 +61,9 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
 
 
 def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
-    # TODO handle outcomes Exchange
     lgr.logger.debug(f"Calculating outcome percentage on {outcome} - {stake} - {quota}")
     if outcome == "win":
         outcome_percentage = stake * (quota - 100) / 100
-        lgr.logger.debug(f"{outcome_percentage=}")
     elif outcome == "loss":
         outcome_percentage = float(-stake)
     else:

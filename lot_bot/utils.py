@@ -117,7 +117,6 @@ def create_cashout_message(message_text: str) -> str:
             or an empty string in case of errors
     """
     matches = re.search(filters.get_cashout_pattern(), message_text)
-    message_tokens = message_text.split()
     giocata_num = matches.group(1)
     cashout_percentage = matches.group(2)
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
@@ -153,7 +152,7 @@ def create_valid_referral_code() -> str:
             break
     return new_referral
 
-#da controllare
+
 def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: int) -> float:
     """Adds giorni_aggiuntivi to the expiration date timestamp in case it is in the future,
     otherwise it adds giorni_aggiuntivi to the current timestamp.
