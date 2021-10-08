@@ -136,7 +136,7 @@ def to_homepage(update: Update, context: CallbackContext):
             chat_id=chat_id,
             message_id=message_id,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="MarkdownV2"
+            parse_mode="HTML"
         )
     else:
         delete_message_if_possible(update, context)
@@ -144,7 +144,7 @@ def to_homepage(update: Update, context: CallbackContext):
             chat_id,
             cst.HOMEPAGE_MESSAGE,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="MarkdownV2"
+            parse_mode="HTML"
         )
     
 
@@ -193,7 +193,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_sports_inline_keyboard(update),
-        parse_mode="MarkdownV2"
+        parse_mode="HTML"
     )
 
 

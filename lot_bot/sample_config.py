@@ -21,6 +21,7 @@ class Config(object):
     PAYMENT_TOKEN = None
     TESTING = False
     SPORTS_CHANNELS_ID = {}
+    NEW_USERS_CHANNEL_ID = None
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
@@ -49,6 +50,7 @@ class Development(Config):
     VIDEO_FILE_NAMES = [] # TBA
     VIDEO_FILE_IDS = {} # TBA
     VIDEO_FILE_EXTENSIONS = (".mp4") # TBA
+    NEW_USERS_CHANNEL_ID = None # TBA
     
 
 
@@ -104,6 +106,9 @@ def create_config():
         config.TESTING = os.getenv("TESTING", False)
         config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
         config.LOG_PATH = os.getenv("LOG_PATH", None)
+        config.NEW_USERS_CHANNEL_ID = os.getenv("NEW_USERS_CHANNEL_ID", None)
+        if not config.NEW_USERS_CHANNEL_ID is None:
+            config.NEW_USERS_CHANNEL_ID = int(config.NEW_USERS_CHANNEL_ID)
         channels_id = os.getenv("SPORTS_CHANNELS_ID", {})
         if channels_id != {}:
             config.SPORTS_CHANNELS_ID = json.loads(channels_id)

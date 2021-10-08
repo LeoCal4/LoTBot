@@ -45,13 +45,19 @@ def create_first_time_user(user: User) -> Dict:
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
-    # * create calcio - piaquest sport_subscription
-    sport_subscriptions_calcio_data = {
+    # * create calcio -  sport_subscription
+    sport_subscriptions_calcio_raddoppio_data = {
         "user_id": user.id,
         "sport": spr.sports_container.CALCIO.name,
-        "strategy": strat.strategies_container.PIAQUEST.name,
+        "strategy": strat.strategies_container.RADDOPPIO.name,
     }
-    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_data)
+    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_raddoppio_data)
+    sport_subscriptions_calcio_multiple_data = {
+        "user_id": user.id,
+        "sport": spr.sports_container.CALCIO.name,
+        "strategy": strat.strategies_container.MULTIPLE.name,
+    }
+    sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_multiple_data)
     # * create exchange - maxexchange sport_subscription
     sport_subscriptions_exchange_data = {
         "user_id": user.id,
@@ -62,7 +68,7 @@ def create_first_time_user(user: User) -> Dict:
     return user_data
 
 
-def first_time_user_handler(update: Update):
+def first_time_user_handler(update: Update, context: CallbackContext):
     """Sends welcome messages to the user, then creates two standard
     sport_subscriptions for her/him and creates the user itself.
 
@@ -73,12 +79,18 @@ def first_time_user_handler(update: Update):
     first_time_user_data = create_first_time_user(update.effective_user)
     trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
-    # TODO 
-    parsed_first_name = user.first_name.replace("_", "\_").replace(".", "\.").replace("(", "\(").replace(")", "\)").replace("*", "\*")
+    # escape chars for HTML
+    parsed_first_name = user.first_name.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
     welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
     # the messages are sent only if the previous operations succeeded, this is fundamental
     #   for the integration tests too
-    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="MarkdownV2")
+    new_user_channel_message = cst.NEW_USER_MESSAGE.format(
+        update.effective_user.id, 
+        update.effective_user.first_name, 
+        update.effective_user.username
+    )
+    context.bot.send_message(cfg.config.NEW_USERS_CHANNEL_ID, new_user_channel_message)
+    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="HTML")
 
 
 def send_messages_to_developers(context: CallbackContext, messages_to_send: List[str], parse_mode=None):
@@ -161,7 +173,7 @@ def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbi
 ################################## COMMANDS ########################################
 
 
-def start_command(update: Update, _):
+def start_command(update: Update, context: CallbackContext):
     """Checks wheter the user is a first timer or not, then,
     in case it is, it creates it; otherwise, it opens the canali 
     menu with a welcome back message.
@@ -176,8 +188,8 @@ def start_command(update: Update, _):
     lgr.logger.debug(f"Received /start command from {user_id}")
     if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
         # * the user does not exist yet
-        first_time_user_handler(update)
-    homepage_handler(update, _)
+        first_time_user_handler(update, context)
+    homepage_handler(update, context)
     # update.message.reply_text(cst.BENTORNATO_MESSAGE, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
     # update.message.reply_text(cst.LISTA_CANALI_MESSAGE, reply_markup=kyb.create_sports_inline_keyboard(update))
 
@@ -281,46 +293,61 @@ def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbi
     return permitted
 
 
-#da controllare
 def aggiungi_giorni(update: Update, context: CallbackContext, _):
     user_id = update.effective_user.id
-    if not check_user_permission(user_id, permitted_roles=["admin"]): #aggiungere l' altro ruolo accettato, (analista o consulente)?
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
+    
+    # * retrieve the target user and additional days from the command text 
     text : str = update.effective_message.text
     text_tokens = text.strip().split(" ")
     if len(text_tokens) != 3:
-        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id (o @username) e giorni di prova da aggiungere")
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id (o username) e giorni di prova da aggiungere")
         return
-    _, target_user_id, giorni_aggiuntivi = text.strip().split(" ")
-    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_id} and {giorni_aggiuntivi}")
-
-    # * check whetever the specified user identification is a Telegram ID or a username
+    _, target_user_identification_data, giorni_aggiuntivi = text.strip().split(" ")
+    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_identification_data} and {giorni_aggiuntivi}")
+    
+    # * check whetever the days received are actually an integer
     try:
-        target_user_id = int(target_user_id)
+        giorni_aggiuntivi = int(giorni_aggiuntivi)
+    except Exception as e:
+        lgr.logger.error(f"Tried to use {giorni_aggiuntivi} as giorni aggiuntivi - Exception type: {type(e).__name__}")
+        update.effective_message.reply_text(f"ERRORE: '{giorni_aggiuntivi}' non è un numero di giorni valido")
+        return
+    
+    # * check whetever the specified user identification is a Telegram ID or a username
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
     except ValueError:
-        lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+        lgr.logger.debug(f"{target_user_identification_data} was a username, not a user_id")
+        # remove @ if it is present
+        target_user_username = target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
+    
     # * an actual user_id was sent
-    if type(target_user_id) is int: 
-        lgr.logger.debug(f"Updating user with user_id {target_user_id} with {giorni_aggiuntivi}")
-        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
-        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}
+    if not target_user_id is None:
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with {giorni_aggiuntivi} days to its subscription expiration date")
+        user_expiration_timestamp = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
         update_result = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
     else:
-        lgr.logger.debug(f"Updating user with username {target_user_id} adding {giorni_aggiuntivi} days to its subscription expiration date")
-        user_data = user_manager.retrieve_user_fields_by_username(user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
-        new_lot_subscription_expiration = {"lot_subscription_expiration":utils.extend_expiration_date(user_data,giorni_aggiuntivi)}        
-        update_result = user_manager.update_user_by_username(target_user_id, giorni_aggiuntivi) #bisognerebbe utilizzare "$inc" invece di "$set"
+        lgr.logger.debug(f"Updating user with username {target_user_username} adding {giorni_aggiuntivi} days to its subscription expiration date")
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_username, ["lot_subscription_expiration", "_id"])
+        user_expiration_timestamp = target_user_data["lot_subscription_expiration"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}        
+        update_result = user_manager.update_user_by_username(target_user_username, new_lot_subscription_expiration)
+        target_user_id = target_user_data["_id"]
+
+    # * answer the analyst with the result of the operation
     if update_result:
-        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} ha {giorni_aggiuntivi} giorni aggiuntivi"
-        message_to_user = f"Hai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti"
-        if type(target_user_id) is int:
-            context.bot.send_message(target_user_id,message_to_user)
-        else:
-            target_from_username = user_manager.retrieve_user_fields_by_username(username, ["_id"])["_id"]
-            context.bot.send_message(target_from_username,message_to_user)
+        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
+        message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!" # TODO messaggio giorni aggiuntivi
+        context.bot.send_message(target_user_id, message_to_user)
     else:
-        reply_message = f"Nessun utente specificato da {target_user_id} è stato trovato"
+        reply_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato"
     update.effective_message.reply_text(reply_message)
 
 
@@ -390,7 +417,7 @@ def homepage_handler(update: Update, _):
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-        parse_mode="MarkdownV2"
+        parse_mode="HTML"
     )
 
 
@@ -401,7 +428,7 @@ def bot_configuration_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
-        parse_mode="MarkdownV2"
+        parse_mode="HTML"
     )
 
 
@@ -412,7 +439,7 @@ def experience_settings_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
-        parse_mode="MarkdownV2"
+        parse_mode="HTML"
     )
 
 
