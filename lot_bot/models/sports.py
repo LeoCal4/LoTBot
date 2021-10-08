@@ -34,7 +34,7 @@ _tutto_strategies = [
     strats.PALLAMANO,
     strats.FRECCETTE,
     strats.SHOWTELEVISIVI,
-    strats.MAXEXCHANGE,
+    #strats.MAXEXCHANGE,
 ]
 
 # ! important: no _ in .name nor in var names
