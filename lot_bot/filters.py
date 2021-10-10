@@ -123,7 +123,7 @@ def get_cashout_pattern() -> str:
     Returns:
         str: cashout regex pattern
     """
-    return r"^\s*#([\w\d-]+)\s*([+-]\d+(?:[\.,]\d+)?)\s*$"
+    return r"^\s*#([\w\d]+)\s*([+-]?\d+(?:[\.,]\d+)?)\s*$"
 
 
 def get_explanation_pattern() -> str:

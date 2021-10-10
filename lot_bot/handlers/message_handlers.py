@@ -41,7 +41,9 @@ def create_first_time_user(user: User) -> Dict:
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+    # ! TODO REVERT
+    # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
+    trial_expiration_timestamp = datetime.datetime(2021, 10, 16, hour=13, minute=15).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio -  sport_subscription
@@ -58,7 +60,7 @@ def create_first_time_user(user: User) -> Dict:
     sport_subscriptions_calcio_multiple_data = {
         "user_id": user.id,
         "sport": spr.sports_container.CALCIO.name,
-        "strategy": strat.strategies_container.MULTIPLE.name,
+        "strategy": strat.strategies_container.MULTIPLA.name,
     }
     try:
         sub_creation_result = sub_creation_result and sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_multiple_data)
@@ -89,8 +91,12 @@ def first_time_user_handler(update: Update, context: CallbackContext):
     """
     user = update.effective_user
     first_time_user_data = create_first_time_user(update.effective_user)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
+    # !!!!!!!!!!!!!!!!! TODO REVERT 
+    # trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"])
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
+    # !!!!!!!!!!!!!!!!! TODO REVERT
+    # trial_expiration_date_string = datetime.datetime(2021, 10, 16, hour=13, minute=15).strftime("%d/%m/%Y alle %H:%M")
     # escape chars for HTML
     parsed_first_name = user.first_name.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
     welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
@@ -208,8 +214,6 @@ def start_command(update: Update, context: CallbackContext):
         # * the user does not exist yet
         first_time_user_handler(update, context)
     homepage_handler(update, context)
-    # update.message.reply_text(cst.BENTORNATO_MESSAGE, reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
-    # update.message.reply_text(cst.LISTA_CANALI_MESSAGE, reply_markup=kyb.create_sports_inline_keyboard(update))
 
 
 def normal_message_to_abbonati_handler(update: Update, context: CallbackContext):
@@ -239,79 +243,7 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
     send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
 
 
-
-def reset_command(update: Update, context: CallbackContext):
-    """Resets giocate, utenti and sport_subscriptions for the command sender,
-        only if he/she is an admin
-
-    Args:
-        update (Update): the Update containing the reset command
-        context (CallbackContext)
-    """
-    # user_id = update.effective_user.id
-    # lgr.logger.info(f"Received /reset command from {user_id}")
-    # # ! TODO check for admin rights set on the DB, not for specific ID
-    # if user_id != ID_MANUEL and user_id != ID_MASSI:
-    #     return
-    # user_manager.delete_user(user_id)
-    # sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
-    return
-
-
-def send_all_videos_for_file_ids(update: Update, context: CallbackContext):
-    # TODO ERASE AND DO IT DECENTLY
-    """Responds to the command `/send_all_videos` and can be used only by the developers.
-
-    This command is used in order to upload the videos for the first time and get 
-    their `file_id`, so that those can be used instead of sending the real files.
-
-    Sends either the videos listed in `VIDEO_FILE_NAMES` (if they exist) and found in the dir `VIDEO_BASE_PATH`
-    or all the videos in `VIDEO_BASE_PATH`, in case `VIDEO_FILE_NAMES` is empty.
-
-    In addition to the videos, a message specifiying the `file_id` of each video is sent.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    # ! command accessible only by developers
-    if not update.effective_user.id in cfg.config.DEVELOPER_CHAT_IDS:
-        return
-    # ! check whetever to use the whole dir or just some files of it
-    if cfg.config.VIDEO_FILE_NAMES and cfg.config.VIDEO_FILE_NAMES != []:
-        video_file_names = cfg.config.VIDEO_FILE_NAMES
-    else:
-        video_file_names = os.listdir(cfg.config.VIDEO_BASE_PATH)
-    video_file_paths = [
-        os.path.join(cfg.config.VIDEO_BASE_PATH, file_name) 
-        for file_name in video_file_names 
-        if os.path.isfile(os.path.join(cfg.config.VIDEO_BASE_PATH, file_name)) and \
-            file_name.lower().endswith(cfg.config.VIDEO_FILE_EXTENSIONS)
-    ]
-    for video_file_path in video_file_paths:
-        update.message.reply_text(f"Sending {video_file_path}")
-        video_to_send = open(video_file_path, "rb")
-        video_sent_update = context.bot.send_video(
-            update.effective_message.chat_id,
-            video_to_send
-        )
-        context.bot.send_message(
-            update.effective_message.chat_id,
-            f"Video file_id: {video_sent_update.video.file_id}",
-        )
-
-def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
-    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
-    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
-    permitted = True
-    if not permitted_roles is None:
-        permitted = user_role in permitted_roles
-    if not forbidden_roles is None:
-        permitted = not user_role in forbidden_roles 
-    return permitted
-
-
-def aggiungi_giorni(update: Update, context: CallbackContext, _):
+def aggiungi_giorni(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
@@ -351,6 +283,7 @@ def aggiungi_giorni(update: Update, context: CallbackContext, _):
         user_expiration_timestamp = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
         new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
         update_result = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
+    # * a username was sent
     else:
         lgr.logger.debug(f"Updating user with username {target_user_username} adding {giorni_aggiuntivi} days to its subscription expiration date")
         target_user_data = user_manager.retrieve_user_fields_by_username(target_user_username, ["lot_subscription_expiration", "_id"])
@@ -371,9 +304,12 @@ def aggiungi_giorni(update: Update, context: CallbackContext, _):
 
 def set_user_role(update: Update, _):
     user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
+    
+    # * retrieve the target user and role from the command text 
     text : str = update.effective_message.text
     text_tokens = text.strip().split(" ")
     if len(text_tokens) != 3:
@@ -385,11 +321,13 @@ def set_user_role(update: Update, _):
         return
     lgr.logger.debug(f"Received /set_user_role with {target_user_id} and {role}")
     user_role = {"role": role}
+    
     # * check whetever the specified user identification is a Telegram ID or a username
     try:
         target_user_id = int(target_user_id)
     except ValueError:
         lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+    
     # * an actual user_id was sent
     if type(target_user_id) is int:
         lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_role}")
@@ -398,6 +336,7 @@ def set_user_role(update: Update, _):
     else:
         lgr.logger.debug(f"Updating user with username {target_user_id} with role {user_role}")
         update_result = user_manager.update_user_by_username(target_user_id, user_role)
+    
     if update_result:
         reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} è un {user_role['role']}"
     else:
@@ -426,8 +365,6 @@ def send_file_id(update: Update, _):
     update.effective_message.reply_text(reply_message)
 
 
-    
-
 ##################################### MESSAGE HANDLERS #####################################
 
 
@@ -440,9 +377,6 @@ def homepage_handler(update: Update, _):
 
 
 def bot_configuration_handler(update: Update, _: CallbackContext):
-    # update.message.edit_reply_markup(
-    #     reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
-    # )
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
@@ -451,9 +385,6 @@ def bot_configuration_handler(update: Update, _: CallbackContext):
 
 
 def experience_settings_handler(update: Update, _: CallbackContext):
-    # update.message.edit_reply_markup(
-    #     reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
-    # )
     update.message.reply_text(
         cst.HOMEPAGE_MESSAGE,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,

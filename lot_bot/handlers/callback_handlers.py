@@ -292,7 +292,7 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
-    updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Giocata effettuata 🟩"
+    updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
     parsed_giocata = utils.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
     personal_user_giocata = giocata_model.create_user_giocata()
@@ -316,7 +316,7 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
     """
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
-    updated_giocata_text = giocata_text_without_answer_row + "\n🟥 Giocata non effettuata 🟥"
+    updated_giocata_text = giocata_text_without_answer_row + "\n🟥 Operazione non effettuata 🟥"
     context.bot.edit_message_text(
         updated_giocata_text,
         chat_id=update.callback_query.message.chat_id,

@@ -12,7 +12,7 @@ def create_base_giocata():
         "strategy": "",
         "giocata_num": "",
         "base_quota": 0, # [quota (float) * 100] => (int)
-        "base_stake": 0, # %
+        "base_stake": 0, # stake (float) % * 100 => (int)
         "sent_timestamp": 0.0,
         "raw_text": "",
         "outcome": "?"
@@ -63,9 +63,9 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
 def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     lgr.logger.debug(f"Calculating outcome percentage on {outcome} - {stake} - {quota}")
     if outcome == "win":
-        outcome_percentage = stake * (quota - 100) / 100
+        outcome_percentage = (stake * (quota - 100)) / 10000
     elif outcome == "loss":
-        outcome_percentage = float(-stake)
+        outcome_percentage = -stake / 100
     else:
         outcome_percentage = 0.0
     return outcome_percentage

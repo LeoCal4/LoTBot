@@ -15,6 +15,7 @@ def test_config(monkeypatch, reset_config):
     assert type(cfg.config) == cfg.Development
     monkeypatch.setenv("ENV", "dotenv")
     cfg.create_config()
+    print(cfg.config.SPORTS_CHANNELS_ID)
     assert type(cfg.config) == cfg.Config
     monkeypatch.setenv("ENV", "development")
     cfg.create_config()

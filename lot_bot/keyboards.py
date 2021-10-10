@@ -27,6 +27,9 @@ _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
     [InlineKeyboardButton(text="📖  Spiegazione Strategie (IN ARRIVO) 🧭", callback_data="new")], # to_explanation_menu
     [InlineKeyboardButton(text="🏗  Gestione Budget (IN ARRIVO) 📈", callback_data="new")], 
+    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
+    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🌟  Status Servizio 📶 (IN ARRIVO)", callback_data="new")], # TODO
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
 BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_configuration_buttons)
@@ -42,21 +45,28 @@ _explanation_test_buttons = [
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 
+_to_resoconti_buttons = [
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖", callback_data="resoconto_7_days")], 
+    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖", callback_data="resoconto_30_days")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
+]
+RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
+
+
 _register_giocata_buttons = [
     [InlineKeyboardButton(text="Sì", callback_data= "register_giocata_yes")],
     [InlineKeyboardButton(text="No", callback_data= "register_giocata_no")],
 ]
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
+
 # ===================================== GESTIONE ESPERIENZA MENU =====================================
 
 _experience_buttons = [
-    [InlineKeyboardButton(text="🌟  Status Servizio 📶 (IN ARRIVO)", callback_data="new")], # TODO
     [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
-    [InlineKeyboardButton(text="🏷  Codice Referral 🔗 (IN ARRIVO)", callback_data="new")], # TODO
-    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
-    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🏷  Codice Referral 🔗 (IN ARRIVO)", callback_data="new")], # TODO
     [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")], # TODO
     [InlineKeyboardButton(text="🗓  Tracciabilità LoT  🗃", url="t.me/LoT_Tracciabilita")],
@@ -64,19 +74,12 @@ _experience_buttons = [
 ]
 EXPERIENCE_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_experience_buttons)
 
-# ===================================== GESTIONE ESPERIENZA SUBMENU =====================================
 
-_to_resoconti_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 7 Giorni 📖", callback_data="resoconto_7_days")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Ultimi 30 Giorni 📖", callback_data="resoconto_30_days")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
-]
-RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
+# ===================================== GESTIONE ESPERIENZA SUBMENU =====================================
 
 
 _social_buttons = [
-    [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")],   
+    [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")], 
     [InlineKeyboardButton(text="💻 Pagina Instagram 📱", url="https://www.instagram.com/lot.official")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
 ]

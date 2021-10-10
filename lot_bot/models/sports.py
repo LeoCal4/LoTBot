@@ -31,6 +31,7 @@ _tutto_strategies = [
     strats.MOTO,
     strats.RUGBY,
     strats.FOOTBALLAMERICANO,
+    strats.BASEBALL,
     strats.ESPORTS,
     strats.PALLAMANO,
     strats.FRECCETTE,

@@ -5,7 +5,6 @@ import string
 from typing import Dict, List, Optional, Tuple
 
 from dateutil.relativedelta import relativedelta
-from telegram.ext import filters
 
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
@@ -14,6 +13,7 @@ from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot import custom_exceptions
+from lot_bot import filters
 
 
 def check_sport_strategy_validity(sport: spr.Sport, strategy_token: str) -> bool:
@@ -62,13 +62,13 @@ def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
     """
     STRATEGY_ROW = 2
     STRATEGY_INDEX = 1
-    played_strategy = text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX]
+    played_strategy = " ".join(text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX:-1])
     strategy = strat.strategies_container.get_strategy(played_strategy)
     sport = spr.sports_container.get_sport(sport)
     if strategy and strategy in sport.strategies:
         return strategy.name
     else:
-        error_message = f"utils.get_strategy_name_from_giocata: Strategy not found from {text} for sport {sport.name}"
+        error_message = f"utils.get_strategy_name_from_giocata: Strategy {played_strategy} not found from {text} for sport {sport.name}"
         lgr.logger.error(error_message)
         raise custom_exceptions.GiocataParsingError(f"strategia '{played_strategy}' non trovata per lo sport '{sport.name}'")
 
@@ -186,8 +186,9 @@ def get_giocata_num_from_giocata(giocata_text: str) -> str:
     Returns:
         str
     """
-    GIOCATA_NUM_EMOJI = "🖊"
-    regex_match = re.search(fr"#\s*(\d+)\s*{GIOCATA_NUM_EMOJI}", giocata_text)
+    # GIOCATA_NUM_EMOJI = "🖊"
+    # lgr.logger.error(f"{giocata_text=}")
+    regex_match = re.search(r"#\s*(\d+)\s*", giocata_text)
     if not regex_match:
         error_message = f"utils.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)
@@ -232,13 +233,13 @@ def get_stake_from_giocata(giocata_text: str) -> int:
     Returns:
         int: the stake percentage value
     """
-    STAKE_EMOJI = "🏛"
-    regex_match = re.search(fr"{STAKE_EMOJI}\s*Stake\s*(\d+)\s*%\s*{STAKE_EMOJI}", giocata_text)
+    # STAKE_EMOJI = "🏛"
+    regex_match = re.search(fr"\s*Stake\s*(\d+[.,]?\d*)\s*", giocata_text)
     if not regex_match:
         error_message = f"utils.get_stake_from_giocata: stake not found from {giocata_text}"
         lgr.logger.error(error_message)
         raise custom_exceptions.GiocataParsingError(f"stake non trovato")
-    return int(regex_match.group(1))
+    return int(float(regex_match.group(1).replace(",", "."))*100)
 
 
 def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Optional[Dict]:
@@ -318,10 +319,16 @@ def create_resoconto_message(giocate: List[Dict]):
     resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     for index, giocata in enumerate(giocate, 1):
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
-        outcome_emoji = "🟢" if outcome_percentage >= 0 else "🔴"
+        if outcome_percentage > 0:
+            outcome_emoji = "🟢"
+        elif outcome_percentage == 0:
+            outcome_emoji = "🕔" # TODO add even case 
+        else:
+            outcome_emoji = "🔴"
         parsed_quota = giocata["base_quota"] / 100
+        parsed_stake = giocata["base_stake"] / 100
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {giocata['base_stake']}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
     return resoconto_message
 
 

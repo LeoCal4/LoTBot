@@ -81,6 +81,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(PreCheckoutQueryHandler(payment_handler.pre_checkout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_successful_payment_filter(), payment_handler.successful_payment_callback))
 
+
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
