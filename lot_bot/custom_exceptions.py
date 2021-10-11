@@ -38,7 +38,7 @@ class SendMessageError(Exception):
 
 
 class UserNotFound(Exception):
-    def __init__(self, user_id: str, update=None):
+    def __init__(self, user_id: str = "", update=None):
         self.user_id = user_id
         self.update = update
 

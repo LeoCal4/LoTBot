@@ -4,7 +4,7 @@ import datetime
 import html
 import json
 import traceback
-from typing import Dict, List
+from typing import Callable, Dict, List, Union
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -277,28 +277,39 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         # remove @ if it is present
         target_user_username = target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
     
-    # * an actual user_id was sent
-    if not target_user_id is None:
-        lgr.logger.debug(f"Updating user with user_id {target_user_id} with {giorni_aggiuntivi} days to its subscription expiration date")
-        user_expiration_timestamp = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["lot_subscription_expiration"])["lot_subscription_expiration"]
-        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
-        update_result = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
-    # * a username was sent
-    else:
-        lgr.logger.debug(f"Updating user with username {target_user_username} adding {giorni_aggiuntivi} days to its subscription expiration date")
-        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_username, ["lot_subscription_expiration", "_id"])
+    user_not_found_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato (ricorda che gli username sono case-sensitive)"
+    def _update_user_exp_date(user_retrieve_function: Callable, expiration_update_function: Callable, user_identification: Union[int, str]):
+        lgr.logger.info(f"Updating user identified by {user_identification} with {giorni_aggiuntivi} days to its subscription expiration date")
+        target_user_data = user_retrieve_function(user_identification, ["lot_subscription_expiration"])
+        if target_user_data is None:
+            raise custom_exceptions.UserNotFound()
         user_expiration_timestamp = target_user_data["lot_subscription_expiration"]
-        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}        
-        update_result = user_manager.update_user_by_username(target_user_username, new_lot_subscription_expiration)
-        target_user_id = target_user_data["_id"]
+        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
+        expiration_update_function(target_user_id, new_lot_subscription_expiration)
+        return target_user_data["_id"]
 
+    try:
+        # * an actual user_id was sent
+        if not target_user_id is None:
+            _update_user_exp_date(
+                user_manager.retrieve_user_fields_by_user_id, 
+                user_manager.update_user, 
+                target_user_id
+            )
+        # * a username was sent
+        else:
+            target_user_id = _update_user_exp_date(
+                user_manager.retrieve_user_fields_by_username, 
+                user_manager.update_user_by_username, 
+                target_user_username
+            )
+    except custom_exceptions.UserNotFound:
+        update.effective_message.reply_text(user_not_found_message)
+        return
     # * answer the analyst with the result of the operation
-    if update_result:
-        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
-        message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!" # TODO messaggio giorni aggiuntivi
-        context.bot.send_message(target_user_id, message_to_user)
-    else:
-        reply_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato"
+    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
+    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!" # TODO messaggio giorni aggiuntivi
+    context.bot.send_message(target_user_id, message_to_user)
     update.effective_message.reply_text(reply_message)
 
 

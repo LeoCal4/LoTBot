@@ -186,9 +186,7 @@ def get_giocata_num_from_giocata(giocata_text: str) -> str:
     Returns:
         str
     """
-    # GIOCATA_NUM_EMOJI = "🖊"
-    # lgr.logger.error(f"{giocata_text=}")
-    regex_match = re.search(r"#\s*(\d+)\s*", giocata_text)
+    regex_match = re.search(r"#\s*([\d\-\.]+)", giocata_text)
     if not regex_match:
         error_message = f"utils.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)

@@ -9,6 +9,7 @@ resocontibot.py
 lot_bot/config.py
 prova*
 gcloud/
+add_giocate_batch.py
 
 
 # Byte-compiled / optimized / DLL files
