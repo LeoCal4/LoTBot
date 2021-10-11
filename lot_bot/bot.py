@@ -96,6 +96,9 @@ def add_handlers(dispatcher: Dispatcher):
     # ============ ERROR HANDLERS =============
     dispatcher.add_error_handler(message_handlers.error_handler)
 
+    dispatcher.add_handler(MessageHandler(filters.get_all_filter(), message_handlers.unrecognized_message))
+
+
 
 def create_bot():
     """Creates the bot, updater and dispatcher objects that will

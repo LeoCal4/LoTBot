@@ -27,10 +27,13 @@ def check_components():
         cfg.create_config()
     if not lgr.logger:
         lgr.create_logger()
+        lgr.logger.info("Logger object created")
     if not db.mongo:
         db.create_db()
+        lgr.logger.info("DB object created")
     if not bot.bot or not bot.updater:
         bot.create_bot()
+        lgr.logger.info("Bot object created")
 
 
 def webhook(request):
@@ -42,9 +45,10 @@ def webhook(request):
     Returns:
         str
     """
-    if request.method != "POST":
-        return
     check_components()
+    if request.method != "POST":
+        lgr.logger.error(f"Bot received {request.method} request")
+        return
     update = Update.de_json(request.get_json(force=True), bot.bot)
     bot.dispatcher.process_update(update)
     return "Ok"

@@ -469,6 +469,10 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
     )
 
 
+def unrecognized_message(update: Update, _):
+    lgr.logger.info(f"Unrecognized message: {update.effective_message}")
+
+
 ############################################ ERROR HANDLERS ############################################
 
 

@@ -12,10 +12,11 @@ def get_giocata_filter() -> Filters:
     Returns:
         Filter
     """
-    GIOCATA_EMOJI = "⚜️"
+    # GIOCATA_EMOJI = "⚜️"
+    # GIOCATA_EMOJI2 = "⚜"
     sport_channels_filter = Filters.chat()
     sport_channels_filter.add_chat_ids(cfg.config.SPORTS_CHANNELS_ID.values())
-    giocata_text_filter = Filters.regex("Stake") & Filters.regex(GIOCATA_EMOJI)
+    giocata_text_filter = Filters.regex(r"[⚜️⚜][\s\S]*(?:[Ss]take)")
     return sport_channels_filter & giocata_text_filter
 
 
@@ -90,6 +91,10 @@ def get_outcome_giocata_filter() -> Filters:
 
 def get_send_file_id_filter() -> Filters:
     return Filters.caption(["/file_id"])
+
+
+def get_all_filter() -> Filters:
+    return Filters.all
 
 
 # ================================================ PATTERNS ================================================
