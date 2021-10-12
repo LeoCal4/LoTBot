@@ -95,6 +95,14 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 Versione 1.00"""
 
 
+# {0}: valid ref code
+SUCC_REFERRED_USER_MESSAGE = "\n\nIl tuo account è stato collegato con successo tramite il codice {0}!"
+
+# {0}: invalid ref code
+NO_REFERRED_USER_FOUND_MESSAGE = """\n\nPurtroppo non siamo riusciti a trovare nessun utente collegato al codice referral {0}.
+Contatta <a href="https://t.me/LegacyOfTipstersBot">l'Assistenza</a> e riporta il problema nella chat."""
+
+
 # {0}: user id
 # {1}: user first name
 # {2}: user username
@@ -107,6 +115,7 @@ Username: {2}"""
 # ================================== ERRORS =========================================
 
 ERROR_MESSAGE = """Abbiamo riscontrato un problema tecnico con il bot. 
-Si consiglia di riprovare più tardi, ci scusiamo per il disagio."""
+Si consiglia di riprovare più tardi, ci scusiamo per il disagio.
+Per ricevere aiuto, contatta <a href="https://t.me/LegacyOfTipstersBot">l'Assistenza</a>."""
 
 

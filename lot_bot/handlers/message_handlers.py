@@ -24,7 +24,7 @@ from telegram.ext.dispatcher import CallbackContext
 ################################# HELPER METHODS #######################################
 
 
-def create_first_time_user(user: User) -> Dict:
+def create_first_time_user(user: User, ref_code: str) -> Dict:
     """Creates the user using the bot for the first time.
     First, it creates the user itself, setting its expiration date to 7 days 
     from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
@@ -41,6 +41,10 @@ def create_first_time_user(user: User) -> Dict:
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
+    if ref_code and user_manager.retrieve_user_id_by_referral(ref_code):
+        user_data["linked_referral_code"] = ref_code
+    else:
+        lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
     # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
     trial_expiration_timestamp = datetime.datetime(2021, 10, 16, hour=13, minute=15).timestamp()
@@ -82,7 +86,7 @@ def create_first_time_user(user: User) -> Dict:
     return user_data
 
 
-def first_time_user_handler(update: Update, context: CallbackContext):
+def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str):
     """Sends welcome messages to the user, then creates two standard
     sport_subscriptions for her/him and creates the user itself.
 
@@ -90,16 +94,21 @@ def first_time_user_handler(update: Update, context: CallbackContext):
         update (Update)
     """
     user = update.effective_user
-    first_time_user_data = create_first_time_user(update.effective_user)
+    first_time_user_data = create_first_time_user(update.effective_user, ref_code)
     # !!!!!!!!!!!!!!!!! TODO REVERT 
     # trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
     trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"])
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # !!!!!!!!!!!!!!!!! TODO REVERT
-    # trial_expiration_date_string = datetime.datetime(2021, 10, 16, hour=13, minute=15).strftime("%d/%m/%Y alle %H:%M")
     # escape chars for HTML
     parsed_first_name = user.first_name.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
     welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
+    # * check if the referral code was successfulyl added 
+    if ref_code:
+        if first_time_user_data["linked_referral_code"] == "":
+            welcome_message += cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+        else:
+            welcome_message += cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
     # the messages are sent only if the previous operations succeeded, this is fundamental
     #   for the integration tests too
     new_user_channel_message = cst.NEW_USER_MESSAGE.format(
@@ -209,10 +218,29 @@ def start_command(update: Update, context: CallbackContext):
     # the effective_message field is always present in normal messages
     # from_user gets the user which sent the message
     user_id = update.effective_user.id
+    message_tokens = update.effective_message.text.split()
+    ref_code = None
+    if len(message_tokens) > 1:
+        ref_code = message_tokens[1]
     lgr.logger.debug(f"Received /start command from {user_id}")
     if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
         # * the user does not exist yet
-        first_time_user_handler(update, context)
+        first_time_user_handler(update, context, ref_code)
+    elif ref_code:
+        # * connect user to used ref_code
+        update_result = False
+        try:
+            # * check if the code is valid and connect to user
+            if user_manager.retrieve_user_id_by_referral(ref_code):
+                update_result = user_manager.update_user(user_id, {"linked_referral_code": ref_code})
+        except Exception as e:
+            lgr.logger.error(f"Error in adding ref code to already existing user from deep linking - {str(e)}")
+            update_result = False
+        if update_result:
+            reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
+        else:
+            reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+        update.message.reply_text(reply_text, parse_mode="HTML")
     homepage_handler(update, context)
 
 
@@ -308,7 +336,7 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         return
     # * answer the analyst with the result of the operation
     reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
-    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!" # TODO messaggio giorni aggiuntivi
+    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!"
     context.bot.send_message(target_user_id, message_to_user)
     update.effective_message.reply_text(reply_message)
 
