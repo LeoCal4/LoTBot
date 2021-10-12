@@ -48,6 +48,13 @@ STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scopr
 
 RESOCONTI_MESSAGE = "Scegli il tipo di resoconto"
 
+# {0}: user first name
+# {1}: the expiration date for the user
+SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 il tuo abbonamento è attivo fino al {1}.
+
+Status Servizio: ✅ nessuna manutenzione programmata."""
+
+
 BOT_CONFIG_BUTTON_TEXT = "⚙️ Configurazione Bot 🤖"
 EXPERIENCE_BUTTON_TEXT = "🚥 Gestione Esperienza 🚥"
 ASSISTANCE_BUTTON_TEXT = "🧑🏽‍💻 Assistenza 👩🏻‍💼 "

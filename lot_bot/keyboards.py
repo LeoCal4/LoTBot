@@ -29,7 +29,7 @@ _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🏗  Gestione Budget (IN ARRIVO) 📈", callback_data="new")], 
     [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
     [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="🌟  Status Servizio 📶 (IN ARRIVO)", callback_data="new")], # TODO
+    [InlineKeyboardButton(text="🌟  Status Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
 BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_configuration_buttons)
@@ -60,6 +60,12 @@ _register_giocata_buttons = [
 ]
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
+
+service_status_buttons = [
+    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento (IN ARRIVO) 🌟", callback_data="new")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
+]
+SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
 
 # ===================================== GESTIONE ESPERIENZA MENU =====================================
 

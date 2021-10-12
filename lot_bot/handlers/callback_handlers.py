@@ -1,5 +1,6 @@
 """Module for the Callback Query Handlers"""
 import datetime
+from time import time
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -157,6 +158,7 @@ def to_bot_config_menu(update: Update, context: CallbackContext):
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
     )
 
+
 def to_experience_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
@@ -194,6 +196,19 @@ def to_sports_menu(update: Update, context: CallbackContext):
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_sports_inline_keyboard(update),
         parse_mode="HTML"
+    )
+
+
+def to_service_status(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "lot_subscription_expiration"])
+    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2), "%d/%m/%Y alle %H:%M")
+    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"], expiration_date)
+    context.bot.edit_message_text(
+        service_status,
+        user_id, 
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.SERVICE_STATUS_KEYBOARD
     )
 
 
