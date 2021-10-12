@@ -48,11 +48,29 @@ STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scopr
 
 RESOCONTI_MESSAGE = "Scegli il tipo di resoconto"
 
+
 # {0}: user first name
 # {1}: the expiration date for the user
 SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 il tuo abbonamento è attivo fino al {1}.
 
 Status Servizio: ✅ nessuna manutenzione programmata."""
+
+# {1}: linked referral code
+# {2}: user successful_referrals_since_last_payment
+"""Il tuo codice di affiliazione (da inviare ai tuoi amici): {0}
+
+Il codice di affiliazione collegato al tuo account: {1}
+
+Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizzando il tuo codice di referral."""
+
+# {0}: user referral code
+REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral {0} 🚀
+
+Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>riceverai il 33% di sconto</b> sul prossimo acquisto!
+
+🌟 <b>3 amici = LoT Gratis</b> ✅
+
+<i>PS: raggiunti i 3 amici LoT ti permette di guadagnare su ogni referenza. <a href="http://t.me/LegacyOfTipstersBot/">Contattaci qui</a> scrivendo "Info Referral" 👍</i>"""
 
 
 BOT_CONFIG_BUTTON_TEXT = "⚙️ Configurazione Bot 🤖"

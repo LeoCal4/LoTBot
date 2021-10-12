@@ -72,6 +72,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_resoconti, pattern=r"^to_resoconti$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_referral, pattern=r"^to_referral$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_24_hours_resoconto, pattern=r"^resoconto_24_hours$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_7_days_resoconto, pattern=r"^resoconto_7_days$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_30_days_resoconto, pattern=r"^resoconto_30_days$"))

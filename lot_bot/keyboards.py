@@ -72,9 +72,9 @@ SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_bu
 _experience_buttons = [
     [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
     [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="🏷  Codice Referral 🔗 (IN ARRIVO)", callback_data="new")], # TODO
+    [InlineKeyboardButton(text="🏷  Codice Referral 🔗", callback_data="to_referral")],
     [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")], # TODO
+    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")],
     [InlineKeyboardButton(text="🗓  Tracciabilità LoT  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
 ]
@@ -92,6 +92,12 @@ _social_buttons = [
 SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_buttons)
 
 
+_referral_menu_buttons = [
+    [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🪂  Collega un codice di referral  🎰 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
+]
+REFERRAL_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_referral_menu_buttons)
 
 # ===================================== STATUS SERVIZIO SUBMENU =====================================
 

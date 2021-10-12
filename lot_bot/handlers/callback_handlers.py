@@ -243,6 +243,21 @@ def to_explanations_menu(update: Update, context: CallbackContext):
     )
 
 
+def to_referral(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    user_fields = ["linked_referral_code", "referral_code", "successful_referrals_since_last_payment"]
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, user_fields)
+    succ_referrals = len(user_data["successful_referrals_since_last_payment"])
+    referral_message = cst.REFERRAL_MENU_MESSAGE.format(user_data["referral_code"], user_data["linked_referral_code"], succ_referrals)
+    context.bot.edit_message_text(
+        referral_message,
+        chat_id=user_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
+        parse_mode="HTML",
+    )
+
+
 def strategy_explanation(update: Update, context: CallbackContext):
     """Sends a video explaining the strategy reported in the callback data.
 
