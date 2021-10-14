@@ -12,7 +12,10 @@ def create_base_user_data():
         "lot_subscription_expiration": 0.0,
         "role": "user",
         "referral_code": utils.create_valid_referral_code(),
-        "linked_referral_code": "",
+        "linked_referral_user": {
+            "linked_user_id": None,
+            "linked_user_code": ""
+        },
         "is_og_user": True, # TODO remember to switch this off
         "successful_referrals_since_last_payment": [],
         "referred_payments": [],

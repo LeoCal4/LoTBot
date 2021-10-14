@@ -41,8 +41,13 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
-    if ref_code and user_manager.retrieve_user_id_by_referral(ref_code):
-        user_data["linked_referral_code"] = ref_code
+    if ref_code:
+        ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
+        if ref_user_data:
+            user_data["linked_referral_user"] = {
+                "linked_user_code": ref_code,
+                "linked_user_id": ref_user_data["_id"]
+            }
     else:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
@@ -95,17 +100,14 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     """
     user = update.effective_user
     first_time_user_data = create_first_time_user(update.effective_user, ref_code)
-    # !!!!!!!!!!!!!!!!! TODO REVERT 
-    # trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"])
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
-    # !!!!!!!!!!!!!!!!! TODO REVERT
     # escape chars for HTML
-    parsed_first_name = user.first_name.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+    parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
     # * check if the referral code was successfulyl added 
     if ref_code:
-        if first_time_user_data["linked_referral_code"] == "":
+        if first_time_user_data["linked_referral_user"]["linked_user_id"] is None:
             welcome_message += cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
         else:
             welcome_message += cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
@@ -231,8 +233,10 @@ def start_command(update: Update, context: CallbackContext):
         update_result = False
         try:
             # * check if the code is valid and connect to user
-            if user_manager.retrieve_user_id_by_referral(ref_code):
-                update_result = user_manager.update_user(user_id, {"linked_referral_code": ref_code})
+            ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
+            if ref_user_data:
+                referral_user_data = {"linked_user_code": ref_code, "linked_user_id": ref_user_data["_id"]}
+                update_result = user_manager.update_user(user_id, {"linked_referral_user": referral_user_data})
         except Exception as e:
             lgr.logger.error(f"Error in adding ref code to already existing user from deep linking - {str(e)}")
             update_result = False
@@ -560,6 +564,7 @@ def error_handler(update: Update, context: CallbackContext):
             context.bot.send_message(
                 user_chat_id,
                 cst.ERROR_MESSAGE,
+                parse_mode="HTML"
             )
     except Exception as e:
         lgr.logger.error(f"Could not send error message to user")

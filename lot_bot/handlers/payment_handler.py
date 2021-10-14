@@ -36,10 +36,11 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
         int: the REFERRAL state for the ConversationHandler
     """
     chat_id = update.callback_query.message.chat_id
-    retrieved_user = user_manager.retrieve_user_fields_by_user_id(chat_id, ["linked_referral_code"])
-    linked_referral_code = retrieved_user["linked_referral_code"]
-    if linked_referral_code != "":
-        referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_code)
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(chat_id, ["linked_referral_user"])
+    linked_referral_id = retrieved_user["linked_referral_user"]["linked_user_id"]
+    linked_referral_user_code = retrieved_user["linked_referral_user"]["linked_user_code"]
+    if not linked_referral_id is None:
+        referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_user_code)
     else:
         referral_text = cst.PAYMENT_ADD_REFERRAL_CODE_TEXT
     message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
@@ -85,7 +86,8 @@ def received_referral(update: Update, _) -> int:
         is_referral_valid = False
     if is_referral_valid:
         # ! link referral code to user
-        user_manager.update_user(chat_id, {"linked_referral_code": referral_text})
+        linked_user_data = {"linked_user_id": referral_user["_id"], "linked_user_code": referral_text}
+        user_manager.update_user(chat_id, {"linked_referral_user": linked_user_data})
         lgr.logger.debug(f"Correctly added referral code {referral_text} for user {chat_id}")
         message_text = "Codice di referral aggiunto con successo!\nClicca il bottone sottostante per procedere al pagamento."        
     update.message.reply_text(
@@ -169,7 +171,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     """
     payment_final_message = f"Grazie per aver acquistato il nostro servizio!"
     user_id = update.effective_user.id
-    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_code"])
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_user"])
     # * extend the user's subscription up to the same day of the next month
     new_expiration_date: float = utils.extend_expiration_date(retrieved_user["lot_subscription_expiration"],30)
     # * reset user successful referrals
@@ -189,16 +191,11 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     payment_data = update.message.successful_payment.to_dict()
     payment_data["datetime_timestamp"] = datetime.datetime.utcnow().timestamp()
     payment_data["payment_id"] = str(user_id) + "-" + str(payment_data["datetime_timestamp"])
-    referred_by_id = ""
     # * get linked referral user
-    linked_referral_code = retrieved_user["linked_referral_code"]
-    linked_user = None
-    if linked_referral_code != "":
-        lgr.logger.debug(f"Updating referred user {linked_referral_code} after successful payment by {user_id}")
-        linked_user = user_manager.retrieve_user_id_by_referral(linked_referral_code)
-    if linked_user:
-        referred_by_id = linked_user["_id"]
-    payment_data["referred_by"] = referred_by_id
+    linked_referral_id = retrieved_user["linked_referral_user"]["linked_user_id"]
+    if not linked_referral_id is None:
+        lgr.logger.debug(f"Updating referred user {linked_referral_id} after successful payment by {user_id}")
+        payment_data["referred_by"] = linked_referral_id
     # * registering payment
     lgr.logger.debug(f"Registering payment {str(payment_data)} for {user_id}")
     try:
@@ -216,18 +213,18 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         dev_message += f"Dati pagamento:\n {str(payment_data)}"
         message_handlers.send_messages_to_developers(context, [dev_message])
     # * update the referred user's successful referrals, if there is a referral code
-    if linked_user:
+    if linked_referral_id is not None:
         try:
-            update_result = user_manager.update_user_succ_referrals(linked_user["_id"], payment_data["payment_id"])
+            update_result = user_manager.update_user_succ_referrals(linked_referral_id, payment_data["payment_id"])
         except:
             # this gets both db errors and other issues related to missing users
             update_result = False
         # * handle referral errors
         if not update_result:
-            lgr.logger.error(f"Could not update referred user {linked_referral_code} referral count after {user_id} payment")
+            lgr.logger.error(f"Could not update referred user {linked_referral_id} referral count after {user_id} payment")
             payment_final_message = f"ERRORE: il pagamento è stato effettuato correttamente, ma non siamo riusciti a registrarlo per l'affiliazione.\n"
             payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
-            dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_user['_id']}. Dati pagamento:\n"
+            dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_referral_id}. Dati pagamento:\n"
             dev_message += f"{str(payment_data)}"
             message_handlers.send_messages_to_developers(context, [dev_message])
     # * send final payment message and homepage

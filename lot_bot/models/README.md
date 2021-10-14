@@ -1,12 +1,14 @@
 # User model
-- _id: telegram ID
+- _id: int (telegram ID)
 - name: str
 - username: str
 - email: str
 - lot_subscription_expiration: timestamp
 - role: str
 - referral_code: str
-- linked_referral_code: str
+- linked_referral_user:
+    - linked_user_id: int (telegram ID)
+    - linked_user_code: str
 - successful_referrals_since_last_payment: List[str]
 - is_og_user: bool = False
 - referred_payments: List[str]
@@ -18,7 +20,7 @@
 - payments: []
     - payment_id: str
     - datetime_timestamp: timestamp (float)
-    - referred_by: str
+    - referred_by: int (telegram ID)
     - invoice_payload: str
     - telegram_payment_charge_id: str
     - provider_payment_charge_id: str
