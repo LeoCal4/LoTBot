@@ -35,7 +35,7 @@ def test_get_strategy_from_wrong_giocata(wrong_giocata: Tuple[str, Dict]):
 
 @pytest.mark.parametrize(
     "percentage_text,expected",
-    [("-999.00", "🔴"), ("+999,00", "🟢"), ("0", "🟢"), ("/start", "")]
+    [("-999.00", "🔴"), ("+999,00", "🟢"), ("0", "⚪️"), ("/start", "")]
 )
 def test_get_emoji_for_cashout_percentage(percentage_text: str, expected: str):
     emoji = utils.get_emoji_for_cashout_percentage(percentage_text)
