@@ -134,7 +134,8 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     SPORT_STRING_MENU_LEN = 19
     # ljust appends " " at the end of the string, until the specified length is reached
     sport_menu_entries = [
-        sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
+        # sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
+        emoji_sport[sport.name] + " " + sport.display_name 
         for sport in sports_in_menu
     ]
     inline_buttons = {
@@ -177,12 +178,15 @@ def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> Inlin
     for strategy in sport.strategies:
         positive_callback = f"{sport.name}_{strategy.name}_activate"
         negative_callback = f"{sport.name}_{strategy.name}_disable"
-        active_text = f"{strategy.display_name} SI"
-        not_active_text = f"{strategy.display_name} NO"
+        active_text = ""
+        not_active_text = ""
         if emoji_strategies[strategy.name] == "🟢":
-            active_text += f" {emoji_strategies[strategy.name]}"
+            active_text += f"{emoji_strategies[strategy.name]} "
         else:
-            not_active_text += f" {emoji_strategies[strategy.name]}"
+            not_active_text += f"{emoji_strategies[strategy.name]} "
+        active_text += f"{strategy.display_name} SI"
+        not_active_text += f"{strategy.display_name} NO"
+
         strategies_buttons.append([
             InlineKeyboardButton(text=active_text, callback_data=positive_callback),
             InlineKeyboardButton(text=not_active_text, callback_data=negative_callback)

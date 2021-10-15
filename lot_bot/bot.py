@@ -53,6 +53,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
     dispatcher.add_handler(CommandHandler("set_user_role", message_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
+    dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
 
 
     # ======= CALLBACK QUERIES HANDLERS =======

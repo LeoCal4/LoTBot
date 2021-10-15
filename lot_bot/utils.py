@@ -314,7 +314,8 @@ def create_resoconto_message(giocate: List[Dict]):
     # Resoconto 24-09-2021
     # 1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
-    resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
+    # resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
+    resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
         if outcome_percentage > 0:

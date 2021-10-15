@@ -184,7 +184,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
                 reply_markup=custom_reply_markup)
             messages_sent += 1
         except Unauthorized:
-            lgr.logger.warning(f"Could not send message {text}: user {user_id} blocked the bot")
+            lgr.logger.warning(f"Could not send message: user {user_id} blocked the bot")
             messages_to_be_sent -= 1
         except Exception as e:
             lgr.logger.error(f"Could not send message {text} to user {user_id} - {str(e)}")
@@ -343,6 +343,37 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!"
     context.bot.send_message(target_user_id, message_to_user)
     update.effective_message.reply_text(reply_message)
+
+
+def _send_broadcast_messages(context, parsed_text):
+    all_user_ids = user_manager.retrieve_all_user_ids()
+    for user_id in all_user_ids:
+        try:
+            context.bot.send_message(                
+                user_id,
+                parsed_text,
+                parse_mode="HTML"
+            )
+        except Unauthorized:
+            lgr.logger.info(f"User {user_id} blocked the bot")
+        except Exception as e:
+            lgr.logger.info(f"Error in sending message: {str(e)}")
+
+
+def broadcast_handler(update: Update, context: CallbackContext):
+    """TODO async this
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
+    context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text)
 
 
 def set_user_role(update: Update, _):

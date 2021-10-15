@@ -365,7 +365,7 @@ def to_resoconti(update: Update, context: CallbackContext):
     chat_id = update.callback_query.from_user.id
     message_id = update.callback_query.message.message_id
     context.bot.edit_message_text(
-        cst.RESOCONTI_MESSAGE,
+        cst.BASE_RESOCONTI_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.RESOCONTI_KEYBOARD,
@@ -380,7 +380,8 @@ def last_24_hours_resoconto(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(hours=24)).timestamp()
-    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+    resoconto_message_header = "RESOCONTO - ULTIME 24 ORE"
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
 def last_7_days_resoconto(update: Update, context: CallbackContext):
@@ -391,7 +392,8 @@ def last_7_days_resoconto(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=7)).timestamp()
-    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+    resoconto_message_header = "RESOCONTO - ULTIMI 7 GIORNI"
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
 def last_30_days_resoconto(update: Update, context: CallbackContext):
@@ -402,23 +404,16 @@ def last_30_days_resoconto(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=30)).timestamp()
-    send_resoconto_since_timestamp(update, context, giocate_since_timestamp)
+    resoconto_message_header = "RESOCONTO - ULTIMI 30 GIORNI"
+    send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
-def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float):
-    """[summary]
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-        giocate_since_timestamp (float): [description]
-    """
-    chat_id = update.callback_query.from_user.id
-    message_id = update.callback_query.message.message_id
+def _create_and_send_resoconto(context: CallbackContext, chat_id: int, message_id: int, giocate_since_timestamp: float, resoconto_message_header: str):
     user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
     if user_giocate_data == []:
+        no_giocata_found_text = resoconto_message_header + "\nNessuna giocata trovata."
         context.bot.edit_message_text(
-            "Nessuna giocata trovata.",
+            no_giocata_found_text,
             chat_id=chat_id,
             message_id=message_id,
             reply_markup=kyb.RESOCONTI_KEYBOARD,
@@ -426,7 +421,7 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
         return
     user_giocate_ids = [giocata["original_id"] for giocata in user_giocate_data]
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
-    resoconto_message = utils.create_resoconto_message(giocate_full_data)
+    resoconto_message = resoconto_message_header + "\n" + utils.create_resoconto_message(giocate_full_data)
     # * edit last message with resoconto
     context.bot.edit_message_text(
         resoconto_message,
@@ -437,6 +432,22 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     # * send new message with menu
     context.bot.send_message(
         chat_id,
-        cst.RESOCONTI_MESSAGE,
+        cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
         reply_markup=kyb.RESOCONTI_KEYBOARD,
     )
+
+
+def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):
+    """[summary]
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+        giocate_since_timestamp (float): timestamp indicating from when to start retrieveing giocate
+    """
+    chat_id = update.callback_query.from_user.id
+    message_id = update.callback_query.message.message_id
+    last_message_text = update.callback_query.message.text
+    if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
+        return
+    context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, message_id, giocate_since_timestamp, resoconto_message_header)

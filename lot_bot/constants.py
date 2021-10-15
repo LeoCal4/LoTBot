@@ -46,7 +46,12 @@ STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scopr
 <i>PS: tramite l'assistenza possiamo <b>personalizzarle</b> solo per te!</i>"""
 
 
-RESOCONTI_MESSAGE = "Scegli il tipo di resoconto"
+BASE_RESOCONTI_MESSAGE = "Scegli il tipo di resoconto:"
+
+# {0}: resoconto type
+RESOCONTI_MESSAGE = """Hai ricevuto: {0}
+
+Scegli il tipo di resoconto"""
 
 
 # {0}: user first name
@@ -64,7 +69,7 @@ Il codice di affiliazione collegato al tuo account: {1}
 Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizzando il tuo codice di referral."""
 
 # {0}: user referral code
-REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral {0} 🚀
+REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral <b>{0}</b> 🚀
 
 Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>riceverai il 33% di sconto</b> sul prossimo acquisto!
 
