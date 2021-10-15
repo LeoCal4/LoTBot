@@ -69,7 +69,9 @@ Il codice di affiliazione collegato al tuo account: {1}
 Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizzando il tuo codice di referral."""
 
 # {0}: user referral code
-REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral <b>{0}</b> 🚀
+# {1}: user ref link
+REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral <b>{0}</b> 
+E questo è il link che puoi condividere per farlo collegare ai tuoi amici: {1} 🚀
 
 Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>riceverai il 33% di sconto</b> sul prossimo acquisto!
 

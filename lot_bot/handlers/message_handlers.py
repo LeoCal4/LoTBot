@@ -225,7 +225,11 @@ def start_command(update: Update, context: CallbackContext):
     if len(message_tokens) > 1:
         ref_code = message_tokens[1]
     lgr.logger.debug(f"Received /start command from {user_id}")
-    if not user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"]):
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
+    if ref_code and ref_code == user_data["referral_code"]:
+        lgr.logger.info("User attempted to /start with its own ref_code")
+        ref_code = None
+    if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code)
     elif ref_code:

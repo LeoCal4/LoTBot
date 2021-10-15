@@ -247,8 +247,10 @@ def to_referral(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_fields = ["linked_referral_user", "referral_code", "successful_referrals_since_last_payment"]
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, user_fields)
-    succ_referrals = len(user_data["successful_referrals_since_last_payment"])
-    referral_message = cst.REFERRAL_MENU_MESSAGE.format(user_data["referral_code"], user_data["linked_referral_user"]["linked_user_code"], succ_referrals)
+    # succ_referrals = len(user_data["successful_referrals_since_last_payment"])
+    ref_code = user_data["referral_code"]
+    referral_link = f"https://t.me/lot_test_bot/test?start={ref_code}" # TODO avoid connecting to itself
+    referral_message = cst.REFERRAL_MENU_MESSAGE.format(ref_code, referral_link)
     context.bot.edit_message_text(
         referral_message,
         chat_id=user_id,
