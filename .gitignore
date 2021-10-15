@@ -10,7 +10,7 @@ lot_bot/config.py
 prova*
 gcloud/
 add_giocate_batch.py
-
+Scripts/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -126,6 +126,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
 
 # Spyder project settings
 .spyderproject
