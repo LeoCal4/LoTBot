@@ -10,7 +10,8 @@ lot_bot/config.py
 prova*
 gcloud/
 add_giocate_batch.py
-Scripts/
+scripts/
+pyvenv.cfg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
