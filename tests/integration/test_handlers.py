@@ -1,5 +1,5 @@
 import datetime
-from typing import Dict
+from typing import Dict, Tuple
 
 import pytest
 from lot_bot import config as cfg
@@ -83,7 +83,7 @@ class TestHandlers:
     async def test_giocata_handler(self, 
     channel_admin_client: TelegramClient, 
     client: TelegramClient, 
-    correct_giocata: tuple[str, Dict]):
+    correct_giocata: Tuple[str, Dict]): #tuple[str, Dict]):
         # ! generate correct_giocata
         giocata_text, giocata_data = correct_giocata
         # ! use client to subscribe to sport-strategy, this also sets it to active

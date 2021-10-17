@@ -84,8 +84,10 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
             the cashout percentage
 
     Returns:
-        str: 🟢 for a non-negative cashout,  
-            🔴 for a negative cashout,  
+        str: 🟢 for a positive cashout,  
+             🔴 for a negative cashout,
+             ⚪️ for a neutral cashout 
+
             an empty string in case of errors
 
     Raises:
@@ -94,10 +96,12 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
     if "," in percentage_text:
         percentage_text = percentage_text.replace(",", ".")
     try:
-        if float(percentage_text) >= 0:
+        if float(percentage_text) > 0:
             return  "🟢"
-        else:
+        elif float(percentage_text) < 0:
             return "🔴"
+        else: 
+            return "⚪️"
     except Exception as e:
         lgr.logger.error(f"Could not parse the cashout percentage {percentage_text}")
         return ""
@@ -107,7 +111,8 @@ def create_cashout_message(message_text: str) -> str:
     """Creates the cashout message to be broadcasted from a cashout message text.
     The message_text needs to be in the form "#<giocata id> +|-<percentage>.
     The final cashout message has the form:
-    🟢|🔴 CASHOUT Exchange <giocata id> +|-<percentage>% 🟢|🔴
+    🟢|🔴 CASHOUT Exchange <giocata id> +|-<percentage>% 🟢|🔴 or
+    ⚪️ Exchange #<giocata id> ABBINATA ⚪️
 
     Args:
         message_text (str): the text of the message containing the cashout.
@@ -120,7 +125,11 @@ def create_cashout_message(message_text: str) -> str:
     giocata_num = matches.group(1)
     cashout_percentage = matches.group(2)
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
-    return f"{emoji} CASHOUT Exchange {giocata_num} {cashout_percentage}% {emoji}"
+    if int(cashout_percentage) == 0:
+        return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"
+    else:        
+        return f"{emoji} CASHOUT Exchange #{giocata_num} {cashout_percentage}% {emoji}"
+
 
 
 def generate_referral_code() -> str:
