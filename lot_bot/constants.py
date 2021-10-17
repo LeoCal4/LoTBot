@@ -121,8 +121,6 @@ Username: {2}"""
 
 # ================================== ERRORS =========================================
 
-ERROR_MESSAGE = """Abbiamo riscontrato un problema tecnico con il bot. 
-Si consiglia di riprovare più tardi, ci scusiamo per il disagio.
-Per ricevere aiuto, contatta <a href="https://t.me/LegacyOfTipstersBot">l'Assistenza</a>."""
+ERROR_MESSAGE = """☠️ Abbiamo riscontrato un problema tecnico con il bot ☠️
 
-
+Invia <i>uno screen</i> di questa chat all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per mostrarci l'errore, <i>scrivendo brevemente</i> cosa stavi cercando di fare e riceverai <b>un giorno di servizio in più</b>! 🔥"""

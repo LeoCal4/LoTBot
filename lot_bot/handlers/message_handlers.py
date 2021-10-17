@@ -52,7 +52,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
     # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_timestamp = datetime.datetime(2021, 10, 16, hour=13, minute=15).timestamp()
+    trial_expiration_timestamp = datetime.datetime(2021, 10, 19, hour=13, minute=15).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio -  sport_subscription
@@ -605,3 +605,7 @@ def error_handler(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not send error message to user")
         lgr.logger.error(f"Update: {str(update)}")
         lgr.logger.error(f"Exception: {str(e)}")
+
+
+def error_test(update, _):
+    raise Exception

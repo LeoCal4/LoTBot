@@ -7,6 +7,9 @@ pytest.ini
 lot_bot_appunti.py
 prova*
 gcloud/
+add_giocate_batch*
+resocontibot*
+lot_bot/sample_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,12 +1,12 @@
 import dataclasses
-from typing import Optional
+from typing import Optional, List
 
 from lot_bot.models import strategies
 
 @dataclasses.dataclass
 class Sport:
     name : str
-    strategies : list[strategies.Strategy] # ! should not partecipate in eq
+    strategies : List[strategies.Strategy] # ! should not partecipate in eq
     show_in_menu : bool = True
     display_name : str = ""
 
