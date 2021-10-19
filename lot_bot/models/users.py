@@ -23,6 +23,7 @@ def create_base_user_data():
         "payments": [],
         "sport_subscriptions": [],
         "available_sports": [],
+        "personal_stakes": [],
     }
 
 

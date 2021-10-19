@@ -35,6 +35,12 @@
 - available_sports: [] TODO
     - sport: str
     - strategies: List[str]
+- personal_stakes: []
+    - min_quota: int (* 100)
+    - max_quota: int (* 100)
+    - stake: int (* 100)
+    - sport: str 
+    - strategies: List[str] 
 
 
 # Giocate model

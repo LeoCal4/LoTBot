@@ -84,7 +84,7 @@ def retrieve_user_id_by_referral(referral_code: str) -> Optional[Dict]:
         lgr.logger.error(f"Error during user retrieval by ref code - {referral_code=}")
         raise e
 
-#da controllare
+
 def retrieve_user_fields_by_username(username: str, user_fields: List[str]) -> Optional[Dict]:
     """Retrieve the user fields from the user specified by username.
 
@@ -105,6 +105,7 @@ def retrieve_user_fields_by_username(username: str, user_fields: List[str]) -> O
     except Exception as e:
         lgr.logger.error(f"Error during user fields retrieval {username=} - {user_fields=}")
         raise e
+
 
 def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Optional[Dict]:
     """Retrieve the user fields from the user specified by user_id.
@@ -251,6 +252,20 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
         if "_id" in giocata:
             del giocata["_id"]
         lgr.logger.error(f"Error during giocata registration: {user_id=} - {dumps(giocata)=}")
+        raise e
+
+
+def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
+    try:
+        lgr.logger.debug(f"Registering {personal_stake=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            { "_id": user_id, },
+            { "$addToSet": { "personal_stakes": personal_stake } }
+        )
+        # this will be true if there was at least a match
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during personal stake registration: {user_id=} - {personal_stake=}")
         raise e
 
 

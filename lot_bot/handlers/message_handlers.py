@@ -17,6 +17,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users as user_model
 from lot_bot.models import giocate as giocata_model
+from lot_bot.models import personal_stakes
 from telegram import ParseMode, Update, User
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -52,7 +53,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
     # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_timestamp = datetime.datetime(2021, 10, 19, hour=13, minute=15).timestamp()
+    trial_expiration_timestamp = datetime.datetime(2021, 10, 21, hour=13, minute=15).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio -  sport_subscription
@@ -380,14 +381,76 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text)
 
 
+def create_personal_stake(update: Update, context: CallbackContext):
+    """- /crea_stake <username> <quota_min> <quota_max> <stake_personale> [<sport> <strategia> (se non specificate va applicato su tutte)] 
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len < 4:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID), quota max, quota min, stake personale")
+        return
+    target_user_identification_data = context.args[0]
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except:
+        target_user_username = target_user_identification_data
+    
+    lgr.logger.debug(f"Received /crea_stake for {target_user_identification_data}")
+    
+    # * parse and validate data, creating a new stake
+    try:
+        parsed_stake = personal_stakes.parse_personal_stake(context.args)
+    except custom_exceptions.PersonalStakeParsingError as e:
+        update.effective_message.reply_text(f"ATTENZIONE: la stake non è stato creato perchè presenta un errore, si prega di controllare e rimandarla.\n{str(e)}")
+        return
+
+    # * check if the personal stake intersects with one which is already present
+    if target_user_id:
+        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["personal_stakes"])
+    else:
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_username, ["personal_stakes"])
+
+    if target_user_data is None:
+        update.effective_message.reply_text("ERRORE: utente non trovato")
+        return
+    
+    # * (setting target user id, in case we only had the username)
+    target_user_id = target_user_data["_id"]
+
+    # * check if the new stake overlaps with any of the present ones
+    if personal_stakes.check_stakes_overlapping(parsed_stake, target_user_data["personal_stakes"]):
+        update.effective_message.reply_text("ERRORE: lo stake personalizzato inserito si sovrappone ad un altro già presente. Controlla gli stake dell'utente con il comando /stake_utente <username o ID>.")
+        return
+
+    # * add the personal stake
+    update_result = user_manager.update_user_personal_stakes(target_user_id, parsed_stake)
+    if not update_result:
+        update.effective_message.reply_text("ERRORE: database non raggiungibile")
+
+    update.effective_message.reply_text("Stake aggiunto con successo")
+
+
 def set_user_role(update: Update, _):
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
-    
+
     # * retrieve the target user and role from the command text 
+    # TODO update using context.args
     text : str = update.effective_message.text
     text_tokens = text.strip().split(" ")
     if len(text_tokens) != 3:
@@ -431,10 +494,8 @@ def send_file_id(update: Update, _):
     if not update.effective_message.document is None:
         file_id = update.effective_message.document.file_id
     elif not update.effective_message.photo is None:
-    # elif hasattr(update.effective_message, "photo"):
         file_id = update.effective_message.photo[-1].file_id
     elif not update.effective_message.video is None:
-    # elif hasattr(update.effective_message, "video"):
         file_id = update.effective_message.video.file_id
     if file_id is None:
         reply_message = "Impossibile ottenere il file_id dal media inviato"

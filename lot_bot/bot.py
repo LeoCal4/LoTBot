@@ -54,15 +54,14 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("set_user_role", message_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("crea_stake", message_handlers.create_personal_stake))
 
 
     # ======= CALLBACK QUERIES HANDLERS =======
-    # matches any callback with pattern "sport_<...>"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern=r"^to_homepage$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_bot_config_menu, pattern=r"^to_bot_config_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_experience_menu, pattern=r"^to_experience_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
-    # matches any callback with pattern "<sport>_<strategy>_[activate | disable]"
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))

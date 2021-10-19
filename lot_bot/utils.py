@@ -124,8 +124,9 @@ def create_cashout_message(message_text: str) -> str:
     matches = re.search(filters.get_cashout_pattern(), message_text)
     giocata_num = matches.group(1)
     cashout_percentage = matches.group(2)
+    # TODO handle no emoji case
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
-    if int(cashout_percentage) == 0:
+    if emoji == "⚪️":
         return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"
     else:        
         return f"{emoji} CASHOUT Exchange #{giocata_num} {cashout_percentage}% {emoji}"

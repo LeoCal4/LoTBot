@@ -83,3 +83,11 @@ class NormalMessageParsingError(Exception):
     # ! this will be sent as an answer to the analisti
     def __str__(self) -> str:
         return self.message
+
+class PersonalStakeParsingError(Exception):
+    def __init__(self, message: str):
+        self.message = message
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message
