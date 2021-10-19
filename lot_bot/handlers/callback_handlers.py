@@ -1,6 +1,5 @@
 """Module for the Callback Query Handlers"""
 import datetime
-from time import time
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -8,11 +7,11 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import sport_subscriptions_manager, user_manager, giocate_manager
+from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
+                         user_manager)
+from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
-from lot_bot.models import giocate as giocata_model
-
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -325,7 +324,7 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
-    parsed_giocata = utils.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
     personal_user_giocata = giocata_model.create_user_giocata()
     personal_user_giocata["original_id"] = retrieved_giocata["_id"]

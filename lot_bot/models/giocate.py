@@ -1,10 +1,12 @@
+import datetime
 import re
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple
 
-from lot_bot import filters
-from lot_bot import custom_exceptions
+from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
 from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
+
 
 def create_base_giocata():
     return {
@@ -69,3 +71,182 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     else:
         outcome_percentage = 0.0
     return outcome_percentage
+
+
+def get_sport_name_from_giocata(text: str) -> str:
+    """Extracts the sport name from a giocata message.
+    It checks if the sports exists.
+
+    Args:
+        text (str): a giocata message
+
+    Returns:
+        str: the name of the sport
+    
+    Raises:
+        GiocataParsingError: if the sport was not found
+    """
+    sport_row = text.split("\n")[0].lower()
+    # ? could be faster if we would just get the second token
+    for sport in spr.sports_container:
+        if sport.display_name.lower() in sport_row:
+            return sport.name
+    error_message = f"giocata_model.get_sport_name_from_giocata: Could not find in any sport in line {sport_row}"
+    lgr.logger.error(error_message)
+    raise custom_exceptions.GiocataParsingError(f"sport non trovato nella riga '{sport_row}'")
+
+
+
+def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
+    """Extracts the strategy name from a giocata message.
+    It checks if the strategy exists and if it is present in the sport's ones.
+
+    Args:
+        text (str): a giocata message
+        sport (str): the strategy's sport
+
+    Returns:
+        str: the name of the strategy
+        
+    Raises:
+        GiocataParsingError: if the strategy is not found
+    """
+    STRATEGY_ROW = 2
+    STRATEGY_INDEX = 1
+    played_strategy = " ".join(text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX:-1])
+    strategy = strat.strategies_container.get_strategy(played_strategy)
+    sport = spr.sports_container.get_sport(sport)
+    if strategy and strategy in sport.strategies:
+        return strategy.name
+    else:
+        error_message = f"giocata_model.get_strategy_name_from_giocata: Strategy {played_strategy} not found from {text} for sport {sport.name}"
+        lgr.logger.error(error_message)
+        raise custom_exceptions.GiocataParsingError(f"strategia '{played_strategy}' non trovata per lo sport '{sport.name}'")
+
+
+def get_giocata_num_from_giocata(giocata_text: str) -> str:
+    """Gets the number of the giocata from its text.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the giocata num cannot be found
+
+    Returns:
+        str
+    """
+    regex_match = re.search(r"#\s*([\d\-\.]+)", giocata_text)
+    if not regex_match:
+        error_message = f"giocata_model.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
+        lgr.logger.error(error_message)
+        raise custom_exceptions.GiocataParsingError(f"numero della giocata non trovato")
+    return regex_match.group(1)
+
+
+def get_quota_from_giocata(giocata_text: str) -> int:
+    """Gets the quota from a giocata text.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the quota cannot be found
+
+    Returns:
+        int: the quota as a integer number (1.10 => 110)
+    """
+    MULTIPLE_QUOTA_EMOJI = "🧾"
+    if MULTIPLE_QUOTA_EMOJI in giocata_text:
+        regex_match = re.search(fr"{MULTIPLE_QUOTA_EMOJI}\s*(\d+\.\d+)\s*{MULTIPLE_QUOTA_EMOJI}", giocata_text)
+    else:
+        SINGLE_QUOTA_EMOJI = "📈"
+        regex_match = re.search(fr"{SINGLE_QUOTA_EMOJI}\s*Quota\s*(\d+\.\d+)\s*{SINGLE_QUOTA_EMOJI}", giocata_text)
+    if not regex_match:
+        error_message = f"giocata_model.get_quota_from_giocata: quota not found from {giocata_text}"
+        lgr.logger.error(error_message)
+        raise custom_exceptions.GiocataParsingError(f"quota non trovata")
+    return int(float(regex_match.group(1))*100)
+
+
+def get_stake_from_giocata(giocata_text: str) -> int:
+    """Gets the stake from a giocata message.
+
+    Args:
+        giocata_text (str)
+
+    Raises:
+        custom_exceptions.GiocataParsingError: in case the stake cannot be found
+
+    Returns:
+        int: the stake percentage value
+    """
+    # STAKE_EMOJI = "🏛"
+    regex_match = re.search(fr"\s*Stake\s*(\d+[.,]?\d*)\s*", giocata_text)
+    if not regex_match:
+        error_message = f"giocata_model.get_stake_from_giocata: stake not found from {giocata_text}"
+        lgr.logger.error(error_message)
+        raise custom_exceptions.GiocataParsingError(f"stake non trovato")
+    return int(float(regex_match.group(1).replace(",", "."))*100)
+
+
+def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Optional[Dict]:
+    """Parses the giocata found in giocata_text.
+    In case message_sent_timestamp is not specified, the current date timestamp is used.
+    An example of a giocata is:
+        🏀 Exchange 🏀
+        🇮🇹Supercoppa Serie A🇮🇹
+        ⚜️ MaxExchange  ⚜️
+
+        Trieste 🆚 Trento
+        🧮 1 inc overtime 🧮
+        📈 Quota 1.55 📈
+
+        Cremona 🆚 Sassari
+        🧮 2 inc overtime 🧮
+        📈 Quota 1.30 📈
+
+        🧾 2.02 🧾 
+
+        🕑 18:30 🕑 
+
+        🏛 Stake 5% 🏛
+        🖊 Exchange #8🖊
+    
+    The structure is:
+        <sport emoji> <sport name> <sport emoji>
+        <emoji><campionato><emoji>
+        ⚜️ <strategy name> ⚜️
+
+        <One or more sport event with bet type and quota>
+
+        [🧾 <cumulative quota> 🧾](only in case of multiple events)
+
+        🕑 <sport event time> 🕑
+
+        🏛 Stake <stake %>% 🏛
+        🖊 <sport name> #<giocata number> 🖊
+    Args:
+        giocata_text (str)
+        message_sent_timestamp (float, optional): the timestamp of the giocata message. Defaults to None.
+
+    Returns:
+        dict: contains the giocata data
+        None: in case there is an error parsing the giocata
+    """
+    sport = get_sport_name_from_giocata(giocata_text)
+    strategy = get_strategy_name_from_giocata(giocata_text, sport)
+    giocata_num = get_giocata_num_from_giocata(giocata_text)
+    giocata_quota = get_quota_from_giocata(giocata_text)
+    giocata_stake = get_stake_from_giocata(giocata_text)
+    if not message_sent_timestamp:
+        message_sent_timestamp = datetime.datetime.utcnow().timestamp()
+    parsed_giocata = create_base_giocata()
+    parsed_giocata["sport"] = sport
+    parsed_giocata["strategy"] = strategy
+    parsed_giocata["giocata_num"] = giocata_num
+    parsed_giocata["base_quota"] = giocata_quota
+    parsed_giocata["base_stake"] = giocata_stake
+    parsed_giocata["sent_timestamp"] = message_sent_timestamp
+    parsed_giocata["raw_text"] = giocata_text
+    return parsed_giocata

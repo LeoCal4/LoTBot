@@ -6,7 +6,6 @@ from typing import Callable, Dict, Tuple
 import pytest
 from lot_bot import database as db
 from lot_bot import logger as lgr
-from lot_bot import utils
 from lot_bot.dao import giocate_manager, user_manager
 from lot_bot.models import giocate as giocata_model
 
@@ -179,7 +178,7 @@ def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_f
     # recent giocate
     for _ in range(random.randint(2, 10)):
         correct_giocata_text, _ = correct_giocata_function_fixture()
-        parsed_giocata = utils.parse_giocata(correct_giocata_text)
+        parsed_giocata = giocata_model.parse_giocata(correct_giocata_text)
         created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
         assert created_giocata_id
         user_giocata = giocata_model.create_user_giocata()
@@ -190,7 +189,7 @@ def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_f
     # older giocate
     for _ in range(random.randint(2, 10)):
         older_giocata_text, _ = correct_giocata_function_fixture()
-        older_parsed_giocata = utils.parse_giocata(older_giocata_text)
+        older_parsed_giocata = giocata_model.parse_giocata(older_giocata_text)
         older_giocata_id = giocate_manager.create_giocata(older_parsed_giocata)
         assert older_giocata_id
         older_user_giocata = giocata_model.create_user_giocata()

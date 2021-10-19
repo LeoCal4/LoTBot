@@ -12,12 +12,13 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import sport_subscriptions_manager, user_manager, giocate_manager
-from lot_bot.models import sports as spr
-from lot_bot.models import strategies as strat
-from lot_bot.models import users as user_model
+from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
+                         user_manager)
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import personal_stakes
+from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
+from lot_bot.models import users
 from telegram import ParseMode, Update, User
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -38,7 +39,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
         Dict: the created user data
     """
     # * create user
-    user_data = user_model.create_base_user_data()
+    user_data = users.create_base_user_data()
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
@@ -321,7 +322,7 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         if target_user_data is None:
             raise custom_exceptions.UserNotFound()
         user_expiration_timestamp = target_user_data["lot_subscription_expiration"]
-        new_lot_subscription_expiration = {"lot_subscription_expiration": utils.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
+        new_lot_subscription_expiration = {"lot_subscription_expiration": users.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
         expiration_update_function(target_user_id, new_lot_subscription_expiration)
         return target_user_data["_id"]
 
@@ -457,7 +458,7 @@ def set_user_role(update: Update, _):
         update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username e il ruolo ")
         return
     _, target_user_id, role = text.strip().split(" ")
-    if role not in user_model.ROLES and role != "admin":
+    if role not in users.ROLES and role != "admin":
         update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
         return
     lgr.logger.debug(f"Received /set_user_role with {target_user_id} and {role}")
@@ -545,7 +546,7 @@ def giocata_handler(update: Update, context: CallbackContext):
     text = update.effective_message.text
     # * parse giocata
     try:
-        parsed_giocata = utils.parse_giocata(text)
+        parsed_giocata = giocata_model.parse_giocata(text)
     except custom_exceptions.GiocataParsingError as e:
         update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè presenta un errore, si prega di controllare e rimandarla.\nL'errore è:\n{str(e)}")
         return
