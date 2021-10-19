@@ -8,6 +8,9 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
 
+STAKE_PATTERN = fr"\s*Stake\s*(\d+[.,]?\d*)\s*"
+
+
 def create_base_giocata():
     return {
         "sport": "",
@@ -25,7 +28,7 @@ def create_user_giocata():
     return {
         "original_id": 0,
         "acceptance_timestamp": 0.0,
-        "personal_quota": 0,
+        # "personal_quota": 0,
         "personal_stake": 0,
     }
 
@@ -71,6 +74,16 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     else:
         outcome_percentage = 0.0
     return outcome_percentage
+
+
+def get_outcome_emoji(outcome_percentage: float) -> str:
+        if outcome_percentage > 0:
+            outcome_emoji = "🟢"
+        elif outcome_percentage == 0:
+            outcome_emoji = "🕔" 
+        else:
+            outcome_emoji = "🔴"
+        return outcome_emoji
 
 
 def get_sport_name_from_giocata(text: str) -> str:
@@ -182,7 +195,7 @@ def get_stake_from_giocata(giocata_text: str) -> int:
         int: the stake percentage value
     """
     # STAKE_EMOJI = "🏛"
-    regex_match = re.search(fr"\s*Stake\s*(\d+[.,]?\d*)\s*", giocata_text)
+    regex_match = re.search(STAKE_PATTERN, giocata_text)
     if not regex_match:
         error_message = f"giocata_model.get_stake_from_giocata: stake not found from {giocata_text}"
         lgr.logger.error(error_message)
@@ -250,3 +263,23 @@ def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Opti
     parsed_giocata["sent_timestamp"] = message_sent_timestamp
     parsed_giocata["raw_text"] = giocata_text
     return parsed_giocata
+
+
+def personalize_giocata_text(giocata_text: str, personal_stakes: List, sport_name: str, strategy_name: str) -> str:
+    if personal_stakes == []:
+        return giocata_text
+    giocata_quota = get_quota_from_giocata(giocata_text)
+    for personal_stake in personal_stakes:
+        # * check sport and strategy
+        personal_stake_sport = personal_stake["sport"] 
+        personal_stake_strategies = personal_stake["strategies"]
+        if ((personal_stake_sport != "all" and personal_stake_sport != sport_name) or 
+            (not "all" in personal_stake_strategies and not strategy_name in personal_stake_strategies)):
+            continue
+        # * check quota in range
+        if personal_stake["min_quota"] > giocata_quota or personal_stake["max_quota"] < giocata_quota:
+            continue
+        # * modify stake
+        giocata_text = re.sub(STAKE_PATTERN, f"Stake {personal_stake['stake'] / 100:.2f}", giocata_text)
+        break
+    return giocata_text

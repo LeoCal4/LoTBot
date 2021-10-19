@@ -309,9 +309,6 @@ def strategy_explanation(update: Update, context: CallbackContext):
         )
 
 
-######################################### TESTING #########################################
-
-
 def accept_register_giocata(update: Update, context: CallbackContext):
     """
     The callback for this is register_giocata_yes
@@ -322,13 +319,18 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     """
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
+    # * modify message text to specify that the giocata has been registered
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
+    # * retrieve and save the giocata for the user
     parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
     personal_user_giocata = giocata_model.create_user_giocata()
     personal_user_giocata["original_id"] = retrieved_giocata["_id"]
     personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+    # * check for differences in the saved stake and the current one (personalized stake)
+    if parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
+        personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
     user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     context.bot.edit_message_text(
         updated_giocata_text,
@@ -420,9 +422,10 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, message_i
             reply_markup=kyb.RESOCONTI_KEYBOARD,
         )
         return
-    user_giocate_ids = [giocata["original_id"] for giocata in user_giocate_data]
+    user_giocate_data_dict = {giocata["original_id"]: giocata for giocata in user_giocate_data}
+    user_giocate_ids = list(user_giocate_data_dict.keys())
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
-    resoconto_message = resoconto_message_header + "\n" + utils.create_resoconto_message(giocate_full_data)
+    resoconto_message = resoconto_message_header + "\n" + utils.create_resoconto_message(giocate_full_data, user_giocate_data_dict)
     # * edit last message with resoconto
     context.bot.edit_message_text(
         resoconto_message,

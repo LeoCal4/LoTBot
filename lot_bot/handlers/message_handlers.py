@@ -139,7 +139,7 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 lgr.logger.error(f"{str(e)}") # cannot raise e since it would loop with the error handler
 
 
-def send_message_to_all_abbonati(update: Update, context: CallbackContext, text: str, sport: str, strategy: str, is_giocata: bool = False):
+def send_message_to_all_abbonati(update: Update, context: CallbackContext, original_text: str, sport: str, strategy: str, is_giocata: bool = False):
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
 
@@ -155,6 +155,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         is_giocata (bool, default = False): False if it is not a giocata, True otherwise.
 
     """
+    text = original_text
     sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
     if sub_user_ids == []:
         lgr.logger.warning(f"There are no sport_subscriptions for {sport=} {strategy=}")
@@ -163,9 +164,9 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
     messages_to_be_sent = len(sub_user_ids)
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
     if is_giocata:
-        text += "\n\nHai effettuato la giocata?"
+        original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes"])
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
             messages_to_be_sent -= 1
@@ -177,10 +178,12 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, text:
         lgr.logger.debug(f"Sending message to {user_id}")
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
+            text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
+            text = original_text
         try:
-            result = context.bot.send_message(
+            context.bot.send_message(
                 user_id, 
                 text, 
                 reply_markup=custom_reply_markup)

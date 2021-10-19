@@ -84,22 +84,23 @@ def parse_float_string_to_int(float_string: str) -> int:
         raise e
 
 
-def create_resoconto_message(giocate: List[Dict]):
+def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
     # Resoconto 24-09-2021
     # 1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
     # resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
-        outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
-        if outcome_percentage > 0:
-            outcome_emoji = "🟢"
-        elif outcome_percentage == 0:
-            outcome_emoji = "🕔" # TODO add even case 
-        else:
-            outcome_emoji = "🔴"
+        stake = giocata["base_stake"]
+        # * check for a personalized stake
+        personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
+        if personalized_stake != 0:
+            stake = personalized_stake
+        # * get outcome percentage and relative emoji
+        outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+        outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage)
         parsed_quota = giocata["base_quota"] / 100
-        parsed_stake = giocata["base_stake"] / 100
+        parsed_stake = stake / 100
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
         resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
     return resoconto_message
