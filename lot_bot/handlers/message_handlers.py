@@ -382,7 +382,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
 
 
 def create_personal_stake(update: Update, context: CallbackContext):
-    """- /crea_stake <username> <quota_min> <quota_max> <stake_personale> [<sport> <strategia> (se non specificate va applicato su tutte)] 
+    """- /crea_stake <username o ID> <quota_min> <quota_max> <stake_personale> [<sport> <strategia> (se non specificate va applicato su tutte)] 
 
     Args:
         update (Update)
@@ -405,7 +405,7 @@ def create_personal_stake(update: Update, context: CallbackContext):
     try:
         target_user_id = int(target_user_identification_data)
     except:
-        target_user_username = target_user_identification_data
+        target_user_username = target_user_identification_data if target_user_identification_data[0] != "@" else target_user_identification_data[1:]
     
     lgr.logger.debug(f"Received /crea_stake for {target_user_identification_data}")
     

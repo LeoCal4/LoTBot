@@ -182,7 +182,21 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
 
-######################################## TESTING #############################################
+def parse_float_string_to_int(float_string: str) -> int:
+    """TODO MOVE TO UTILS
+
+    Args:
+        float_string (str): [description]
+
+    Returns:
+        int: [description]
+    """
+    try:
+        return int(float(float_string.replace(",", ".")) * 100)
+    except Exception as e:
+        lgr.logger.error(f"Error during parsing of {float_string} to int * 100 - {str(e)}")
+        raise e
+
 
 def get_giocata_num_from_giocata(giocata_text: str) -> str:
     """Gets the number of the giocata from its text.

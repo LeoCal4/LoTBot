@@ -1,9 +1,10 @@
-
 from typing import Dict, List
 
+from lot_bot import logger as lgr
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot import custom_exceptions
+from lot_bot import utils
 
 
 def create_base_personal_stake():
@@ -14,10 +15,6 @@ def create_base_personal_stake():
         "sport": None,
         "strategies": None,
     }
-
-
-def parse_float_string_to_int(float_string):
-    return int(float(float_string.replace(",", ".")) * 100)
 
 
 def parse_personal_stake(personal_stake_data: List) -> Dict:
@@ -49,16 +46,16 @@ def parse_personal_stake(personal_stake_data: List) -> Dict:
     _, raw_min_quota, raw_max_quota, raw_personal_stake = personal_stake_data[:SPORT_INDEX]
     # * check if the quota range and the stake are valid floats and turn them to ints
     try:
-        min_quota = parse_float_string_to_int(raw_min_quota)
-        max_quota = parse_float_string_to_int(raw_max_quota)
-        personal_stake = parse_float_string_to_int(raw_personal_stake)
+        min_quota = utils.parse_float_string_to_int(raw_min_quota)
+        max_quota = utils.parse_float_string_to_int(raw_max_quota)
+        personal_stake = utils.parse_float_string_to_int(raw_personal_stake)
     except:
         raise custom_exceptions.PersonalStakeParsingError(f"ERRORE: impossibile analizzare min/max quota o stake")
     # * check if the min quota is less then the max quota
     if min_quota >= max_quota:
         raise custom_exceptions.PersonalStakeParsingError(f"ERRORE: la quota minima {raw_min_quota} è maggiore o uguale alla quota massima {raw_max_quota}")
     # * check if the personal stake is a valid percentage
-    if personal_stake >= 10000 or personal_stake <= 0:
+    if personal_stake > 10000 or personal_stake <= 0:
         raise custom_exceptions.PersonalStakeParsingError(f"ERRORE: lo stake {raw_personal_stake} è maggiore di 100 o minore o uguale a 0")
     # * check if the sport is valid    
     sport = "all"
@@ -84,16 +81,16 @@ def parse_personal_stake(personal_stake_data: List) -> Dict:
     personal_stake_data["max_quota"] = max_quota
     personal_stake_data["stake"] = personal_stake
     personal_stake_data["sport"] = sport
-    personal_stake_data["strategies"] = strategies
+    personal_stake_data["strategies"] = list(set(strategies))
     return personal_stake_data
 
 
-def check_stakes_overlapping(new_stake: Dict, user_stakes: Dict) -> bool:
-    """Checks if the parsed stake overlap with any 
+def check_stakes_overlapping(new_stake: Dict, user_stakes: List) -> bool:
+    """Checks if the new stake overlaps with any of the user's stakes.
 
     Args:
         new_stake (Dict)
-        user_stakes (Dict)
+        user_stakes (List)
 
     Returns:
         bool: True if the stakes are overlapping, False otherwise
@@ -102,7 +99,10 @@ def check_stakes_overlapping(new_stake: Dict, user_stakes: Dict) -> bool:
         return False
     for stake in user_stakes:
         stake_sport = stake["sport"] 
-        if stake_sport != new_stake["sport"] and len(set(stake["strategies"]) & set(new_stake["strategies"])) == 0:
+        # * sports are different and neither of them are "all"
+        # * if sports overlap, no common strategies and none or them are "all"
+        if ((stake_sport != "all" and new_stake["sport"] != "all" and stake_sport != new_stake["sport"]) or 
+            (len(set(stake["strategies"]) & set(new_stake["strategies"])) == 0 and "all" not in stake["strategies"] and "all" not in new_stake["strategies"])):
             continue
         retrieved_min_quota = stake["min_quota"]
         retrieved_max_quota = stake["max_quota"]
