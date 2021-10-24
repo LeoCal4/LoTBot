@@ -1,11 +1,12 @@
 from json import dumps
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
+from lot_bot.models import sports as spr
+from lot_bot import custom_exceptions
 from lot_bot import database as db
 from lot_bot import logger as lgr
-from lot_bot import custom_exceptions
-from pymongo.results import InsertOneResult, UpdateResult
 from pymongo.errors import DuplicateKeyError
+from pymongo.results import InsertOneResult, UpdateResult
 
 
 def create_giocata(giocata: Dict) -> Optional[int]:
@@ -111,4 +112,22 @@ def update_giocata_outcome(sport: str, giocata_num: str, outcome: str) -> bool:
         return bool(update_result.matched_count)
     except Exception as e:
         lgr.logger.error(f"Error during update giocata outcome {sport=} - {giocata_num=} - {outcome=}")
+        raise e
+
+
+def update_exchange_giocata_outcome(giocata_num: str, percentage_outcome: int):
+    if percentage_outcome > 0:
+        outcome = "win"
+    elif percentage_outcome < 0:
+        outcome = "loss"
+    else:
+        outcome = "abbinata"
+    try:
+        update_result : UpdateResult = db.mongo.giocate.update_one(
+            { "sport": spr.sports_container.EXCHANGE.name, "giocata_num": giocata_num },
+            { "$set": {"outcome": outcome, "cashout": percentage_outcome} },
+            )
+        return bool(update_result.modified_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during update Exchange giocata outcome {giocata_num=} - {percentage_outcome=}")
         raise e

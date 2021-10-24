@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Tuple
 
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
+from lot_bot import utils
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
@@ -60,9 +61,40 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
         outcome = "win"
     elif outcome in loss_keywords:
         outcome = "loss"
+    elif outcome == "void":
+        outcome = "void"
     else:
-        outcome = "?"
+        outcome = "neutral"
     return sport.name, giocata_num, outcome
+
+
+def get_cashout_data(cashout_message: str) -> Tuple[str, int]:
+    """[summary]
+
+    Args:
+        cashout_message (str)
+
+    Raises:
+        custom_exceptions.GiocataOutcomeParsingError: in case there are less than 2 tokens
+        custom_exceptions.GiocataOutcomeParsingError: in case the percentage is not a valid float
+
+    Returns:
+        Tuple[str, int]: giocata number and cashout percentage
+    """
+    cashout_tokens = cashout_message.strip().split()
+    # * check if both id and % are present
+    if len(cashout_tokens) < 2:
+        raise custom_exceptions.GiocataOutcomeParsingError("\nIndicare l'id della giocata preceduta da # e la percentuale del cashout")
+    # * eventually remove % at the end and convert cashout percentage to int
+    cashout_percentage = cashout_tokens[1] if cashout_tokens[1][-1] != "%" else cashout_tokens[1][:-1]
+    try:
+        cashout_percentage = utils.parse_float_string_to_int(cashout_tokens[1])
+    except Exception as e:
+        lgr.logger.error(f"During cashout parsing - {str(e)}")
+        raise custom_exceptions.GiocataOutcomeParsingError("\nPercentuale di cashout non valida")
+    # * remove '#' from giocata num
+    giocata_num = cashout_tokens[0][1:]
+    return giocata_num, cashout_percentage
 
 
 def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
@@ -76,14 +108,27 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     return outcome_percentage
 
 
-def get_outcome_emoji(outcome_percentage: float) -> str:
-        if outcome_percentage > 0:
-            outcome_emoji = "🟢"
-        elif outcome_percentage == 0:
-            outcome_emoji = "🕔" 
-        else:
-            outcome_emoji = "🔴"
-        return outcome_emoji
+def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
+    """TODO only outcome state
+
+    Args:
+        outcome_percentage (float): [description]
+        outcome_state (str): [description]
+
+    Returns:
+        str: [description]
+    """
+    if outcome_state == "neutral" or outcome_state == "abbinata":
+        return "⚪"
+    if outcome_state == "void":
+        return "🟡"
+    if outcome_percentage > 0:
+        outcome_emoji = "🟢"
+    elif outcome_percentage == 0:
+        outcome_emoji = "🕔" 
+    else:
+        outcome_emoji = "🔴"
+    return outcome_emoji
 
 
 def get_sport_name_from_giocata(text: str) -> str:

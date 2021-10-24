@@ -98,8 +98,12 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
         if personalized_stake != 0:
             stake = personalized_stake
         # * get outcome percentage and relative emoji
-        outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
-        outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage)
+        if "cashout" in giocata:
+            outcome_percentage = giocata["cashout"] / 100
+        else:
+            outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+        # TODO only outcome, no need for %
+        outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage, giocata["outcome"])
         parsed_quota = giocata["base_quota"] / 100
         parsed_stake = stake / 100
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name

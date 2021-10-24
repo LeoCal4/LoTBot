@@ -14,6 +14,7 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
                          user_manager)
+from lot_bot.handlers.ref_code_handlers import update_linked_referral
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import personal_stakes
 from lot_bot.models import sports as spr
@@ -689,11 +690,20 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
     Args:
         update (Update)
         context (CallbackContext)
-
-    Raises:
-        Exception: when there is an error parsing the cashout or sending the messages
     """
-    cashout_text = utils.create_cashout_message(update.effective_message.text)
+    cashout_text_raw = update.effective_message.text
+    # * get giocata num and cashout
+    try:
+        giocata_num, cashout_percentage = giocata_model.get_cashout_data(cashout_text_raw)
+    except custom_exceptions.GiocataParsingError as e:
+        update.effective_message.reply_text(f"ATTENZIONE: il cashout non è stato inviato.{str(e)}")
+        return
+    # * update the giocata outcome
+    update_result = giocate_manager.update_exchange_giocata_outcome(giocata_num, cashout_percentage)
+    if not update_result:
+        update.effective_message.reply_text(f"ATTENZIONE: il cashout non è stato inviato. La giocata {giocata_num} non è stata trovata")
+    # * create parsed cashout message
+    cashout_text = utils.create_cashout_message(cashout_text_raw)
     lgr.logger.info(f"Received cashout message {cashout_text}")
     send_message_to_all_abbonati(
         update, 
