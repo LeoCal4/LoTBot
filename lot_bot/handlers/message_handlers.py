@@ -54,7 +54,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
     # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_timestamp = datetime.datetime(2021, 10, 21, hour=13, minute=15).timestamp()
+    trial_expiration_timestamp = datetime.datetime(2021, 10, 31, hour=13, minute=15).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio -  sport_subscription
@@ -157,28 +157,34 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     """
     text = original_text
     sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
+    # * check if there are any subscribers to the specified strategy
     if sub_user_ids == []:
         lgr.logger.warning(f"There are no sport_subscriptions for {sport=} {strategy=}")
         return
     messages_sent = 0
     messages_to_be_sent = len(sub_user_ids)
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
+    # * eventually add giocata text at the end of the message
     if is_giocata:
         original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
         user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes"])
+        # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
             messages_to_be_sent -= 1
             continue
+        # * check if the user has an active subscription
         if not user_manager.check_user_validity(update.effective_message.date, user_data):
             lgr.logger.warning(f"User {user_id} is not active")
             messages_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Sending message to {user_id}")
+        # * in case of giocata message, add the register giocata keyboard and personalize the stake
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
             text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
+        # * otherwise, keep the original text and resend the base keyboard
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
             text = original_text
@@ -188,6 +194,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
                 text, 
                 reply_markup=custom_reply_markup)
             messages_sent += 1
+        # * check if the user has blocked the bot
         except Unauthorized:
             lgr.logger.warning(f"Could not send message: user {user_id} blocked the bot")
             messages_to_be_sent -= 1
@@ -370,7 +377,7 @@ def _send_broadcast_messages(context, parsed_text):
 
 
 def broadcast_handler(update: Update, context: CallbackContext):
-    """TODO async this
+    """
 
     Args:
         update (Update)
@@ -420,7 +427,7 @@ def create_personal_stake(update: Update, context: CallbackContext):
         update.effective_message.reply_text(f"ATTENZIONE: la stake non è stato creato perchè presenta un errore, si prega di controllare e rimandarla.\n{str(e)}")
         return
 
-    # * check if the personal stake intersects with one which is already present
+    # * retrieve target user personal stakes 
     if target_user_id:
         target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["personal_stakes"])
     else:
@@ -446,6 +453,91 @@ def create_personal_stake(update: Update, context: CallbackContext):
     update.effective_message.reply_text("Stake aggiunto con successo")
 
 
+def visualize_personal_stakes(update: Update, context: CallbackContext):
+    """/visualizza_stake <username o ID>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["analyst", "admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len != 1:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID)")
+        return
+    target_user_identification_data = context.args[0]
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except:
+        target_user_username = target_user_identification_data if target_user_identification_data[0] != "@" else target_user_identification_data[1:]
+    
+    # * retrieve personal stakes
+    if target_user_id:
+        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, ["personal_stakes"])
+    else:
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_username, ["personal_stakes"])
+
+    if target_user_data is None:
+        update.effective_message.reply_text("ERRORE: utente non trovato")
+        return
+    
+    # * (setting target user id, in case we only had the username)
+    target_user_id = target_user_data["_id"]
+
+    # * create and send personal stakes message
+    stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
+    stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
+    update.effective_message.reply_text(stakes_message)
+
+
+def delete_personal_stakes(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    if not check_user_permission(user_id, permitted_roles=["analyst", "admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len != 2:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID) e l'identificatore dello stake da eliminare (specificato dal comando '/visualizza_stake')")
+        return
+    target_user_identification_data = context.args[0]
+    personal_stake_to_delete = context.args[1]
+    number_not_valid = False
+    # * check if the personal stake to delete is actually a number
+    try:
+        personal_stake_to_delete = int(personal_stake_to_delete.strip()) - 1
+    except:
+        update.effective_message.reply_text(f"ERRORE: stake non eliminato, il numero dello stake {personal_stake_to_delete} non è valido")
+        return
+    # * check if the stake number is > 0
+    if personal_stake_to_delete < 0:
+        update.effective_message.reply_text(f"ERRORE: stake non eliminato, il numero dello stake deve essere maggiore di 0")
+        return
+    target_user = None
+    try:
+        target_user = int(target_user_identification_data)
+    except:
+        target_user = target_user_identification_data if target_user_identification_data[0] != "@" else target_user_identification_data[1:]
+    
+    # * delete personal stakes
+    try:
+        deletion_result = user_manager.delete_personal_stake_by_user_id_or_username(target_user, personal_stake_to_delete)
+    except IndexError:
+        update.effective_message.reply_text(f"ERRORE: stake non eliminato, il numero dello stake {personal_stake_to_delete} è troppo basso o troppo alto")
+        return
+    if not deletion_result:
+        update.effective_message.reply_text("ERRORE: stake non eliminato, utente non trovato")
+        return
+    update.effective_message.reply_text("Stake rimosso con successo")
+    
+
+
 def set_user_role(update: Update, _):
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
@@ -464,7 +556,7 @@ def set_user_role(update: Update, _):
     if role not in users.ROLES and role != "admin":
         update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
         return
-    lgr.logger.debug(f"Received /set_user_role with {target_user_id} and {role}")
+    lgr.logger.debug(f"Received /cambia_ruolo with {target_user_id} and {role}")
     user_role = {"role": role}
     
     # * check whetever the specified user identification is a Telegram ID or a username
@@ -505,7 +597,7 @@ def send_file_id(update: Update, _):
         reply_message = "Impossibile ottenere il file_id dal media inviato"
     else:
         reply_message = f"{file_id}"
-    update.effective_message.reply_text(reply_message)
+    update.effective_message.reply_text(reply_message)    
 
 
 ##################################### MESSAGE HANDLERS #####################################

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, final
 
 from lot_bot import logger as lgr
 from lot_bot.models import sports as spr
@@ -109,3 +109,32 @@ def check_stakes_overlapping(new_stake: Dict, user_stakes: List) -> bool:
         if retrieved_min_quota <= new_stake["min_quota"] <= retrieved_max_quota or retrieved_min_quota <= new_stake["max_quota"] <= retrieved_max_quota:
             return True
     return False
+
+
+def create_personal_stakes_message(user_stakes: List[Dict]) -> str:
+    """
+    num) Sport - Strategia1, Strategia2 - Quota Minima: x - Quota Massima: y - Stake: z%
+
+    Args:
+        user_stakes (List[Dict]): list of the user personalized stakes
+
+    Returns:
+        str: the message containing all the user personalized stakes info
+    """
+    if not user_stakes:
+        return "Non è presente nessuno stake personalizzato." 
+    final_message = ""
+    for i, user_stake in enumerate(user_stakes):
+        sport = "Tutti gli sport" if user_stake["sport"] == "all" else spr.sports_container.get_sport(user_stake["sport"]).display_name
+        strategies = ""
+        for strategy in user_stake["strategies"]:
+            if strategy == "all":
+                strategies = "Tutte le strategie"
+                break
+            strategies += strat.strategies_container.get_strategy(strategy).display_name + ", "
+        strategies = strategies[:-2] if strategies != "Tutte" else strategies
+        min_quota = f"{int(user_stake['min_quota']) / 100:.2f}"
+        max_quota = f"{int(user_stake['max_quota']) / 100:.2f}"
+        stake = f"{int(user_stake['stake']) / 100:.2f}"
+        final_message += f"{i+1}) {sport} - {strategies} - Quota Min: {min_quota} - Quota Max: {max_quota} - Stake: {stake}%\n"
+    return final_message

@@ -1,6 +1,6 @@
 import datetime
 from json import dumps
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 
 from telegram import user
 
@@ -337,6 +337,25 @@ def delete_user(user_id: int) -> bool:
         return False
 
 
+def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str):
+    if type(user_identification_data) is int:
+        user_query = {"_id": user_identification_data}
+    else:
+        user_query = {"username": user_identification_data}
+    try:
+        user_data : List[Dict] = db.mongo.utenti.find_one(user_query, {"personal_stakes": 1})
+        if not user_data:
+            # * user not found
+            return False
+        personal_stakes = user_data["personal_stakes"]
+        del personal_stakes[personal_stake_id]
+        result: UpdateResult = db.mongo.utenti.update_one(user_query, {"$set": { "personal_stakes": personal_stakes } })
+        return bool(result.modified_count)
+    except Exception as e:
+        lgr.logger.error(f"Error deletion of user stake - {user_identification_data} - {personal_stake_id}")
+        raise e
+
+
 def delete_all_users():
     try:
         db.mongo.utenti.delete_many({})
@@ -348,6 +367,7 @@ def delete_all_users():
 
 def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> bool:
     """Checks if the user subscription is still valid.
+    # TODO move to user model 
 
     Args:
         message_date (datetime): the date of the message being checked
@@ -364,6 +384,7 @@ def get_subscription_price_for_user(user_id: int) -> float:
     """Calculates the price for the user specified by user_id.
     As of now, for a first timer and for LoT's first ever users, the base price is halved.
     For each referred user, the base price is discounted by 33%.
+    # TODO move to user model 
 
     Args:
         user_id (int)

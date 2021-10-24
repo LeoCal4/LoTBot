@@ -282,4 +282,7 @@ def personalize_giocata_text(giocata_text: str, personal_stakes: List, sport_nam
         # * modify stake
         giocata_text = re.sub(STAKE_PATTERN, f"Stake {personal_stake['stake'] / 100:.2f}", giocata_text)
         break
+    giocata_text_rows = giocata_text.split("\n")
+    giocata_text_rows = giocata_text_rows[:-1] + ["(stake personalizzato)", "", giocata_text_rows[-1]]
+    giocata_text = "\n".join(giocata_text_rows)
     return giocata_text
