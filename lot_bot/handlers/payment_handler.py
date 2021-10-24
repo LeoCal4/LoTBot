@@ -8,7 +8,7 @@ from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
-from lot_bot.handlers import callback_handlers, message_handlers
+from lot_bot.handlers import callback_handlers, message_handlers, ref_code_handlers
 from lot_bot.models import users
 from telegram import LabeledPrice, Update
 from telegram.ext.conversationhandler import ConversationHandler
@@ -17,7 +17,7 @@ from telegram.ext.dispatcher import CallbackContext
 REFERRAL = 0
 
 
-def to_add_referral_before_payment(update: Update, context: CallbackContext) -> Optional[int]:
+def to_add_linked_referral_before_payment(update: Update, context: CallbackContext) -> Optional[int]:
     """Asks the user to add a new referral/affiliation code, possibily showing the one that he/she
     has already inserted previously, while presenting a button to proceed with the payment 
     or to go back.
@@ -35,13 +35,7 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
         int: the REFERRAL state for the ConversationHandler
     """
     chat_id = update.callback_query.message.chat_id
-    retrieved_user = user_manager.retrieve_user_fields_by_user_id(chat_id, ["linked_referral_user"])
-    linked_referral_id = retrieved_user["linked_referral_user"]["linked_user_id"]
-    linked_referral_user_code = retrieved_user["linked_referral_user"]["linked_user_code"]
-    if not linked_referral_id is None:
-        referral_text = cst.PAYMENT_EXISTING_REFERRAL_CODE_TEXT.format(linked_referral_user_code)
-    else:
-        referral_text = cst.PAYMENT_ADD_REFERRAL_CODE_TEXT
+    referral_text = ref_code_handlers.get_update_linked_referral_message(chat_id)
     message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
     context.bot.edit_message_text(
         message_text,
@@ -53,7 +47,7 @@ def to_add_referral_before_payment(update: Update, context: CallbackContext) -> 
     return REFERRAL
 
 
-def received_referral(update: Update, _) -> int:
+def received_linked_referral_during_payment(update: Update, _) -> int:
     """Checks the referral code specified by the user in order to know if the 
     code exists and if it is not the current user's one. If the referral code was 
     valid, it is added to its data.
@@ -70,28 +64,14 @@ def received_referral(update: Update, _) -> int:
     """
     chat_id = update.effective_user.id
     referral_text = update.effective_message.text
-    referral_user = user_manager.retrieve_user_id_by_referral(referral_text)
-    is_referral_valid = True
-    message_text = ""
-    retry_text = "Prova di nuovo ad inviare un messaggio con un codice di referral oppure premi il bottone sottostante per procedere."
-    # * check if referral is not valid
-    if not referral_user:
-        lgr.logger.debug(f"Referral code {referral_text} not found")
-        message_text = "Il codice di referral specificato non è collegato a nessun utente.\n" + retry_text
-        is_referral_valid = False
-    elif referral_user["_id"] == update.effective_user.id:
-        lgr.logger.debug(f"Referral code {referral_text} is the current user's one")
-        message_text = "Non puoi utilizzare il tuo codice di referral.\n" + retry_text
-        is_referral_valid = False
-    if is_referral_valid:
-        # ! link referral code to user
-        linked_user_data = {"linked_user_id": referral_user["_id"], "linked_user_code": referral_text}
-        user_manager.update_user(chat_id, {"linked_referral_user": linked_user_data})
-        lgr.logger.debug(f"Correctly added referral code {referral_text} for user {chat_id}")
-        message_text = "Codice di referral aggiunto con successo!\nClicca il bottone sottostante per procedere al pagamento."        
+    update_successful, message_text = ref_code_handlers.received_linked_referral_handler(chat_id, referral_text)
+    if update_successful:
+        message_text += "\nClicca il bottone sottostante per procedere al pagamento."
+    # * send update outcome message
     update.message.reply_text(
         message_text,
         reply_markup=kyb.PROCEED_TO_PAYMENTS_KEYBOARD,
+        parse_mode="HTML"
     )
     return REFERRAL
     
@@ -244,16 +224,3 @@ def to_homepage_from_referral_callback(update: Update, context: CallbackContext)
     callback_handlers.to_homepage(update, context)
     return ConversationHandler.END
 
-
-def to_homepage_from_referral_message(update: Update, context: CallbackContext) -> int:
-    """Homepage message handler that closes the conversation.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-
-    Returns:
-        int: ConversationHandler.END (-1), to signal the end of the conversation
-    """
-    message_handlers.homepage_handler(update, context)
-    return ConversationHandler.END

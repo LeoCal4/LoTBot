@@ -6,6 +6,7 @@ from lot_bot import logger as lgr
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot import constants as cst
 
 
 def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
@@ -136,3 +137,8 @@ def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport,
         lgr.logger.error(f"Strategy {strategy_token} not valid from normal message {message} - {first_row=}")
         raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport}'")
     return sport, strategy
+
+
+def create_personal_referral_updated_text(updated_referral: str) -> str:
+    referral_link = f"https://t.me/SportSignalsBot?start={updated_referral}"
+    return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)

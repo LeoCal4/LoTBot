@@ -93,11 +93,16 @@ SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_butto
 
 
 _referral_menu_buttons = [
-    [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="🪂  Collega un codice di referral  🎰 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰", callback_data="to_update_personal_ref_code_conversation")],
+    [InlineKeyboardButton(text="🪂  Collega un codice di referral  🎰", callback_data="to_update_linked_ref_code_conversation")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
 ]
 REFERRAL_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_referral_menu_buttons)
+
+_back_to_ref_code_menu_buttons = [
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_ref_code_menu_from_referral")],
+]
+BACK_TO_REF_CODE_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_back_to_ref_code_menu_buttons)
 
 # ===================================== STATUS SERVIZIO SUBMENU =====================================
 

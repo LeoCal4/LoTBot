@@ -1,4 +1,4 @@
-from typing import Dict, List, final
+from typing import Dict, List
 
 from lot_bot import logger as lgr
 from lot_bot.models import sports as spr

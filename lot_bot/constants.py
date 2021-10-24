@@ -11,11 +11,18 @@ PAYMENT_BASE_TEXT = """Se hai un <i>codice sconto o referral</i> <b>inseriscilo<
 <i>(Durante il pagamento ti chiederemo email e nome al solo fine di contattarti in caso di necessità)</i>"""
 
 
-PAYMENT_EXISTING_REFERRAL_CODE_TEXT = """Il codice di referral che hai aggiunto è {0}.
+EXISTING_LINKED_REFERRAL_CODE_TEXT = """Il codice di referral a cui sei collegato è <b>{0}</b>.
 
 Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido oppure premi il bottone sottostante per procedere"""
 
-PAYMENT_ADD_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
+ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
+
+
+
+UPDATE_PERSONAL_REFERRAL_CODE_TEXT = """Il tuo codice di referral attuale è <b>{0}</b>.
+Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere.
+
+ATTENZIONE: per essere valido, il nuovo codice deve contenere <i>solo lettere o numeri</i>. Inoltre, alla fine del codice, verrà aggiunto in automatico '-lot'.""" 
 
 
 # ================================== MAIN MENU =========================================

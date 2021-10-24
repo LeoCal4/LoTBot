@@ -96,6 +96,9 @@ def get_send_file_id_filter() -> Filters:
 def get_all_filter() -> Filters:
     return Filters.all
 
+def get_text_messages_filter() -> Filters:
+    return Filters.text
+
 
 # ================================================ PATTERNS ================================================
 

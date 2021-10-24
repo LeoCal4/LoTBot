@@ -242,21 +242,27 @@ def to_explanations_menu(update: Update, context: CallbackContext):
     )
 
 
-def to_referral(update: Update, context: CallbackContext):
+def to_referral(update: Update, context: CallbackContext, send_new: bool = False):
     user_id = update.effective_user.id
     user_fields = ["linked_referral_user", "referral_code", "successful_referrals_since_last_payment"]
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, user_fields)
     # succ_referrals = len(user_data["successful_referrals_since_last_payment"])
-    ref_code = user_data["referral_code"]
-    referral_link = f"https://t.me/SportSignalsBot?start={ref_code}"
-    referral_message = cst.REFERRAL_MENU_MESSAGE.format(ref_code, referral_link)
-    context.bot.edit_message_text(
-        referral_message,
-        chat_id=user_id,
-        message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
-        parse_mode="HTML",
-    )
+    referral_message = utils.create_personal_referral_updated_text(user_data["referral_code"])
+    if not send_new:
+        context.bot.edit_message_text(
+            referral_message,
+            chat_id=user_id,
+            message_id=update.callback_query.message.message_id,
+            reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
+            parse_mode="HTML",
+        )
+    else:
+        context.bot.send_message(
+            user_id,
+            referral_message,
+            reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
+            parse_mode="HTML",
+        )
 
 
 def strategy_explanation(update: Update, context: CallbackContext):
@@ -282,12 +288,12 @@ def strategy_explanation(update: Update, context: CallbackContext):
     if not strategy or strategy.name not in cfg.config.VIDEO_FILE_IDS.keys():
         lgr.logger.error(f"{strategy_token} cannot be found for explanation")
         raise Exception(f"Strategy {strategy} not found")
-    # ! avoid reloading the same video strategy
+    # * avoid reloading the same video strategy
     if update.effective_message.caption and strategy.display_name in update.effective_message.caption:
         return
     strategy_video_explanation_id = cfg.config.VIDEO_FILE_IDS[strategy.name]
     caption = f"Spiegazione di {strategy.display_name}"
-    # ! if the previous message has a video, edit that message
+    # * if the previous message has a video, edit that message
     if update.effective_message.video:
         context.bot.edit_message_media(
             chat_id=update.callback_query.message.chat_id,
@@ -295,7 +301,7 @@ def strategy_explanation(update: Update, context: CallbackContext):
             media=InputMediaVideo(strategy_video_explanation_id, caption=caption),
             reply_markup=kyb.EXPLANATION_TEST_INLINE_KEYBOARD,
         )
-    # ! otherwise, send a new message and delete the previous one (if possible)
+    # * otherwise, send a new message and delete the previous one (if possible)
     else:
         try:
             delete_message_if_possible(update, context)

@@ -39,5 +39,5 @@
 
 
 ## Admin
-- `/set_user_role <user id|username> <ruolo>`: cambia il ruolo dell'utente in _base_ or _analyst_
+- `/cambia_ruolo <user id|username> <ruolo>`: cambia il ruolo dell'utente in _base_ or _analyst_
 - `/send_file_id` with <media> attached: sends a message containing the file_id of the sent media

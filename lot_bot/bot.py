@@ -7,7 +7,7 @@ from telegram.ext.dispatcher import Dispatcher
 from lot_bot import config as cfg
 from lot_bot import filters
 from lot_bot.handlers import (callback_handlers, message_handlers,
-                              payment_handler)
+                              payment_handler, ref_code_handlers)
 
 
 bot = None
@@ -28,19 +28,42 @@ def get_referral_conversation_handler() -> ConversationHandler:
         ConversationHandler
     """
     payment_conversation_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(payment_handler.to_add_referral_before_payment, pattern=r"^to_add_referral$")],
+        entry_points=[CallbackQueryHandler(payment_handler.to_add_linked_referral_before_payment, pattern=r"^to_add_referral$")],
         states={
             payment_handler.REFERRAL: [
-                MessageHandler(filters.get_referral_filter(), payment_handler.received_referral),
+                MessageHandler(filters.get_referral_filter(), payment_handler.received_linked_referral_during_payment),
                 CallbackQueryHandler(payment_handler.to_payments, pattern=r"^to_payments$")
                 ],
         },
         fallbacks=[
             CallbackQueryHandler(payment_handler.to_homepage_from_referral_callback, pattern=r"^to_homepage_from_referral$"),
-            MessageHandler(filters.get_normal_messages_filter(), payment_handler.to_homepage_from_referral_message),
+            MessageHandler(filters.get_normal_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
             ],
     )
     return payment_conversation_handler
+
+
+def update_referral_conversation_handler() -> ConversationHandler:
+    update_ref_code_conv_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(ref_code_handlers.to_update_personal_ref_code, pattern=r"^to_update_personal_ref_code_conversation$"),
+            CallbackQueryHandler(ref_code_handlers.to_update_linked_referral, pattern=r"^to_update_linked_ref_code_conversation$")
+            ],
+        states={
+            ref_code_handlers.UPDATE_PERSONAL_REFERRAL: [
+                MessageHandler(filters.get_text_messages_filter(), ref_code_handlers.received_personal_referral),
+                CallbackQueryHandler(ref_code_handlers.to_ref_code_menu_from_referral_update_callback, pattern=r"^to_ref_code_menu_from_referral$")
+            ],
+            ref_code_handlers.UPDATE_LINKED_REFERRAL: [
+                MessageHandler(filters.get_text_messages_filter(), ref_code_handlers.received_linked_referral_handler),
+                CallbackQueryHandler(ref_code_handlers.to_ref_code_menu_from_referral_update_callback, pattern=r"^to_ref_code_menu_from_referral$")
+            ]
+        },
+        fallbacks=[
+            MessageHandler(filters.get_normal_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
+        ],
+    )
+    return update_ref_code_conv_handler
 
 
 def add_handlers(dispatcher: Dispatcher):
@@ -51,10 +74,12 @@ def add_handlers(dispatcher: Dispatcher):
     """
     # ============ COMMAND HANDLERS ===========
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
-    dispatcher.add_handler(CommandHandler("set_user_role", message_handlers.set_user_role))
+    dispatcher.add_handler(CommandHandler("cambia_ruolo", message_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
     dispatcher.add_handler(CommandHandler("crea_stake", message_handlers.create_personal_stake))
+    dispatcher.add_handler(CommandHandler("visualizza_stake", message_handlers.visualize_personal_stakes))
+    dispatcher.add_handler(CommandHandler("elimina_stake", message_handlers.delete_personal_stakes))
 
 
     # ======= CALLBACK QUERIES HANDLERS =======
@@ -82,6 +107,8 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(get_referral_conversation_handler())
     dispatcher.add_handler(PreCheckoutQueryHandler(payment_handler.pre_checkout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_successful_payment_filter(), payment_handler.successful_payment_callback))
+
+    dispatcher.add_handler(update_referral_conversation_handler())
 
 
     # ============ MESSAGE HANDLERS ===========
