@@ -1,3 +1,4 @@
+import re
 from typing import Union
 
 from lot_bot import constants as cst
@@ -10,6 +11,8 @@ from telegram import Update
 from telegram.ext.conversationhandler import ConversationHandler
 from telegram.ext.dispatcher import CallbackContext
 
+MIN_REF_CODE_LEN = 4
+MAX_REF_CODE_LEN = 12
 
 ################################## CONVERSATION STATES ####################################
 
@@ -68,42 +71,50 @@ def to_update_personal_ref_code(update: Update, context: CallbackContext):
     return UPDATE_PERSONAL_REFERRAL
 
 
+def check_referral_code_validity(new_ref_code: str) -> Union[bool, str]:
+    update_status = True
+    error_message = ""
+    ref_code_len = len(new_ref_code)
+    # * check if message is too short
+    if ref_code_len < MIN_REF_CODE_LEN + 4: # 4 + -lot 
+        error_message = f"Il codice di referral {new_ref_code} è troppo corto (minimo {MIN_REF_CODE_LEN} caratteri, escludendo '-lot')."
+        update_status = False
+    # * check if message is too long
+    if ref_code_len > MAX_REF_CODE_LEN + 4: # 12 + -lot
+        error_message = f"Il codice di referral {new_ref_code} è troppo lungo (massimo {MAX_REF_CODE_LEN} caratteri, escludendo '-lot')."
+        update_status = False
+    if re.search(r"[^\w-]", new_ref_code):
+        error_message = f"Il codice di referral {new_ref_code} deve contenere solo lettere, numeri o il carattere '-'."
+        update_status = False
+    # * check if the new referral is valid (it's already used or not)
+    referral_user = user_manager.retrieve_user_id_by_referral(new_ref_code)
+    if referral_user:
+        update_status = False
+        error_message = f"Il codice di referral {new_ref_code} è già collegato ad un altro utente."
+    return update_status, error_message
+
+
 def received_personal_referral(update: Update, context: CallbackContext) -> int:
     chat_id = update.effective_user.id
-    new_referral_text = update.effective_message.text.strip()
+    new_ref_code = update.effective_message.text.strip()
     # * add '-lot' at the end of the code if it isn't present
-    if new_referral_text[-4:] != "-lot":
-        new_referral_text += "-lot"
-    ref_code_len = len(new_referral_text)
-    retry_text = "Prova di nuovo ad inviare un messaggio con un codice di referral oppure premi il bottone sottostante per tornare al menù Codice Referral."
-    # * check if message is too short
-    if ref_code_len < 8: # 4 + -lot 
+    if new_ref_code[-4:] != "-lot":
+        new_ref_code += "-lot"
+    # * check if the code is valid and get the eventual error
+    update_successful, update_message = check_referral_code_validity(new_ref_code)
+    if not update_successful:
+        retry_text = "Prova di nuovo ad inviare un messaggio con un codice di referral oppure premi il bottone sottostante per tornare al menù Codice Referral."
+        update_message += f"\n{retry_text}"
         update.effective_message.reply_text(
-            f"Il codice di referral {new_referral_text} è troppo corto.\n{retry_text}",
+            update_message,
             reply_markup=kyb.BACK_TO_REF_CODE_MENU_KEYBOARD,
-            )
-        return UPDATE_PERSONAL_REFERRAL
-    # * check if message is too long
-    if ref_code_len > 16: # 12 + -lot
-        update.effective_message.reply_text(
-            f"Il codice di referral {new_referral_text} è troppo lungo.\n{retry_text}",
-            reply_markup=kyb.BACK_TO_REF_CODE_MENU_KEYBOARD,
-            )
-        return UPDATE_PERSONAL_REFERRAL
-    # * check if the new referral is valid (it's already used or not)
-    referral_user = user_manager.retrieve_user_id_by_referral(new_referral_text)
-    if referral_user:
-        lgr.logger.debug(f"Referral code {new_referral_text} already present")
-        update.effective_message.reply_text(
-            f"Il codice di referral {new_referral_text} è già collegato ad un altro utente.\n{retry_text}",
-            reply_markup=kyb.BACK_TO_REF_CODE_MENU_KEYBOARD,
-            )
+        )
         return UPDATE_PERSONAL_REFERRAL
     # * update user referral code
-    user_manager.update_user(chat_id, {"referral_code": new_referral_text})
-    lgr.logger.debug(f"Correctly updated referral code {new_referral_text} for user {chat_id}")
+    user_manager.update_user(chat_id, {"referral_code": new_ref_code})
+    lgr.logger.debug(f"Correctly updated referral code {new_ref_code} for user {chat_id}")
     # * send success message
-    message_text = f"Codice di referral aggiornato con successo in <b>{new_referral_text}</b>!\n\n"
+    message_text = f"Codice di referral aggiornato con successo in <b>{new_ref_code}</b>!\n\n"
     update.message.reply_text(
         message_text,
         parse_mode="HTML"
@@ -111,6 +122,54 @@ def received_personal_referral(update: Update, context: CallbackContext) -> int:
     # * load referral menu
     callback_handlers.to_referral(update, context, send_new=True)
     return ConversationHandler.END
+
+
+def update_user_ref_code_handler(update: Update, context: CallbackContext):
+    """/modifica_referral <username o id> <nuovo referral>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not message_handlers.check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len != 2:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID) e nuovo codice referral")
+        return
+    target_user_identification_data = context.args[0]
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except:
+        target_user_username = target_user_identification_data if target_user_identification_data[0] != "@" else target_user_identification_data[1:]
+    
+    lgr.logger.info(f"Received /modifica_referral for {target_user_identification_data}")
+    new_ref_code = context.args[1]
+    # * add '-lot' at the end of the code if it isn't present
+    if new_ref_code[-4:] != "-lot":
+        new_ref_code += "-lot"
+    # * check if the received code is valid
+    update_successful, update_message = check_referral_code_validity(new_ref_code)
+    if not update_successful:
+        update.effective_message.reply_text(f"ERRORE: codice referral non modificato.\n{update_message}")
+        return
+    if target_user_id:
+        user_manager.update_user(target_user_id, {"referral_code": new_ref_code})
+    else:
+        user_manager.update_user_by_username(target_user_username, {"referral_code": new_ref_code})
+    lgr.logger.debug(f"Correctly updated referral code {new_ref_code} for user {target_user_identification_data}")
+    message_text = f"Codice di referral aggiornato con successo in <b>{new_ref_code}</b> per l'utente {target_user_identification_data}"
+    update.message.reply_text(
+        message_text,
+        parse_mode="HTML"
+    )
 
 
 

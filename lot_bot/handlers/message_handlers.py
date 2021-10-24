@@ -418,7 +418,7 @@ def create_personal_stake(update: Update, context: CallbackContext):
     except:
         target_user_username = target_user_identification_data if target_user_identification_data[0] != "@" else target_user_identification_data[1:]
     
-    lgr.logger.debug(f"Received /crea_stake for {target_user_identification_data}")
+    lgr.logger.info(f"Received /crea_stake for {target_user_identification_data}")
     
     # * parse and validate data, creating a new stake
     try:
@@ -442,7 +442,7 @@ def create_personal_stake(update: Update, context: CallbackContext):
 
     # * check if the new stake overlaps with any of the present ones
     if personal_stakes.check_stakes_overlapping(parsed_stake, target_user_data["personal_stakes"]):
-        update.effective_message.reply_text("ERRORE: lo stake personalizzato inserito si sovrappone ad un altro già presente. Controlla gli stake dell'utente con il comando /stake_utente <username o ID>.")
+        update.effective_message.reply_text("ERRORE: lo stake personalizzato inserito si sovrappone ad un altro già presente. Controlla gli stake dell'utente con il comando /visualizza_stake <username o ID>.")
         return
 
     # * add the personal stake

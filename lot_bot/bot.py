@@ -72,11 +72,13 @@ def add_handlers(dispatcher: Dispatcher):
     Args:
         dispatcher (Dispatcher)
     """
-    # ============ COMMAND HANDLERS ===========
+    # ================ COMMAND HANDLERS ================
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
     dispatcher.add_handler(CommandHandler("cambia_ruolo", message_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
+    # ------------ Personal stake commands --------------
     dispatcher.add_handler(CommandHandler("crea_stake", message_handlers.create_personal_stake))
     dispatcher.add_handler(CommandHandler("visualizza_stake", message_handlers.visualize_personal_stakes))
     dispatcher.add_handler(CommandHandler("elimina_stake", message_handlers.delete_personal_stakes))

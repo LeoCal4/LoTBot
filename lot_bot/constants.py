@@ -77,7 +77,7 @@ Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizz
 
 # {0}: user referral code
 # {1}: user ref link
-REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral <b>{0}</b> 
+REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral: <b>{0}</b> 
 E questo è il link che puoi condividere per farlo collegare ai tuoi amici: {1} 🚀
 
 Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>riceverai il 33% di sconto</b> sul prossimo acquisto!
