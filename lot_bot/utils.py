@@ -91,9 +91,10 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
     # resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
+        user_giocata = user_giocate_data_dict[giocata["_id"]]
         stake = giocata["base_stake"]
         # * check for a personalized stake
-        personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
+        personalized_stake = user_giocata["personal_stake"]
         if personalized_stake != 0:
             stake = personalized_stake
         # * get outcome percentage and relative emoji
@@ -105,8 +106,17 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
         outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage, giocata["outcome"])
         parsed_quota = giocata["base_quota"] / 100
         parsed_stake = stake / 100
+        parsed_stake_string = f"Stake {parsed_stake:.2f}%"
+        outcome_percentage_string = f"{outcome_percentage:.2f}%"
+        if "pre_giocata_budget" in user_giocata:
+            user_old_budget = int(user_giocata["pre_giocata_budget"]) / 100
+            stake_money = user_old_budget * parsed_stake / 100
+            parsed_stake_string += f" ({stake_money:.2f}€)"
+            outcome_money = user_old_budget * outcome_percentage / 100
+            outcome_sign = "" if outcome_money < 0 else "+"
+            outcome_percentage_string += f" ({outcome_sign}{outcome_money:.2f}€)"
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} {parsed_stake_string} = {outcome_percentage_string} {outcome_emoji}\n"
     return resoconto_message
 
 

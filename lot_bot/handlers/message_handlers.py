@@ -509,7 +509,6 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
         return
     target_user_identification_data = context.args[0]
     personal_stake_to_delete = context.args[1]
-    number_not_valid = False
     # * check if the personal stake to delete is actually a number
     try:
         personal_stake_to_delete = int(personal_stake_to_delete.strip()) - 1
@@ -613,6 +612,92 @@ def send_file_id(update: Update, _):
     update.effective_message.reply_text(reply_message)    
 
 
+def get_user_budget(update: Update, context: CallbackContext):
+    """/visualizza_budget <ID o username>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len != 1:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID) e il budget")
+        return
+    target_user_identification_data = context.args[0]
+
+    # * check whetever the specified user identification is a Telegram ID or a username
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except ValueError:
+        target_user_username = target_user_identification_data
+        
+    if not target_user_id is None:
+        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, {"budget"})
+    else:
+        user_data = user_manager.retrieve_user_fields_by_username(target_user_username, {"budget"})
+    if not user_data:
+        update.effective_message.reply_text(f"ERRORE: utente non trovato")
+        return
+    user_budget = int(user_data["budget"]) / 100
+    update.effective_message.reply_text(f"Il budget dell'utente {target_user_identification_data} è {user_budget:.2f}")
+
+
+def set_user_budget(update: Update, context: CallbackContext):
+    """/imposta_budget <username o ID> <new budget>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+
+    # * retrieve the data from the command text 
+    command_args_len = len(context.args) 
+    if command_args_len != 2:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare username (o ID) e il budget")
+        return
+    target_user_identification_data = context.args[0]
+    user_budget = context.args[1]
+
+    # * check whetever the specified user identification is a Telegram ID or a username
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except ValueError:
+        target_user_username = target_user_identification_data
+
+    # * check if the budget is valid
+    try:
+        user_budget = utils.parse_float_string_to_int(user_budget)
+    except ValueError:
+        update.effective_message.reply_text(f"ERRORE: il budget specificato non è un numero valido")
+        
+    if not target_user_id is None:
+        update_result = user_manager.update_user(target_user_id, {"budget": user_budget})
+    else:
+        update_result = user_manager.update_user_by_username(target_user_username, {"budget": user_budget})
+    if not update_result:
+        update.effective_message.reply_text(f"ERRORE: utente non trovato")
+        return
+    update.effective_message.reply_text(f"Budget aggiornato con successo")
+    
+
+    
+
 ##################################### MESSAGE HANDLERS #####################################
 
 
@@ -689,11 +774,29 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
         return
     update_result = giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
     if not update_result:
-        update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
+        update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stato inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
         return
     updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
     strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
+    # * send outcome
     send_message_to_all_abbonati(update, context, text, sport, strategy.name)
+    # * update the budget of all the user's who accepted the giocata
+    users_who_played_giocata = user_manager.retrieve_users_who_played_giocata(updated_giocata["_id"])
+    if not users_who_played_giocata:
+        return
+    for target_user in users_who_played_giocata:
+        target_user_budget = int(target_user["budget"])
+        if target_user_budget is None:
+            continue
+        target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
+        users.update_user_budget_with_giocata(
+            target_user["_id"], 
+            target_user_budget, 
+            updated_giocata["_id"],
+            updated_giocata, 
+            user_personal_stake=target_user_personal_stake
+        )
+
 
 
 def exchange_cashout_handler(update: Update, context: CallbackContext):

@@ -9,6 +9,7 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
                          user_manager)
+from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
@@ -353,7 +354,17 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     # * check for differences in the saved stake and the current one (personalized stake)
     if parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
         personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
-    user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
+    # * register giocata
+    update_result = user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
+    if not update_result:
+        context.bot.send_message(user_chat_id, "ERRORE: impossibile registrare la giocata")
+        return
+    # * update user budget (if it is set and if giocata has an outcome)
+    user_budget = int(user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"])
+    if not user_budget is None and retrieved_giocata["outcome"] == "win" or retrieved_giocata["outcome"] == "loss":
+        update_result = users.update_user_budget_with_giocata(user_chat_id, user_budget, retrieved_giocata["_id"], parsed_giocata)
+        if not update_result:
+            context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     context.bot.edit_message_text(
         updated_giocata_text,
         chat_id=user_chat_id,

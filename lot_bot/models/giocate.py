@@ -29,7 +29,6 @@ def create_user_giocata():
     return {
         "original_id": 0,
         "acceptance_timestamp": 0.0,
-        # "personal_quota": 0,
         "personal_stake": 0,
     }
 

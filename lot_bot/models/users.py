@@ -1,10 +1,13 @@
+import datetime
 import random
 import string
-import datetime
+from typing import Dict
 
-from lot_bot import constants as cst
-from lot_bot.dao import user_manager
 from dateutil.relativedelta import relativedelta
+from lot_bot import constants as cst
+from lot_bot import logger as lgr
+from lot_bot.dao import user_manager
+from lot_bot.models import giocate as giocata_model
 
 # role: user, analyst, admin
 ROLES = ["user", "analyst", "admin"]
@@ -29,12 +32,13 @@ def create_base_user_data():
         "payments": [],
         "sport_subscriptions": [],
         "available_sports": [],
+        "budget": None,
         "personal_stakes": [],
     }
 
 def generate_referral_code() -> str:
     """Generates a random referral code.
-    The pattern is lot-ref-<8 chars among digits and lowercase letters>
+    The pattern is <8 chars among digits and lowercase letters>-lot
 
     Returns:
         str: the referral code
@@ -79,3 +83,33 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
     else:
         base_timestamp = expiration_date_timestamp
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
+
+
+def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personalized_stake: int = None) -> int:
+    stake = giocata["base_stake"]
+    # * check if there is a personalized stake
+    if not personalized_stake is None and personalized_stake != 0:
+        stake = personalized_stake
+    # * get outcome percentage
+    if "cashout" in giocata:
+        outcome_percentage = giocata["cashout"] / 100
+    else:
+        outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+    # * update budget with outcome percentange
+    stake_money = (user_budget * round(stake / 100, 2)) # TODO save
+    budget_difference = (user_budget * round(outcome_percentage / 100, 2)) # TODO save
+    new_budget = user_budget + budget_difference
+    return new_budget
+
+
+def update_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, giocata_data: Dict, user_personal_stake: int = None):
+    new_budget = calculate_new_budget_after_giocata(target_user_budget, giocata_data, user_personal_stake)
+    # * update user's budget
+    update_result = user_manager.update_user(target_user_id, {"budget": new_budget})
+    # * update personal giocata with pre-giocata budget info
+    update_result = user_manager.update_user_giocata_with_previous_budget(
+        target_user_id, 
+        giocata_id,
+        target_user_budget) and update_result
+    return update_result
+

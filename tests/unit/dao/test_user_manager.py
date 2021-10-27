@@ -216,3 +216,19 @@ def test_retrieve_user_fields_by_user_id(new_user: Dict):
     # * non-existent field
     retrieved_only_id = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], "fake field")
     assert list(retrieved_only_id.keys()) == ["_id"]
+
+
+def test_retrieve_users_who_played_giocata(new_user: Dict, correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):
+    user_id = new_user["_id"]
+    created_giocate = []
+    for _ in range(random.randint(2, 10)):
+        correct_giocata_text, _ = correct_giocata_function_fixture()
+        parsed_giocata = giocata_model.parse_giocata(correct_giocata_text)
+        created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
+        assert created_giocata_id
+        user_giocata = giocata_model.create_user_giocata()
+        user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+        user_giocata["original_id"] = created_giocata_id
+        user_manager.register_giocata_for_user_id(user_giocata, user_id)
+        created_giocate.append(user_giocata)
+    

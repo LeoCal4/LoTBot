@@ -170,6 +170,18 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
         raise e
 
 
+def retrieve_users_who_played_giocata(giocata_id: str) -> bool:
+    try:
+        return list(db.mongo.utenti.aggregate([
+            {"$match": { "giocate.original_id": giocata_id } },
+            {"$unwind": "$giocate"},
+            {"$match": { "giocate.original_id": giocata_id } },
+        ]))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieval of users who played giocata - {giocata_id=}")
+        raise e
+
+
 def update_user(user_id: int, user_data: Dict) -> bool:
     """Updates the user specified by the user_id,
         using the data found in user_data
@@ -266,6 +278,23 @@ def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
         return bool(update_result.matched_count)
     except Exception as e:
         lgr.logger.error(f"Error during personal stake registration: {user_id=} - {personal_stake=}")
+        raise e
+
+
+def update_user_giocata_with_previous_budget(user_id: int, giocata_id, previous_budget: int) -> bool:
+    try:
+        # return db.mongo.utenti.find_one(
+        #     {"_id": user_id, "giocate.original_id": giocata_id },
+            # {"$set": {"giocate.$.pre_giocata_budget": previous_budget } }
+        # )
+        update_result : UpdateResult = db.mongo.utenti.update_one(
+        #     {"_id": user_id, "giocate": { "$elemMatch": {"giocata_num": giocata_num, "sport": giocata_sport} } },
+            {"_id": user_id, "giocate.original_id": giocata_id },
+            {"$set": {"giocate.$.pre_giocata_budget": previous_budget } }
+        )
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during giocata update with new budget: {giocata_id=} - {previous_budget=}")
         raise e
 
 
