@@ -9,14 +9,16 @@ from lot_bot import logger as lgr
 _startup_buttons = [
     [KeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT)],
     [KeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT)],
-    # [KeyboardButton(text=cst.ASSISTANCE_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.USE_GUIDE_BUTTON_TEXT)],
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
 
 _homepage_buttons = [
-    [InlineKeyboardButton(text="⚙️ Configurazione Bot 🤖", callback_data="to_bot_config_menu")],
-    [InlineKeyboardButton(text="🚥 Gestione Esperienza 🚥", callback_data="to_experience_menu")],
+    [InlineKeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT, callback_data="to_bot_config_menu")],
+    [InlineKeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT, callback_data="to_experience_menu")],
+    [InlineKeyboardButton(text=cst.USE_GUIDE_BUTTON_TEXT, callback_data="to_use_guide_menu")],
+    
 ]
 HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
 
@@ -26,9 +28,7 @@ HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_button
 _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
     [InlineKeyboardButton(text="📖  Spiegazione Strategie (IN ARRIVO) 🧭", callback_data="new")], # to_explanation_menu
-    [InlineKeyboardButton(text="🏗  Gestione Budget (IN ARRIVO) 📈", callback_data="new")], 
-    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
-    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_gestione_budget_menu")], 
     [InlineKeyboardButton(text="🌟  Status Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
@@ -44,6 +44,12 @@ _explanation_test_buttons = [
 ]
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
+_gestione_budget_buttons = [
+    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
+    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
+]
+GESTIONE_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_gestione_budget_buttons)
 
 _to_resoconti_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
@@ -71,10 +77,9 @@ SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_bu
 
 _experience_buttons = [
     [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
-    [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
+    # [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="🏷  Codice Referral 🔗", callback_data="to_referral")],
-    [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")],
+    # [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="🗓  Tracciabilità LoT  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
 ]
@@ -82,14 +87,6 @@ EXPERIENCE_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_experien
 
 
 # ===================================== GESTIONE ESPERIENZA SUBMENU =====================================
-
-
-_social_buttons = [
-    [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")], 
-    [InlineKeyboardButton(text="💻 Pagina Instagram 📱", url="https://www.instagram.com/lot.official")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
-]
-SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_buttons)
 
 
 _referral_menu_buttons = [
@@ -104,13 +101,34 @@ _back_to_ref_code_menu_buttons = [
 ]
 BACK_TO_REF_CODE_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_back_to_ref_code_menu_buttons)
 
-# ===================================== STATUS SERVIZIO SUBMENU =====================================
+# ===================================== STATUS SERVIZIO SUBMENUS =====================================
 
 _proceed_to_payments_buttons = [
     [InlineKeyboardButton(text="Procedi al pagamento", callback_data= "to_payments")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage_from_referral")]
 ]
 PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_payments_buttons)
+
+# ======================================== GUIDA ALL'USO MENU =======================================
+
+_use_guide_buttons = [
+    [InlineKeyboardButton(text="🧮 Come funziona? (IN ARRIVO) 📖", callback_data= "new")],
+    [InlineKeyboardButton(text="❔ F.A.Q. (IN ARRIVO) ❔", callback_data= "new")],
+    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
+]
+USE_GUIDE_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_use_guide_buttons)
+
+# ======================================== GUIDA ALL'USO SUBMENUS =======================================
+
+
+_social_buttons = [
+    [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")], 
+    [InlineKeyboardButton(text="💻 Pagina Instagram 📱", url="https://www.instagram.com/lot.official")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_use_guide_menu")]
+]
+SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_buttons)
+
 
 
 

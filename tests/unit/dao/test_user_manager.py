@@ -206,7 +206,6 @@ def test_retrieve_user_giocate_since_timestamp(new_user: Dict, correct_giocata_f
 
 
 def test_retrieve_user_fields_by_user_id(new_user: Dict):
-    # TODO test for missing fields
     random_fields = []
     user_fields = list(new_user.keys())
     for _ in range(random.randint(1, 4)):
@@ -214,6 +213,6 @@ def test_retrieve_user_fields_by_user_id(new_user: Dict):
     retrieved_fields = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], random_fields)
     for field in random_fields:
         assert new_user[field] == retrieved_fields[field]  
-    # non-existent field
+    # * non-existent field
     retrieved_only_id = user_manager.retrieve_user_fields_by_user_id(new_user["_id"], "fake field")
     assert list(retrieved_only_id.keys()) == ["_id"]

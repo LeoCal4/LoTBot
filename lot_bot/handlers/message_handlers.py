@@ -378,7 +378,7 @@ def _send_broadcast_messages(context, parsed_text):
 
 
 def broadcast_handler(update: Update, context: CallbackContext):
-    """
+    """/broadcast LINE BREAK <message>
 
     Args:
         update (Update)
@@ -386,7 +386,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
     """
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
-    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+    if not check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
     parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
@@ -539,51 +539,63 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
     
 
 
-def set_user_role(update: Update, _):
+def set_user_role(update: Update, context: CallbackContext):
+    """/cambia_ruolo <username or ID> <new role>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
-
-    # * retrieve the target user and role from the command text 
-    # TODO update using context.args
-    text : str = update.effective_message.text
-    text_tokens = text.strip().split(" ")
-    if len(text_tokens) != 3:
+    if len(context.args) != 2:
         update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username e il ruolo ")
         return
-    _, target_user_id, role = text.strip().split(" ")
+    
+    # * retrieve the target user and role from the command text 
+    target_user_identification_data, role = context.args
     if role not in users.ROLES and role != "admin":
         update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
         return
-    lgr.logger.debug(f"Received /cambia_ruolo with {target_user_id} and {role}")
+    lgr.logger.info(f"Received /cambia_ruolo with {target_user_identification_data} and {role}")
     user_role = {"role": role}
     
     # * check whetever the specified user identification is a Telegram ID or a username
+    target_user_id = None
+    target_user_username = None
     try:
-        target_user_id = int(target_user_id)
+        target_user_id = int(target_user_identification_data)
     except ValueError:
-        lgr.logger.debug(f"{target_user_id} was a username, not a user_id")
+        target_user_username = target_user_identification_data
     
     # * an actual user_id was sent
-    if type(target_user_id) is int:
+    if target_user_id is not None:
         lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_role}")
         update_result = user_manager.update_user(target_user_id, user_role)
     # * a username was sent
     else:
-        lgr.logger.debug(f"Updating user with username {target_user_id} with role {user_role}")
-        update_result = user_manager.update_user_by_username(target_user_id, user_role)
+        lgr.logger.debug(f"Updating user with username {target_user_username} with role {user_role}")
+        update_result = user_manager.update_user_by_username(target_user_username, user_role)
     
     if update_result:
-        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_id} è un {user_role['role']}"
+        reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è un {user_role['role']}"
     else:
-        reply_message = f"Nessun utente specificato da {target_user_id} è stato trovato"
+        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
     update.effective_message.reply_text(reply_message)
 
 
 def send_file_id(update: Update, _):
+    """/send_file_id + MEDIA
+
+    Args:
+        update (Update)
+        _
+    """
     user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return

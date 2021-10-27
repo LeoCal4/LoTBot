@@ -204,7 +204,7 @@ def update_user_by_username(username: str, user_data: Dict) -> bool:
 
     Args:
         username (str)
-        user_data (Dict) # TODO add check for user_data validation
+        user_data (Dict)
 
     Returns:
         bool: True if the user was updated,

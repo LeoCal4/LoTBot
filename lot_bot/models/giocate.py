@@ -112,11 +112,11 @@ def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
     """TODO only outcome state
 
     Args:
-        outcome_percentage (float): [description]
-        outcome_state (str): [description]
+        outcome_percentage (float)
+        outcome_state (str)
 
     Returns:
-        str: [description]
+        str
     """
     if outcome_state == "neutral" or outcome_state == "abbinata":
         return "⚪"

@@ -27,6 +27,30 @@
 - messaggio contenente `configurazione esperienza`: carica il menu Gestione Esperienza
 
 ## Analista/Consulente
+### Nel Bot
+- `/aggiungi_giorni <username o ID utente> <numero giorni (positivo)>`: aggiunge giorni di abbonamento all'utente specificato
+- `/visualizza_stake <username o ID utente>`: mostra gli stake personalizzati assegnati all'utente specificato
+- `/crea_stake <username o ID utente> <quota minima> <quota massima> <stake personalizzato>`: crea uno stake personalizzato per l'utente specificato. In questo modo, tutte le giocate ricevute dall'utente che hanno una quota compresa tra la minima e la massima indicate (valori estremi compresi), avranno uno stake pari a quello indicato nel comando.
+- `/elimina_stake <username o ID utente> <numero dello stake personalizzato da eliminare>`: elimina uno degli stake personalizzati dell'utente specificato. Il numero dello stake personalizzato è dato dal comando `/visualizza_stake`. *ATTENZIONE: __ogni volta__ che uno stake viene eliminato e se ne vuole successivamente eliminare un altro, il comando /visualizza_stake __deve essere eseguito__, in quanto eliminando uno stake i numeri degli altri ancora presenti possono variare.*.
+    Esempio: il comando /visualizza_stake utente1 ha il seguente output:
+    *1) Calcio - Singola - Quota Minima: 1 - Quota Massima: 2 - Stake: 10.0%*
+    2) Calcio - Singola - Quota Minima: 2.1 - Quota Massima: 3 - Stake: 5.0%
+    *3) Calcio - Singola - Quota Minima: 3.1 - Quota Massima: 4 - Stake: 2.5%*
+    4) Tennis - Multipla - Quota Minima: 1.5 - Quota Massima: 2.5 - Stake: 5.0%
+
+    Assumiamo che si vogliano eliminare lo stake 1 e lo stake 3 (in corsivo), quindi viene innanzitutto eseguito il comando /elimina_stake utente1 1.
+    Lanciando di nuovo /visualizza_stake utente1, gli stake dell'utente ora sono i seguenti:
+    1) Calcio - Singola - Quota Minima: 2.1 - Quota Massima: 3 - Stake: 5.0%
+    *2) Calcio - Singola - Quota Minima: 3.1 - Quota Massima: 4 - Stake: 2.5%*
+    3) Tennis - Multipla - Quota Minima: 1.5 - Quota Massima: 2.5 - Stake: 5.0%
+
+    Come si può vedere, quella che inizialmente era riportato come lo stake personalizzato 3, ora è lo stake 2, in quanto il primo è stato eliminato.
+    Quindi, per eliminarlo, viene eseguito il comando /elimina_stake utente1 2. Il risultato finale lanciando /visualizza_stake utente1 è il seguente:
+    1) Calcio - Singola - Quota Minima: 2.1 - Quota Massima: 3 - Stake: 5.0%
+    2) Tennis - Multipla - Quota Minima: 1.5 - Quota Massima: 2.5 - Stake: 5.0%
+
+
+
 ### In un qualsiasi canale sport
 - `/messaggio_abbonati <sport> - <strategia> A CAPO <messaggio>`: invia un messaggio a tutti gli utenti abbonati alla strategia dello sport indicati
 - `<giocata>`: la giocata è analizzata, salvata ed è inviata tutti i relativi utenti abbonati. Nel caso in cui lo sport, la strategia, lo stake o la quota 
@@ -35,9 +59,11 @@
     Se il numero della giocata non è valido o se la parola indicante l'esito non è riconosciuta, il risultato non è inviato agli utenti e l'errore viene riportato all'analista
 
 ### Canale Exchange
-- `<messaggio cashout>`: il messaggio di cashout è analizzato e inviato a tutti gli utenti abbonati a MaxExchange
+- `<messaggio cashout>`: il messaggio di cashout è analizzato e inviato a tutti gli utenti abbonati a MaxExchange. La percentuale di guadagno/perdita è utilizzata come risultato della giocata ai fini del resoconto.
 
 
 ## Admin
 - `/cambia_ruolo <user id|username> <ruolo>`: cambia il ruolo dell'utente in _base_ or _analyst_
 - `/send_file_id` with <media> attached: sends a message containing the file_id of the sent media
+- `/broadcast A CAPO <messaggio da inviare>`: invia un messaggio a tutti gli utenti tramite il bot
+- `/modifica_referral <username o ID utente> <nuovo referral>`: modifica il codice referral dell'utente specificato. Se il nuovo referral è già utilizzato o non è valido, il referral non viene modificato e un messaggio di errore viene inviato per spiegare l'entità del problema.

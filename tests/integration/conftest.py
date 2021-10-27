@@ -104,7 +104,6 @@ async def client() -> TelegramClient:
     Yields:
         TelegramClient: the Telegram client connected to the test servers
     """
-    # TODO add connection errors handling
     client = TelegramClient(None, cfg.config.API_ID, cfg.config.API_HASH, sequential_updates=True)
     DC_ID = 3
     TELEGRAM_TEST_SERVER_IP = "149.154.167.40"
@@ -143,7 +142,6 @@ async def channel_admin_client() -> TelegramClient:
     Yields:
         TelegramClient: the Telegram client connected to the test servers
     """
-    # TODO add connection errors handling
     client = TelegramClient(None, cfg.config.API_ID, cfg.config.API_HASH, sequential_updates=True)
     DC_ID = 3
     TELEGRAM_TEST_SERVER_IP = "149.154.167.40"

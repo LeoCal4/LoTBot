@@ -25,8 +25,6 @@ _LoTBot_ has three different environments:
 To run the bot locally, simply run:
     `py .\main.py`
 
-TODO: account on test server
-
 # Branches
 
 ## Branch basic workflow

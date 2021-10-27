@@ -50,21 +50,6 @@ def clean_sport_subscriptions_before_test():
 # =================================================================================
 
 class TestHandlers:
-    # @pytest.mark.asyncio
-    # async def test_first_message(self, client: TelegramClient):
-    #     async with client.conversation(cfg.config.BOT_TEST_USERNAME, timeout=BOT_TEST_TIMEOUT) as conv:
-    #         await conv.send_message("hi")
-    #         first_resp: Message = await conv.get_response()
-    #         # TODO use messages in constants
-    #         assert "Benvenuto/a" in first_resp.raw_text
-    #         second_resp: Message = await conv.get_response()
-    #         assert "contrastare la ludopatia" in second_resp.raw_text
-    #     client_me = await client.get_me()
-    #     assert user_exists_and_is_valid(client_me.id)
-    #     # the start messages sets calcio and exchange
-    #     assert len(list(sport_subscriptions_manager.retrieve_sport_subscriptions({"user_id": client_me.id}))) == 2
-    #     delete_user_and_sport_subscriptions(client_me.id)
-
 
     @pytest.mark.asyncio
     async def test_start(self, client: TelegramClient):

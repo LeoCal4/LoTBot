@@ -39,8 +39,8 @@ def get_emoji_for_cashout_percentage(percentage_text: str) -> str:
         else: 
             return "⚪️"
     except Exception as e:
-        lgr.logger.error(f"Could not parse the cashout percentage {percentage_text}")
-        return ""
+        lgr.logger.error(f"Could not parse the cashout percentage {percentage_text} - {str(e)}")
+        raise e
 
 
 def create_cashout_message(message_text: str) -> str: 
@@ -60,7 +60,6 @@ def create_cashout_message(message_text: str) -> str:
     matches = re.search(filters.get_cashout_pattern(), message_text)
     giocata_num = matches.group(1)
     cashout_percentage = matches.group(2)
-    # TODO handle no emoji case
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
     if emoji == "⚪️":
         return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"

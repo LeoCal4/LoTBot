@@ -89,7 +89,7 @@ Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>ricev
 
 BOT_CONFIG_BUTTON_TEXT = "⚙️ Configurazione Bot 🤖"
 EXPERIENCE_BUTTON_TEXT = "🚥 Gestione Esperienza 🚥"
-ASSISTANCE_BUTTON_TEXT = "🧑🏽‍💻 Assistenza 👩🏻‍💼 "
+USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 
 
 # ================================== FIRST USAGE =========================================

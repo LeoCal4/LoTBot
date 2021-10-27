@@ -168,6 +168,14 @@ def to_experience_menu(update: Update, context: CallbackContext):
     )
 
 
+def to_use_guide_menu(update: Update, context: CallbackContext):
+    context.bot.edit_message_reply_markup(
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
+    )
+
+
 def to_sports_menu(update: Update, context: CallbackContext):
     """Loads the sports menù.
     The callback for this is "to_sports_menu".
@@ -239,6 +247,14 @@ def to_explanations_menu(update: Update, context: CallbackContext):
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.EXPLANATION_TEST_INLINE_KEYBOARD,
+    )
+
+
+def to_gestione_budget_menu(update: Update, context: CallbackContext):
+    context.bot.edit_message_reply_markup(
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.GESTIONE_BUDGET_MENU_KEYBOARD,
     )
 
 

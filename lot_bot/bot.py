@@ -88,11 +88,12 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern=r"^to_homepage$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_bot_config_menu, pattern=r"^to_bot_config_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_experience_menu, pattern=r"^to_experience_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_use_guide_menu, pattern=r"^to_use_guide_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_explanations_menu, pattern=r"^to_explanation_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_gestione_budget_menu, pattern=r"^to_gestione_budget_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
@@ -103,6 +104,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_24_hours_resoconto, pattern=r"^resoconto_24_hours$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_7_days_resoconto, pattern=r"^resoconto_7_days$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_30_days_resoconto, pattern=r"^resoconto_30_days$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
 
     
     # =========== PAYMENTS HANDLERS ===========
