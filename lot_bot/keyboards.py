@@ -6,6 +6,7 @@ from lot_bot.models import sports as spr
 from lot_bot.dao import sport_subscriptions_manager
 from lot_bot import logger as lgr
 
+
 _startup_buttons = [
     [KeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT)],
     [KeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT)],
@@ -154,10 +155,7 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     emoji_sport = {sport.name: "🔴" for sport in sports_in_menu}
     for sport in subscribed_sports:
         emoji_sport[sport] = "🟢"
-    SPORT_STRING_MENU_LEN = 19
-    # ljust appends " " at the end of the string, until the specified length is reached
     sport_menu_entries = [
-        # sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
         emoji_sport[sport.name] + " " + sport.display_name 
         for sport in sports_in_menu
     ]

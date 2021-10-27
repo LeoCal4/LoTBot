@@ -92,7 +92,7 @@ def update_giocata_outcome(sport: str, giocata_num: str, outcome: str) -> bool:
     Args:
         sport (str)
         giocata_num (str)
-        outcome (str): either "win", "loss" or "?"
+        outcome (str): either "win", "loss", "void", "abbinata" or "?"
 
     Raises:
         e: in case of db errors

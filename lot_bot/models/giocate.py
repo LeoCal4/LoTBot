@@ -9,7 +9,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
 
-STAKE_PATTERN = fr"\s*Stake\s*(\d+[.,]?\d*)\s*"
+STAKE_PATTERN = r"\s*Stake\s*(\d+[.,]?\d*)\s*"
 
 
 def create_base_giocata():
@@ -29,7 +29,6 @@ def create_user_giocata():
     return {
         "original_id": 0,
         "acceptance_timestamp": 0.0,
-        # "personal_quota": 0,
         "personal_stake": 0,
     }
 
@@ -69,7 +68,7 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
 
 
 def get_cashout_data(cashout_message: str) -> Tuple[str, int]:
-    """[summary]
+    """Extracts the giocata number and the cashout percentage from a cashout message.
 
     Args:
         cashout_message (str)
@@ -110,6 +109,7 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
 
 def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
     """TODO only outcome state
+    TODO just create a dict
 
     Args:
         outcome_percentage (float)

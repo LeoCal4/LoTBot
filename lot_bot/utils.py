@@ -84,11 +84,22 @@ def parse_float_string_to_int(float_string: str) -> int:
         raise e
 
 
-def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
-    # Resoconto 24-09-2021
-    # 1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
+def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) -> str:
+    """Creates the resoconto message, given the base giocate and adding additional personalized
+    stake data if any.
+    Base structure:
+        <index>) <Sport>#<giocata_num> @<Quota> Stake <(personalized) stake> = <outcome percentage>% 
+    Example:
+        1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
+
+    Args:
+        giocate (List[Dict])
+        user_giocate_data_dict (Dict): user giocate for the personalized stakes
+
+    Returns:
+        str: the resoconto message
+    """
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
-    # resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
         stake = giocata["base_stake"]
@@ -123,7 +134,7 @@ def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport,
     Returns:
         Tuple[spr.Sport, strat.Strategy]: the sport and the strategy found
     """
-    # text on the first line after the command
+    # * text on the first line after the command
     first_row = message.split("\n")[0]
     matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s*-\s*([\w\s]+)", first_row)
     if not matches:

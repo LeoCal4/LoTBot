@@ -2,8 +2,6 @@ import datetime
 from json import dumps
 from typing import Dict, Optional, List, Union
 
-from telegram import user
-
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
@@ -53,6 +51,14 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
 
 
 def retrieve_all_user_ids() -> List[int]:
+    """Retrieves all the users' IDs.
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        List[int]: the list of the users' IDs
+    """
     try:
         results = db.mongo.utenti.find({}, {"_id": 1})
         if not results:
@@ -145,24 +151,10 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
     """
     try:
         return list(db.mongo.utenti.aggregate([
-            {
-                "$match": {
-                    "_id": user_id
-                }
-            },
-            {
-                "$unwind": "$giocate"
-            },
-            {
-                "$match": {
-                    "giocate.acceptance_timestamp": { "$gt": timestamp }
-                }
-            },
-            {
-                "$replaceRoot": {
-                    "newRoot": "$giocate"
-                }
-            }
+            { "$match": { "_id": user_id } },
+            { "$unwind": "$giocate" },
+            { "$match": { "giocate.acceptance_timestamp": { "$gt": timestamp } } },
+            { "$replaceRoot": { "newRoot": "$giocate" } }
             ])
         )
     except Exception as e:
@@ -237,14 +229,8 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
     try:
         lgr.logger.debug(f"Registering {giocata=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
-            {
-                "_id": user_id,
-            },
-            {
-                "$addToSet": {
-                    "giocate": giocata
-                }
-            }
+            { "_id": user_id, },
+            { "$addToSet": { "giocate": giocata } }
         )
         # this will be true if there was at least a match
         return bool(update_result.matched_count)
@@ -256,6 +242,18 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
 
 
 def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
+    """Adds a personalized stake to the ones of the specified user.
+
+    Args:
+        user_id (int)
+        personal_stake (Dict)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the stake was added, False otherwise
+    """
     try:
         lgr.logger.debug(f"Registering {personal_stake=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
@@ -302,6 +300,18 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
 
 
 def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
+    """Adds a successful referral (in the form of a payment ID) to the specified user's ones.
+
+    Args:
+        user_id (int)
+        payment_id (str)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the payment is added, False otherwise
+    """
     try:
         lgr.logger.debug(f"Adding {payment_id=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
@@ -312,11 +322,11 @@ def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
                 }
             }
         )
-        # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
         lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {payment_id=}")
         raise e
+
 
 def delete_user(user_id: int) -> bool:
     """Deletes the user specified by user_id
@@ -337,7 +347,20 @@ def delete_user(user_id: int) -> bool:
         return False
 
 
-def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str):
+def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str) -> bool:
+    """Deletes a user's personal stake, indicated by its position on the personal stake's list.
+
+    Args:
+        user_identification_data (Union[int, str]): either the user's ID or username
+        personal_stake_id (str): the position of the stake in the personal stake's list
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the stake was deleted, False otherwise
+    """
+    # * checks whetever the user identification data is an ID or a username
     if type(user_identification_data) is int:
         user_query = {"_id": user_identification_data}
     else:
@@ -356,7 +379,15 @@ def delete_personal_stake_by_user_id_or_username(user_identification_data: Union
         raise e
 
 
-def delete_all_users():
+def delete_all_users() -> bool:
+    """Deletes all the users.
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True
+    """
     try:
         db.mongo.utenti.delete_many({})
         return True
