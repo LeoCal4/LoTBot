@@ -163,7 +163,7 @@ def update_user_ref_code_handler(update: Update, context: CallbackContext):
     if target_user_id:
         user_manager.update_user(target_user_id, {"referral_code": new_ref_code})
     else:
-        user_manager.update_user_by_username(target_user_username, {"referral_code": new_ref_code})
+        user_manager.update_user_by_username_and_retrieve_fields(target_user_username, {"referral_code": new_ref_code})
     lgr.logger.debug(f"Correctly updated referral code {new_ref_code} for user {target_user_identification_data}")
     message_text = f"Codice di referral aggiornato con successo in <b>{new_ref_code}</b> per l'utente {target_user_identification_data}"
     update.message.reply_text(

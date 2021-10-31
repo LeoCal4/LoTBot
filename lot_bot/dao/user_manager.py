@@ -4,6 +4,7 @@ from typing import Dict, Optional, List, Union
 
 from lot_bot import database as db
 from lot_bot import logger as lgr
+from pymongo.collection import ReturnDocument
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
 
@@ -191,23 +192,27 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         raise e
 
 
-def update_user_by_username(username: str, user_data: Dict) -> bool:
-    """Updates the user specified by the username.
+def update_user_by_username_and_retrieve_fields(username: str, user_data: Dict, user_fields: List = ["_id"]) -> Optional[Dict]:
+    """Updates the user specified by the username, returning the user's ID.
 
     Args:
         username (str)
         user_data (Dict)
+        user_fields (List): the updated user's fields to return. Defaults to ["_id"]
 
     Returns:
-        bool: True if the user was updated,
-            False otherwise
+        Dict: the specified user's fields
+        None: if the user is not found
     """
+    user_fields_projection = {field: True for field in user_fields}
     try:
-        result: UpdateResult = db.mongo.utenti.update_one(
+        result = db.mongo.utenti.find_one_and_update(
             {"username": username},
-            {"$set": user_data}
+            {"$set": user_data},
+            projection=user_fields_projection,
+            return_document=ReturnDocument.AFTER
         )
-        return bool(result.matched_count)
+        return result
     except Exception as e:
         lgr.logger.error(f"Error during user retrieval by username -  {username=}")
         raise e

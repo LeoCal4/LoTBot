@@ -169,10 +169,15 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     if is_giocata:
         original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes", "blocked"])
         # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
+            messages_to_be_sent -= 1
+            continue
+        # * check if the user is blocked
+        if user_data["blocked"]:
+            lgr.logger.warning(f"User {user_id} is blocked")
             messages_to_be_sent -= 1
             continue
         # * check if the user has an active subscription
@@ -294,6 +299,15 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
 
 
 def aggiungi_giorni(update: Update, context: CallbackContext):
+    """TODO use context args
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+
+    Raises:
+        custom_exceptions.UserNotFound: [description]
+    """
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
     if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
@@ -350,7 +364,7 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         else:
             target_user_id = _update_user_exp_date(
                 user_manager.retrieve_user_fields_by_username, 
-                user_manager.update_user_by_username, 
+                user_manager.update_user_by_username_and_retrieve_fields, 
                 target_user_username
             )
     except custom_exceptions.UserNotFound:
@@ -363,7 +377,13 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     update.effective_message.reply_text(reply_message)
 
 
-def _send_broadcast_messages(context, parsed_text):
+def _send_broadcast_messages(context: CallbackContext, parsed_text: str):
+    """Function to be called in async in order to send a broadcast message.
+
+    Args:
+        context (CallbackContext)
+        parsed_text (str)
+    """
     all_user_ids = user_manager.retrieve_all_user_ids()
     for user_id in all_user_ids:
         try:
@@ -539,6 +559,64 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
     update.effective_message.reply_text("Stake rimosso con successo")
     
 
+def unlock_messages_to_user(update: Update, context: CallbackContext):
+    """/sblocca_utente <username or ID>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    set_user_blocked_status(update, context, False, "Da ora inizierai di nuovo a ricevere le giocate.")
+
+
+def block_messages_to_user(update: Update, context: CallbackContext):
+    """/blocca_utente <username or ID>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    set_user_blocked_status(update, context, True, "ATTENZIONE: sei stato bloccato per inattività, contatta l'Assistenza.")
+
+
+def set_user_blocked_status(update: Update, context: CallbackContext, user_status: bool, user_message: str):
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not check_user_permission(user_id, permitted_roles=["admin", "analyst"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    if len(context.args) != 1:
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username dell'utente da bloccare")
+        return
+
+    # * check whetever the specified user identification is a Telegram ID or a username
+    target_user_identification_data = context.args[0]
+    target_user_id = None
+    target_user_username = None
+    try:
+        target_user_id = int(target_user_identification_data)
+    except ValueError:
+        target_user_username = target_user_identification_data
+    
+    user_status = {"blocked": user_status}
+    # * an actual user_id was sent
+    if target_user_id is not None:
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_status}")
+        update_result = user_manager.update_user(target_user_id, user_status)
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_username} with role {user_status}")
+        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_username, user_status)
+        if update_result:
+            target_user_id = update_result["_id"]
+    
+    if not update_result:
+        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
+        return
+    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è stato bloccato"
+    update.effective_message.reply_text(reply_message)
+    context.bot.send_message(target_user_id, user_message)
+
 
 def set_user_role(update: Update, context: CallbackContext):
     """/cambia_ruolo <username or ID> <new role>
@@ -579,7 +657,7 @@ def set_user_role(update: Update, context: CallbackContext):
     # * a username was sent
     else:
         lgr.logger.debug(f"Updating user with username {target_user_username} with role {user_role}")
-        update_result = user_manager.update_user_by_username(target_user_username, user_role)
+        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_username, user_role)
     
     if update_result:
         reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è un {user_role['role']}"

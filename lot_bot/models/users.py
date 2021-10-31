@@ -23,13 +23,14 @@ def create_base_user_data():
             "linked_user_code": ""
         },
         "is_og_user": True, # TODO remember to switch this off
+        "blocked": False, # TODO add for everyone >>>>>>>>>>
         "successful_referrals_since_last_payment": [],
         "referred_payments": [],
         "giocate": [],
         "payments": [],
         "sport_subscriptions": [],
         "available_sports": [],
-        "personal_stakes": [],
+        "personal_stakes": [], # TODO add for everyone >>>>>>>>>>>>>
     }
 
 def generate_referral_code() -> str:

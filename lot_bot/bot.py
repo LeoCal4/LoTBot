@@ -75,6 +75,8 @@ def add_handlers(dispatcher: Dispatcher):
     # ================ COMMAND HANDLERS ================
     dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
     dispatcher.add_handler(CommandHandler("cambia_ruolo", message_handlers.set_user_role))
+    dispatcher.add_handler(CommandHandler("blocca_utente", message_handlers.block_messages_to_user))
+    dispatcher.add_handler(CommandHandler("sblocca_utente", message_handlers.unlock_messages_to_user))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
     dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
