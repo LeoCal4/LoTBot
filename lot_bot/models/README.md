@@ -17,6 +17,7 @@
     - personal_stake: int
     - personal_quota: int
     - acceptance_timestamp: float
+    - pre_giocata_budget: int (* 100) [optional]
 - payments: []
     - payment_id: str
     - datetime_timestamp: timestamp (float)
@@ -51,3 +52,4 @@
 - base_quota: int
 - sent_date: float
 - outcome: str
+- cashout: int (* 100) [optional] 

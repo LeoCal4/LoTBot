@@ -55,7 +55,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # ! TODO REVERT
     # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_timestamp = datetime.datetime(2021, 10, 31, hour=13, minute=15).timestamp()
+    trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     # * create calcio -  sport_subscription
@@ -103,9 +103,9 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     """
     user = update.effective_user
     first_time_user_data = create_first_time_user(update.effective_user, ref_code)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2)
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
-    # escape chars for HTML
+    # * escape chars for HTML
     parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
     # * check if the referral code was successfulyl added 
@@ -184,7 +184,8 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
         # * in case of giocata message, add the register giocata keyboard and personalize the stake
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
-            text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
+            if "personal_stakes" in user_data:
+                text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
         # * otherwise, keep the original text and resend the base keyboard
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD

@@ -80,19 +80,19 @@ def get_cashout_data(cashout_message: str) -> Tuple[str, int]:
     Returns:
         Tuple[str, int]: giocata number and cashout percentage
     """
-    cashout_tokens = cashout_message.strip().split()
+    # cashout_tokens = cashout_message.strip().split()
+    match_results = re.match(filters.get_cashout_pattern(), cashout_message.strip())
     # * check if both id and % are present
-    if len(cashout_tokens) < 2:
-        raise custom_exceptions.GiocataOutcomeParsingError("\nIndicare l'id della giocata preceduta da # e la percentuale del cashout")
-    # * eventually remove % at the end and convert cashout percentage to int
-    cashout_percentage = cashout_tokens[1] if cashout_tokens[1][-1] != "%" else cashout_tokens[1][:-1]
+    if not match_results:
+        raise custom_exceptions.GiocataOutcomeParsingError("\nIndicare il numero della giocata e mese/anno, preceduti da #, e la percentuale del cashout [esempio: #123 01/21 15]")
+    giocata_num = match_results.group(1).strip()
+    # * convert cashout percentage to int
     try:
-        cashout_percentage = utils.parse_float_string_to_int(cashout_tokens[1])
+        cashout_percentage = utils.parse_float_string_to_int(match_results.group(2))
     except Exception as e:
         lgr.logger.error(f"During cashout parsing - {str(e)}")
         raise custom_exceptions.GiocataOutcomeParsingError("\nPercentuale di cashout non valida")
-    # * remove '#' from giocata num
-    giocata_num = cashout_tokens[0][1:]
+
     return giocata_num, cashout_percentage
 
 
@@ -194,11 +194,11 @@ def get_giocata_num_from_giocata(giocata_text: str) -> str:
     Returns:
         str
     """
-    regex_match = re.search(r"#\s*([\d\-\.]+)", giocata_text)
+    regex_match = re.search(r"#\s*([\d\-]+(?:\s*\d\d\/\d\d))", giocata_text)
     if not regex_match:
         error_message = f"giocata_model.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)
-        raise custom_exceptions.GiocataParsingError(f"numero della giocata non trovato")
+        raise custom_exceptions.GiocataParsingError(f"numero della giocata non trovato o non corretto. Assicurati che tu abbia usato la seguente struttura: [nome_sport #numero_giocata mese/anno]")
     return regex_match.group(1)
 
 

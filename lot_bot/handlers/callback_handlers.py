@@ -193,8 +193,8 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    # summing 2 hours for the UTC timezone
-    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=2)
+    # summing 1 hours for the UTC timezone
+    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=1)
     # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.SPORT_MENU_MESSAGE
     context.bot.edit_message_text(
@@ -209,7 +209,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
 def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "lot_subscription_expiration"])
-    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2), "%d/%m/%Y alle %H:%M")
+    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
     service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"], expiration_date)
     context.bot.edit_message_text(
         service_status,
