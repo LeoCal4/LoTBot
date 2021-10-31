@@ -86,23 +86,47 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
 
 
 def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personalized_stake: int = None) -> int:
+    """[summary]
+
+    Args:
+        user_budget (int): actual budget * 100
+        giocata (Dict): [description]
+        personalized_stake (int, optional): [description]. Defaults to None.
+
+    Returns:
+        int: the new budget after the giocata
+    """
     stake = giocata["base_stake"]
     # * check if there is a personalized stake
     if not personalized_stake is None and personalized_stake != 0:
         stake = personalized_stake
     # * get outcome percentage
     if "cashout" in giocata:
-        outcome_percentage = giocata["cashout"] / 100
+        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "abbinata") # just to be sure to avoid abbinate
     else:
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
     # * update budget with outcome percentange
-    stake_money = (user_budget * round(stake / 100, 2)) # TODO save
-    budget_difference = (user_budget * round(outcome_percentage / 100, 2)) # TODO save
+    budget_difference = (user_budget * round(outcome_percentage / 100, 2))
     new_budget = user_budget + budget_difference
     return new_budget
 
 
-def update_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, giocata_data: Dict, user_personal_stake: int = None):
+def update_single_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, giocata_data: Dict, user_personal_stake: int = None) -> bool:
+    """Calculates the new user's budget given the giocata, updates it and saves the pre-giocata budget in the personal user's giocata.
+
+    Args:
+        target_user_id (int)
+        target_user_budget (int)
+        giocata_id:
+        giocata_data (Dict)
+        user_personal_stake (int, optional): Can be specified separately to calculate the new budget. Defaults to None.
+
+    Returns:
+        bool: True if the user's budget is updated and if the pre-giocata budget is saved, False otherwise
+    """
+    if target_user_budget is None:
+        return True
+    # * calculate updated budget
     new_budget = calculate_new_budget_after_giocata(target_user_budget, giocata_data, user_personal_stake)
     # * update user's budget
     update_result = user_manager.update_user(target_user_id, {"budget": new_budget})
@@ -112,4 +136,25 @@ def update_user_budget_with_giocata(target_user_id: int, target_user_budget: int
         giocata_id,
         target_user_budget) and update_result
     return update_result
+
+
+def update_users_budget_with_giocata(updated_giocata: Dict):
+    """Updates the budgets of the users who played the new giocata.
+
+    Args:
+        updated_giocata (Dict)
+    """
+    users_who_played_giocata = user_manager.retrieve_users_who_played_giocata(updated_giocata["_id"])
+    if not users_who_played_giocata:
+        return
+    for target_user in users_who_played_giocata:
+        target_user_budget = int(target_user["budget"])
+        target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
+        update_single_user_budget_with_giocata(
+            target_user["_id"], 
+            target_user_budget, 
+            updated_giocata["_id"],
+            updated_giocata, 
+            user_personal_stake=target_user_personal_stake
+        )
 

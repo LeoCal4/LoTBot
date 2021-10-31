@@ -8,6 +8,7 @@ from lot_bot import database as db
 from lot_bot import logger as lgr
 from lot_bot.dao import giocate_manager, user_manager
 from lot_bot.models import giocate as giocata_model
+from lot_bot.models import users as user_model
 
 
 def get_random_string(length: int):
@@ -218,8 +219,19 @@ def test_retrieve_user_fields_by_user_id(new_user: Dict):
     assert list(retrieved_only_id.keys()) == ["_id"]
 
 
-def test_retrieve_users_who_played_giocata(new_user: Dict, correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):
-    user_id = new_user["_id"]
+def _new_random_user():
+    user_data = user_model.create_base_user_data()
+    user_data["_id"] = random.randint(0, 999)
+    user_manager.create_user(user_data)
+    return user_data
+
+
+def test_retrieve_users_who_played_giocata(correct_giocata_function_fixture: Callable[[], Tuple[str, Dict]]):
+    # * create random users
+    created_users = []
+    for _ in range(random.randint(1, 10)):
+        created_users.append(_new_random_user())
+    # * create random giocate
     created_giocate = []
     for _ in range(random.randint(2, 10)):
         correct_giocata_text, _ = correct_giocata_function_fixture()
@@ -229,6 +241,63 @@ def test_retrieve_users_who_played_giocata(new_user: Dict, correct_giocata_funct
         user_giocata = giocata_model.create_user_giocata()
         user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
         user_giocata["original_id"] = created_giocata_id
-        user_manager.register_giocata_for_user_id(user_giocata, user_id)
+        # * randomly add giocate
+        for created_user in created_users:
+            if random.random() > 0.5: 
+                user_manager.register_giocata_for_user_id(user_giocata, created_user["_id"])
         created_giocate.append(user_giocata)
-    
+    main_giocata = created_giocate[0]
+    # * make sure they all have the first giocata
+    for created_user in created_users:
+        user_manager.register_giocata_for_user_id(main_giocata, created_user["_id"])
+    # * retrieve all users given the first giocata
+    retrieved_users = user_manager.retrieve_users_who_played_giocata(main_giocata["original_id"])
+    # * check that the giocate field is not a list and contains the specified giocata
+    for ret_user in retrieved_users:
+        assert ret_user["giocate"] is not list
+        assert ret_user["giocate"]["original_id"] == main_giocata["original_id"]
+    # * check that the users are the correct ones
+    assert len(retrieved_users) == len(created_users)
+    retrieved_users_ids = [ret_user["_id"] for ret_user in retrieved_users]
+    created_users_ids = [created_user["_id"] for created_user in created_users]
+    for ret_id in retrieved_users_ids:
+        assert ret_id in created_users_ids
+    # * cleanup
+    for user_id in created_users_ids:
+        user_manager.delete_user(user_id)
+    for created_giocata in created_giocate:
+        giocate_manager.delete_giocata(created_giocata["original_id"])
+
+
+def test_retrieve_users_who_played_giocata_no_users(correct_giocata: Tuple[str, Dict]):
+    correct_giocata_text, _ = correct_giocata
+    parsed_giocata = giocata_model.parse_giocata(correct_giocata_text)
+    created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
+    assert created_giocata_id
+    assert user_manager.retrieve_users_who_played_giocata(created_giocata_id) == []
+    # * cleanup
+    giocate_manager.delete_giocata(created_giocata_id)
+
+
+def test_update_user_giocata_with_previous_budget(new_user: Dict, correct_giocata: Tuple[str, Dict]):
+    # * create giocata
+    correct_giocata_text, _ = correct_giocata
+    parsed_giocata = giocata_model.parse_giocata(correct_giocata_text)
+    created_giocata_id = giocate_manager.create_giocata(parsed_giocata)
+    assert created_giocata_id
+    user_giocata = giocata_model.create_user_giocata()
+    user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+    user_giocata["original_id"] = created_giocata_id
+    # * add giocata to user
+    user_id = new_user["_id"]
+    user_manager.register_giocata_for_user_id(user_giocata, user_id)
+    # * add pre-giocata budget to giocata
+    previous_budget = random.randint(100, 1000000)
+    assert user_manager.update_user_giocata_with_previous_budget(user_id, created_giocata_id, previous_budget)
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["giocate"])
+    assert user_data["giocate"][0]["pre_giocata_budget"] == previous_budget
+    # * inexistent user
+    assert not user_manager.update_user_giocata_with_previous_budget(-1, created_giocata_id, previous_budget)
+    # * inexistent giocata
+    assert not user_manager.update_user_giocata_with_previous_budget(user_id, -1, previous_budget)
+

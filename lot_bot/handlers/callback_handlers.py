@@ -348,21 +348,17 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     # * retrieve and save the giocata for the user
     parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
-    personal_user_giocata = giocata_model.create_user_giocata()
-    personal_user_giocata["original_id"] = retrieved_giocata["_id"]
-    personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
-    # * check for differences in the saved stake and the current one (personalized stake)
-    if parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
-        personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
+    personal_user_giocata = giocata_model.create_personal_giocata_from_new_giocata(retrieved_giocata, parsed_giocata["base_stake"])
     # * register giocata
     update_result = user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     if not update_result:
         context.bot.send_message(user_chat_id, "ERRORE: impossibile registrare la giocata")
         return
-    # * update user budget (if it is set and if giocata has an outcome)
-    user_budget = int(user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"])
-    if not user_budget is None and retrieved_giocata["outcome"] == "win" or retrieved_giocata["outcome"] == "loss":
-        update_result = users.update_user_budget_with_giocata(user_chat_id, user_budget, retrieved_giocata["_id"], parsed_giocata)
+    # * update user budget if giocata has an outcome
+    giocata_outcome = retrieved_giocata["outcome"]
+    if giocata_outcome == "win" or giocata_outcome == "loss":
+        user_budget = int(user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"])
+        update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
         if not update_result:
             context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     context.bot.edit_message_text(

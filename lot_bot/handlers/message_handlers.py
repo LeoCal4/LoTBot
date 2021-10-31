@@ -140,7 +140,7 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 lgr.logger.error(f"{str(e)}") # cannot raise e since it would loop with the error handler
 
 
-def send_message_to_all_abbonati(update: Update, context: CallbackContext, original_text: str, sport: str, strategy: str, is_giocata: bool = False):
+def send_message_to_all_subscribers(update: Update, context: CallbackContext, original_text: str, sport: str, strategy: str, is_giocata: bool = False):
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
 
@@ -289,7 +289,7 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
     if parsed_text == "":
         update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
         return
-    send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
+    send_message_to_all_subscribers(update, context, parsed_text, sport.name, strategy.name)
 
 
 def aggiungi_giorni(update: Update, context: CallbackContext):
@@ -752,7 +752,7 @@ def giocata_handler(update: Update, context: CallbackContext):
     sport = parsed_giocata["sport"]
     strategy = parsed_giocata["strategy"]
     lgr.logger.info(f"Received giocata {sport} - {strategy}")
-    send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True)
+    send_message_to_all_subscribers(update, context, text, sport, strategy, is_giocata=True)
 
 
 def outcome_giocata_handler(update: Update, context: CallbackContext):
@@ -768,35 +768,18 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
         sport, giocata_num, outcome = giocata_model.get_giocata_outcome_data(text)
     except custom_exceptions.GiocataOutcomeParsingError as e:
         error_message = f"ATTENZIONE: il risultato non è stato inviato perchè presenta un errore. Si prega di ricontrollare e rimandarlo."
-        if e.message:
-            error_message += f"\nErrore: {e.message}"
+        error_message += f"\nErrore: {e.message}"
         update.effective_message.reply_text(error_message)
         return
-    update_result = giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
-    if not update_result:
+    updated_giocata = giocate_manager.update_giocata_outcome_and_get_giocata(sport, giocata_num, outcome)
+    if not updated_giocata:
         update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stato inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
         return
-    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
     strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
     # * send outcome
-    send_message_to_all_abbonati(update, context, text, sport, strategy.name)
+    send_message_to_all_subscribers(update, context, text, sport, strategy.name)
     # * update the budget of all the user's who accepted the giocata
-    users_who_played_giocata = user_manager.retrieve_users_who_played_giocata(updated_giocata["_id"])
-    if not users_who_played_giocata:
-        return
-    for target_user in users_who_played_giocata:
-        target_user_budget = int(target_user["budget"])
-        if target_user_budget is None:
-            continue
-        target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
-        users.update_user_budget_with_giocata(
-            target_user["_id"], 
-            target_user_budget, 
-            updated_giocata["_id"],
-            updated_giocata, 
-            user_personal_stake=target_user_personal_stake
-        )
-
+    users.update_users_budget_with_giocata(updated_giocata)
 
 
 def exchange_cashout_handler(update: Update, context: CallbackContext):
@@ -814,19 +797,21 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         update.effective_message.reply_text(f"ATTENZIONE: il cashout non è stato inviato.{str(e)}")
         return
     # * update the giocata outcome
-    update_result = giocate_manager.update_exchange_giocata_outcome(giocata_num, cashout_percentage)
-    if not update_result:
+    updated_giocata = giocate_manager.update_exchange_giocata_outcome_and_get_giocata(giocata_num, cashout_percentage)
+    if not updated_giocata:
         update.effective_message.reply_text(f"ATTENZIONE: il cashout non è stato inviato. La giocata {giocata_num} non è stata trovata")
     # * create parsed cashout message
     cashout_text = utils.create_cashout_message(cashout_text_raw)
     lgr.logger.info(f"Received cashout message {cashout_text}")
-    send_message_to_all_abbonati(
+    send_message_to_all_subscribers(
         update, 
         context, 
         cashout_text, 
         spr.sports_container.EXCHANGE.name, 
         strat.strategies_container.MAXEXCHANGE.name
     )
+    # * update the budget of all the user's who accepted the giocata
+    users.update_users_budget_with_giocata(updated_giocata)
 
 
 def unrecognized_message(update: Update, _):
