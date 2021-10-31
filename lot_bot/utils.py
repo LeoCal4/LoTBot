@@ -102,8 +102,7 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
             outcome_percentage = giocata["cashout"] / 100
         else:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
-        # TODO only outcome, no need for %
-        outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage, giocata["outcome"])
+        outcome_emoji = giocata_model.OUTCOME_EMOJIS[giocata["outcome"]]
         parsed_quota = giocata["base_quota"] / 100
         parsed_stake = stake / 100
         parsed_stake_string = f"Stake {parsed_stake:.2f}%"

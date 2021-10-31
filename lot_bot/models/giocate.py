@@ -8,17 +8,24 @@ from lot_bot import utils
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 
-
 STAKE_PATTERN = fr"\s*Stake\s*(\d+[.,]?\d*)\s*"
 
+OUTCOME_EMOJIS = {
+    "win": "🟢",
+    "loss": "🔴",
+    "?": "🕔",
+    "neutral": "⚪",
+    "abbinata": "⚪",
+    "void": "🟡",
+}
 
 def create_base_giocata():
     return {
         "sport": "",
         "strategy": "",
         "giocata_num": "",
-        "base_quota": 0, # [quota (float) * 100] => (int)
-        "base_stake": 0, # stake (float) % * 100 => (int)
+        "base_quota": 0, # quota (float) * 100 => (int)
+        "base_stake": 0, # stake (float) * 100 => (int)
         "sent_timestamp": 0.0,
         "raw_text": "",
         "outcome": "?"
@@ -97,6 +104,16 @@ def get_cashout_data(cashout_message: str) -> Tuple[str, int]:
 
 
 def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
+    """[summary]
+
+    Args:
+        outcome (str): [description]
+        stake (int): [description]
+        quota (int): [description]
+
+    Returns:
+        float: the outcome percentage (as in x.y%)
+    """
     lgr.logger.debug(f"Calculating outcome percentage on {outcome} - {stake} - {quota}")
     if outcome == "win":
         outcome_percentage = (stake * (quota - 100)) / 10000
@@ -105,29 +122,6 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     else:
         outcome_percentage = 0.0
     return outcome_percentage
-
-
-def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
-    """TODO only outcome state
-
-    Args:
-        outcome_percentage (float)
-        outcome_state (str)
-
-    Returns:
-        str
-    """
-    if outcome_state == "neutral" or outcome_state == "abbinata":
-        return "⚪"
-    if outcome_state == "void":
-        return "🟡"
-    if outcome_percentage > 0:
-        outcome_emoji = "🟢"
-    elif outcome_percentage == 0:
-        outcome_emoji = "🕔" 
-    else:
-        outcome_emoji = "🔴"
-    return outcome_emoji
 
 
 def get_sport_name_from_giocata(text: str) -> str:
@@ -310,6 +304,17 @@ def parse_giocata(giocata_text: str, message_sent_timestamp: float=None) -> Opti
 
 
 def personalize_giocata_text(giocata_text: str, personal_stakes: List, sport_name: str, strategy_name: str) -> str:
+    """TODO tests
+
+    Args:
+        giocata_text (str): [description]
+        personal_stakes (List): [description]
+        sport_name (str): [description]
+        strategy_name (str): [description]
+
+    Returns:
+        str: [description]
+    """
     if personal_stakes == []:
         return giocata_text
     giocata_quota = get_quota_from_giocata(giocata_text)
@@ -330,3 +335,14 @@ def personalize_giocata_text(giocata_text: str, personal_stakes: List, sport_nam
     giocata_text_rows = giocata_text_rows[:-1] + ["(stake personalizzato)", "", giocata_text_rows[-1]]
     giocata_text = "\n".join(giocata_text_rows)
     return giocata_text
+
+
+def create_personal_giocata_from_new_giocata(retrieved_giocata: Dict, stake_from_giocata_message: str) -> Tuple[Dict, str]:
+    personal_user_giocata = create_user_giocata()
+    personal_user_giocata["original_id"] = retrieved_giocata["_id"]
+    personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+    # * check for differences in the saved stake and the current one (personalized stake)
+    if stake_from_giocata_message != retrieved_giocata["base_stake"]:
+        personal_user_giocata["personal_stake"] = stake_from_giocata_message
+    return personal_user_giocata
+
