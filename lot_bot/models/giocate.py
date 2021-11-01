@@ -45,8 +45,8 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
     Returns:
         Tuple[str, str, str]: sport, giocata_num and outcome of the giocata outcome text
     """
-    win_keywords = ["vincente", "vinta", "vittoria"]
-    loss_keywords = ["perdente", "persa", "perdita", "sconfitta"]
+    win_keywords = ["vincente", "vinta", "vittoria", "positiva", "positivo"]
+    loss_keywords = ["perdente", "persa", "perdita", "sconfitta", "negativa", "negativo"]
     matches = re.search(filters.get_giocata_outcome_pattern(), giocata_outcome)
     if not matches:
         raise custom_exceptions.GiocataOutcomeParsingError
@@ -194,7 +194,7 @@ def get_giocata_num_from_giocata(giocata_text: str) -> str:
     Returns:
         str
     """
-    regex_match = re.search(r"#\s*([\d\-]+(?:\s*\d\d\/\d\d))", giocata_text)
+    regex_match = re.search(filters.get_giocata_num_pattern(), giocata_text)
     if not regex_match:
         error_message = f"giocata_model.get_giocata_num_from_giocata: giocata num not found from {giocata_text}"
         lgr.logger.error(error_message)

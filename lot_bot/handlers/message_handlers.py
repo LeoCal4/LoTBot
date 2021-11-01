@@ -566,7 +566,7 @@ def unlock_messages_to_user(update: Update, context: CallbackContext):
         update (Update): [description]
         context (CallbackContext): [description]
     """
-    set_user_blocked_status(update, context, False, "Da ora inizierai di nuovo a ricevere le giocate.")
+    set_user_blocked_status(update, context, False, "⚠️ AVVISO ⚠️: sei stato riabilitato al servizio, da ora inizierai di nuovo a ricevere le giocate 🥳")
 
 
 def block_messages_to_user(update: Update, context: CallbackContext):
@@ -576,7 +576,7 @@ def block_messages_to_user(update: Update, context: CallbackContext):
         update (Update): [description]
         context (CallbackContext): [description]
     """
-    set_user_blocked_status(update, context, True, "ATTENZIONE: sei stato bloccato per inattività, contatta l'Assistenza.")
+    set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza! ❌")
 
 
 def set_user_blocked_status(update: Update, context: CallbackContext, user_status: bool, user_message: str):
@@ -586,7 +586,7 @@ def set_user_blocked_status(update: Update, context: CallbackContext, user_statu
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
     if len(context.args) != 1:
-        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username dell'utente da bloccare")
+        update.effective_message.reply_text(f"ERRORE: comando non valido, specificare id o username dell'utente da bloccare o sbloccare")
         return
 
     # * check whetever the specified user identification is a Telegram ID or a username
@@ -601,11 +601,11 @@ def set_user_blocked_status(update: Update, context: CallbackContext, user_statu
     user_status = {"blocked": user_status}
     # * an actual user_id was sent
     if target_user_id is not None:
-        lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_status}")
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with status {user_status}")
         update_result = user_manager.update_user(target_user_id, user_status)
     # * a username was sent
     else:
-        lgr.logger.debug(f"Updating user with username {target_user_username} with role {user_status}")
+        lgr.logger.debug(f"Updating user with username {target_user_username} with status {user_status}")
         update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_username, user_status)
         if update_result:
             target_user_id = update_result["_id"]
@@ -613,7 +613,7 @@ def set_user_blocked_status(update: Update, context: CallbackContext, user_statu
     if not update_result:
         reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
         return
-    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è stato bloccato"
+    reply_message = f"Operazione avvenuta con successo per l'utente {target_user_identification_data}"
     update.effective_message.reply_text(reply_message)
     context.bot.send_message(target_user_id, user_message)
 

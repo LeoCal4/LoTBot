@@ -103,24 +103,34 @@ def get_text_messages_filter() -> Filters:
 # ================================================ PATTERNS ================================================
 
 
+def get_giocata_num_pattern() -> str:
+    """# <giocata_index> [MB] [<month/year>]
+
+    Returns:
+        str
+    """
+    return r"#\s*([\w]+(?:\s*MB)?(?:\s+\d\d\/\d\d)?)"
+
+
 def get_giocata_outcome_pattern() -> str:
     """Creates the regex pattern to identify a giocata outcome.
     The structure of a giocata is:
-        <🟢/🔴> <sport name>#<giocata_index month/year>(this is the giocata) <Vincente/Perdente> <percentage> <🟢/🔴>
+        <🟢/🔴> <sport name>#<giocata_index> <month/year> <Vincente/Perdente> <percentage> <🟢/🔴>
     
-    The regex only checks up to <Vincente/Perdente> to determine if the 
-    message is a giocata or not.
+    The regex only checks 
+        "<sport name>#<giocata_index month/year> <Vincente/Perdente>"
+    to determine if the message is a giocata or not.
 
     The regex gathers the following groups:
-    group(1) = sport
-    group(2) = giocata_num
-    group(3) = outcome
+        - group(1) = sport
+        - group(2) = giocata_num
+        - group(3) = outcome
 
 
     Returns:
         str: giocata outcome regex pattern
     """
-    return r"([\w\s]+)\s*#\s*([\d\w-]+(?:\s*\d\d\/\d\d))\s*(\w+)"
+    return rf"([\w\s]+)\s*{get_giocata_num_pattern()}\s*([a-zA-Z]+)"
 
 
 def get_cashout_pattern() -> str:
