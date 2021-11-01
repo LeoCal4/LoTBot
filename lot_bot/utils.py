@@ -136,7 +136,7 @@ def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport,
     """
     # * text on the first line after the command
     first_row = message.split("\n")[0]
-    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s*-\s*([\w\s]+)", first_row)
+    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s-\s([\w\s]+)", first_row)
     if not matches:
         lgr.logger.error(f"Cannot parse {message} with {first_row=}")
         raise custom_exceptions.NormalMessageParsingError("messaggio non analizzabile, assicurati che segua la struttura '/messaggio_abbonati nomesport - nomestrategia'")
@@ -149,7 +149,7 @@ def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport,
     strategy = strat.strategies_container.get_strategy(strategy_token)
     if not strategy or strategy not in sport.strategies:
         lgr.logger.error(f"Strategy {strategy_token} not valid from normal message {message} - {first_row=}")
-        raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport}'")
+        raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport_token}'")
     return sport, strategy
 
 

@@ -118,10 +118,10 @@ def add_handlers(dispatcher: Dispatcher):
 
 
     # ============ MESSAGE HANDLERS ===========
+    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.normal_message_to_abbonati_handler))
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_outcome_giocata_filter(), message_handlers.outcome_giocata_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.normal_message_to_abbonati_handler))
     dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), message_handlers.send_file_id))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))

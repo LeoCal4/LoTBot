@@ -145,7 +145,7 @@ def get_cashout_pattern() -> str:
     Returns:
         str: cashout regex pattern
     """
-    return r"^\s*#([\w\d]+(?:\s*\d\d\/\d\d))\s*([+-]?\d+(?:[\.,]\d+)?)\s*$"
+    return rf"^\s*{get_giocata_num_pattern()}\s*([+-]?\d+(?:[\.,]\d+)?)\s*$"
 
 
 def get_explanation_pattern() -> str:
