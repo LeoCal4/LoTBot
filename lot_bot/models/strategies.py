@@ -33,6 +33,7 @@ class StrategyContainer:
     FRECCETTE : Strategy = Strategy("freccette")
     SHOWTELEVISIVI : Strategy = Strategy("showtelevisivi", display_name="Show Televisivi")
     MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
+    MB : Strategy = Strategy("mb", display_name="MB")
 
     def astuple(self):
         return tuple([self.__dict__[field.name] for field in dataclasses.fields(self)])

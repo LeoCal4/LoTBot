@@ -44,7 +44,7 @@ class SportsContainer:
     CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD])
     BASKET : Sport = Sport("basket", _base_strategies)
     TENNIS : Sport = Sport("tennis", _base_strategies)
-    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE])
+    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB])
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
     # PINGPONG : Sport = Sport("pingpong", _base_strategies + [strats.TRILLED], display_name="Ping Pong")
     # FRECCETTE : Sport = Sport("freccette", _base_strategies + [strats.TRILLED], show_in_menu=False)
