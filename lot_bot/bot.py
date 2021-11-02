@@ -7,7 +7,8 @@ from telegram.ext.dispatcher import Dispatcher
 from lot_bot import config as cfg
 from lot_bot import filters
 from lot_bot.handlers import (callback_handlers, message_handlers,
-                              payment_handler, ref_code_handlers)
+                              payment_handler, ref_code_handlers, 
+                              command_handlers)
 
 
 bot = None
@@ -73,17 +74,17 @@ def add_handlers(dispatcher: Dispatcher):
         dispatcher (Dispatcher)
     """
     # ================ COMMAND HANDLERS ================
-    dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
-    dispatcher.add_handler(CommandHandler("cambia_ruolo", message_handlers.set_user_role))
-    dispatcher.add_handler(CommandHandler("blocca_utente", message_handlers.block_messages_to_user))
-    dispatcher.add_handler(CommandHandler("sblocca_utente", message_handlers.unlock_messages_to_user))
-    dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
-    dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("start", command_handlers.start_command))
+    dispatcher.add_handler(CommandHandler("cambia_ruolo", command_handlers.set_user_role))
+    dispatcher.add_handler(CommandHandler("blocca_utente", command_handlers.block_messages_to_user))
+    dispatcher.add_handler(CommandHandler("sblocca_utente", command_handlers.unlock_messages_to_user))
+    dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
+    dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
     dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
     # ------------ Personal stake commands --------------
-    dispatcher.add_handler(CommandHandler("crea_stake", message_handlers.create_personal_stake))
-    dispatcher.add_handler(CommandHandler("visualizza_stake", message_handlers.visualize_personal_stakes))
-    dispatcher.add_handler(CommandHandler("elimina_stake", message_handlers.delete_personal_stakes))
+    dispatcher.add_handler(CommandHandler("crea_stake", command_handlers.create_personal_stake))
+    dispatcher.add_handler(CommandHandler("visualizza_stake", command_handlers.visualize_personal_stakes))
+    dispatcher.add_handler(CommandHandler("elimina_stake", command_handlers.delete_personal_stakes))
 
 
     # ======= CALLBACK QUERIES HANDLERS =======
@@ -118,11 +119,11 @@ def add_handlers(dispatcher: Dispatcher):
 
 
     # ============ MESSAGE HANDLERS ===========
-    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.normal_message_to_abbonati_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), command_handlers.normal_message_to_abbonati_handler))
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_outcome_giocata_filter(), message_handlers.outcome_giocata_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), message_handlers.send_file_id))
+    dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), command_handlers.send_file_id))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))

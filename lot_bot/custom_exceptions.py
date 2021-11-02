@@ -91,3 +91,21 @@ class PersonalStakeParsingError(Exception):
     # ! this will be sent as an answer to the analisti
     def __str__(self) -> str:
         return self.message
+
+
+class UserPermissionError(Exception):
+    def __init__(self):
+        self.message = "ERRORE: non disponi dei permessi necessari ad utilizzare questo comando"
+
+    # ! this will be sent as an answer to the analisti
+    def __str__(self) -> str:
+        return self.message
+
+
+class CommandArgumentsError(Exception):
+    def __init__(self):
+        self.message = f"ERRORE: comando non valido, specificare "
+
+    # ! this will be sent as an answer to the analisti and needs to be completed
+    def __str__(self) -> str:
+        return self.message
