@@ -5,6 +5,7 @@ import dataclasses
 class Strategy:
     name : str
     display_name : str = ""
+    emoji : str = "📑"
 
     def __post_init__(self):
         if self.display_name == "":
@@ -16,7 +17,7 @@ class StrategyContainer:
     RADDOPPIO : Strategy = Strategy("raddoppio")
     MULTIPLA : Strategy = Strategy("multipla")
     SINGOLA : Strategy = Strategy("singola")
-    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong")
+    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong", emoji="🏓")
     SPECIALI : Strategy = Strategy("speciali")
     PDRRADDOPPI : Strategy = Strategy("pdrraddoppi", display_name="PDR Raddoppi")
     PDRHIGHODD : Strategy = Strategy("pdrhighodd", display_name="PDR High Odd")

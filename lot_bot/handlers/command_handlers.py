@@ -1,6 +1,6 @@
 """Module containing all the message handlers"""
 import datetime
-from typing import Callable, List, Optional, Union
+from typing import List, Optional, Union
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -9,9 +9,9 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import user_manager
-from lot_bot.handlers import message_handlers 
-from lot_bot.models import personal_stakes, users
-from telegram import ParseMode, Update, user
+from lot_bot.handlers import message_handlers
+from lot_bot.models import personal_stakes, users, giocate
+from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
 
@@ -31,14 +31,15 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
         min_num_args (int): the minimum number of command arguments needed
         permitted_roles (List[str], optional): the roles that can use the command. Defaults to None.
         forbidden_roles (List[str], optional): the roles that cannot use the command. Defaults to None.
-        target_user_identification_data_args_index (int, optional): the index of the target user identification data among the arguments list. Defaults to 1.
+        target_user_identification_data_args_index (int, optional): the index of the target user identification data among 
+        the arguments list. If it is equal to -1, it is not search. Defaults to 1.
 
     Raises:
         custom_exceptions.UserPermissionError: in case the user does not have the permission to use the command
         custom_exceptions.CommandArgumentsError: in case there number of arguments is wrong
 
     Returns:
-        Optional[Union[int, str]]: the target user id or username
+        Optional[Union[int, str]]: the target user id or username, or None if it is not needed
     """
     # * check if the user has the permission to use this command
     if not users.check_user_permission(user_id, permitted_roles=permitted_roles, forbidden_roles=forbidden_roles):
@@ -47,6 +48,8 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
     if len(context_args) < min_num_args:
         raise custom_exceptions.CommandArgumentsError()
     # * check whetever the specified user identification is a Telegram ID or a username
+    if target_user_identification_data_args_index == -1:
+        return 
     target_user_identification_data = context_args[target_user_identification_data_args_index]
     try:
         target_user_id = int(target_user_identification_data)
@@ -260,6 +263,133 @@ def broadcast_handler(update: Update, context: CallbackContext):
     context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text)
 
 
+def unlock_messages_to_user(update: Update, context: CallbackContext):
+    """/sblocca_utente <username or ID>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    set_user_blocked_status(update, context, False, "⚠️ AVVISO ⚠️: sei stato riabilitato al servizio, da ora inizierai di nuovo a ricevere le giocate 🥳")
+
+
+def block_messages_to_user(update: Update, context: CallbackContext):
+    """/blocca_utente <username or ID>
+
+    Args:
+        update (Update): [description]
+        context (CallbackContext): [description]
+    """
+    set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza! ❌")
+
+
+def set_user_blocked_status(update: Update, context: CallbackContext, user_status: bool, user_message: str):
+    """Modifies the blocked bool for the specified user, sending a message to it to notify the change and an ack
+    message to the analyst.
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+        user_status (bool)
+        user_message (str): the message that is sent to the user, in case the operation is successful.
+    """
+    user_id = update.effective_user.id
+    try:
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin", "analyst"]) 
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "username (o ID) dell'utente da bloccare o sbloccare")
+        return
+    user_status = {"blocked": user_status}
+    # * an actual user_id was sent
+    if type(target_user_identification_data) is int:
+        lgr.logger.debug(f"Updating user with user_id {target_user_identification_data} with status {user_status}")
+        update_result = user_manager.update_user(target_user_identification_data, user_status)
+        target_user_id = target_user_identification_data
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_identification_data} with status {user_status}")
+        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_identification_data, user_status)
+        if update_result:
+            target_user_id = update_result["_id"]
+    # * check if the user exists
+    if not update_result:
+        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
+        return
+    reply_message = f"Operazione avvenuta con successo per l'utente {target_user_identification_data}"
+    update.effective_message.reply_text(reply_message)
+    context.bot.send_message(target_user_id, user_message)
+
+
+def set_user_role(update: Update, context: CallbackContext):
+    """/cambia_ruolo <username or ID> <new role>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    try:
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin"]) 
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "username (o ID) e il ruolo tra user e analyst")
+        return
+    
+    # * retrieve the target user and role from the command text 
+    role = context.args[1]
+    if role not in users.ROLES and role != "admin":
+        update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
+        return
+    lgr.logger.info(f"Received /cambia_ruolo with {target_user_identification_data} and {role}")
+    user_role = {"role": role}
+    
+    # * an actual user_id was sent
+    if type(target_user_identification_data) is int:
+        target_user_id = target_user_identification_data
+        lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_role}")
+        update_result = user_manager.update_user(target_user_id, user_role)
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Updating user with username {target_user_identification_data} with role {user_role}")
+        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_identification_data, user_role)
+    
+    if not update_result:
+        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
+        return
+    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è un {user_role['role']}"
+    update.effective_message.reply_text(reply_message)
+
+
+def get_trend(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    try:
+        initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin", "analyst"], target_user_identification_data_args_index=-1)
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "il numero di giorni da includere")
+        return
+    # * check whetever the days received are actually an integer
+    try:
+        days_for_trend = int(context.args[0])
+    except Exception as e:
+        lgr.logger.error(f"Tried to use {context.args[0]} as days for trend - Exception type: {type(e).__name__}")
+        update.effective_message.reply_text(f"ERRORE: '{context.args[0]}' non è un numero di giorni valido")
+        return
+    # * create giocate trend
+    giocate_trend = giocate.get_giocate_trend_since_days(days_for_trend)
+    update.effective_message.reply_text(giocate_trend)
+
+
+############################################ STAKE COMMANDS ############################################
+
+
 def create_personal_stake(update: Update, context: CallbackContext):
     """Creates a new personal stake for the target user.
     If no sport is specified, the stake is applied to all sports.
@@ -387,109 +517,10 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
         update.effective_message.reply_text("ERRORE: stake non eliminato, utente non trovato")
         return
     update.effective_message.reply_text("Stake rimosso con successo")
-    
-
-def unlock_messages_to_user(update: Update, context: CallbackContext):
-    """/sblocca_utente <username or ID>
-
-    Args:
-        update (Update): [description]
-        context (CallbackContext): [description]
-    """
-    set_user_blocked_status(update, context, False, "⚠️ AVVISO ⚠️: sei stato riabilitato al servizio, da ora inizierai di nuovo a ricevere le giocate 🥳")
 
 
-def block_messages_to_user(update: Update, context: CallbackContext):
-    """/blocca_utente <username or ID>
 
-    Args:
-        update (Update): [description]
-        context (CallbackContext): [description]
-    """
-    set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza! ❌")
-
-
-def set_user_blocked_status(update: Update, context: CallbackContext, user_status: bool, user_message: str):
-    """Modifies the blocked bool for the specified user, sending a message to it to notify the change and an ack
-    message to the analyst.
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-        user_status (bool)
-        user_message (str): the message that is sent to the user, in case the operation is successful.
-    """
-    user_id = update.effective_user.id
-    try:
-        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin", "analyst"]) 
-    except custom_exceptions.UserPermissionError as e:
-        update.effective_message.reply_text(str(e))
-        return
-    except custom_exceptions.CommandArgumentsError as e:
-        update.effective_message.reply_text(str(e) + "username (o ID) dell'utente da bloccare o sbloccare")
-        return
-    user_status = {"blocked": user_status}
-    # * an actual user_id was sent
-    if type(target_user_identification_data) is int:
-        lgr.logger.debug(f"Updating user with user_id {target_user_identification_data} with status {user_status}")
-        update_result = user_manager.update_user(target_user_identification_data, user_status)
-        target_user_id = target_user_identification_data
-    # * a username was sent
-    else:
-        lgr.logger.debug(f"Updating user with username {target_user_identification_data} with status {user_status}")
-        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_identification_data, user_status)
-        if update_result:
-            target_user_id = update_result["_id"]
-    # * check if the user exists
-    if not update_result:
-        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
-        return
-    reply_message = f"Operazione avvenuta con successo per l'utente {target_user_identification_data}"
-    update.effective_message.reply_text(reply_message)
-    context.bot.send_message(target_user_id, user_message)
-
-
-def set_user_role(update: Update, context: CallbackContext):
-    """/cambia_ruolo <username or ID> <new role>
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    user_id = update.effective_user.id
-    try:
-        target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin"]) 
-    except custom_exceptions.UserPermissionError as e:
-        update.effective_message.reply_text(str(e))
-        return
-    except custom_exceptions.CommandArgumentsError as e:
-        update.effective_message.reply_text(str(e) + "username (o ID) e il ruolo tra user e analyst")
-        return
-    
-    # * retrieve the target user and role from the command text 
-    role = context.args[1]
-    if role not in users.ROLES and role != "admin":
-        update.effective_message.reply_text(f"ERRORE: Il ruolo {role} non è valido")
-        return
-    lgr.logger.info(f"Received /cambia_ruolo with {target_user_identification_data} and {role}")
-    user_role = {"role": role}
-    
-    # * an actual user_id was sent
-    if type(target_user_identification_data) is int:
-        target_user_id = target_user_identification_data
-        lgr.logger.debug(f"Updating user with user_id {target_user_id} with role {user_role}")
-        update_result = user_manager.update_user(target_user_id, user_role)
-    # * a username was sent
-    else:
-        lgr.logger.debug(f"Updating user with username {target_user_identification_data} with role {user_role}")
-        update_result = user_manager.update_user_by_username_and_retrieve_fields(target_user_identification_data, user_role)
-    
-    if not update_result:
-        reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
-        return
-    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} è un {user_role['role']}"
-    update.effective_message.reply_text(reply_message)
-
+############################################ OTHER COMMANDS ############################################
 
 def send_file_id(update: Update, _):
     """/send_file_id + MEDIA

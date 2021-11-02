@@ -85,6 +85,17 @@ def retrieve_giocate_from_ids(ids_list: List[int]) -> List[Dict]:
         raise e
 
 
+def retrieve_giocate_between_timestamps(max_timestamp: float, min_timestamp: float) -> List:
+    try:
+        return list(db.mongo.giocate.find(
+            { "sent_timestamp": {"$gt": min_timestamp, "$lt": max_timestamp}}
+        ))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve giocate since timestamp - {max_timestamp=} - {min_timestamp=}")
+        raise e
+
+
+
 def update_giocata_outcome(sport: str, giocata_num: str, outcome: str) -> bool:
     """Updates the giocata specified by the combination of sport and giocata_num
     with its outcome.

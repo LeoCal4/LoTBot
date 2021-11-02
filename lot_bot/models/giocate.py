@@ -2,12 +2,14 @@ import datetime
 import re
 from typing import Dict, List, Optional, Tuple
 
+from pymongo import database
+
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
-
+from lot_bot.dao import giocate_manager
 
 STAKE_PATTERN = r"\s*Stake\s*(\d+[.,]?\d*)\s*"
 
@@ -331,3 +333,91 @@ def personalize_giocata_text(giocata_text: str, personal_stakes: List, sport_nam
     giocata_text_rows = giocata_text_rows[:-1] + ["(stake personalizzato)", "", giocata_text_rows[-1]]
     giocata_text = "\n".join(giocata_text_rows)
     return giocata_text
+
+
+def get_exchange_trend_emoji(trend_value: float) -> str:
+    if trend_value >= 2:
+        return "⬆️"
+    elif 0 < trend_value < 2:
+        return "↗️"
+    elif trend_value == 0:
+        return "➡️"
+    elif -8 < trend_value < 0:
+        return "↘️"
+    else: # <= -8
+        return "⬇️"
+
+
+def get_calcio_and_tennis_trend_emoji(trend_value: float) -> str:
+    if trend_value >= 5:
+        return "⬆️"
+    elif 2.5 <= trend_value < 5:
+        return "↗️"
+    elif 0 < trend_value < 2.5:
+        return "➡️"
+    elif -5 < trend_value < 0:
+        return "↘️"
+    else: # <= -5
+        return "⬇️"
+
+
+def get_ping_pong_trend_emoji(trend_value: float) -> str:
+    if trend_value >= 10:
+        return "⬆️"
+    elif 5 <= trend_value < 10:
+        return "↗️"
+    elif 0 < trend_value < 5:
+        return "➡️"
+    elif -10 < trend_value < 0:
+        return "↘️"
+    else: # <= -10
+        return "⬇️"
+
+
+def get_trend_emoji(sport_name: str, trend_value: float) -> str:
+    if sport_name == spr.sports_container.EXCHANGE.name:
+        return get_exchange_trend_emoji(trend_value)
+    elif sport_name == spr.sports_container.CALCIO.name or spr.sports_container.TENNIS.name:
+        return get_calcio_and_tennis_trend_emoji(trend_value)
+    if sport_name == strat.strategies_container.PINGPONG:
+        return get_ping_pong_trend_emoji(trend_value)
+
+
+def get_giocate_trend_since_days(days_for_trend: int) -> str:
+    last_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
+    days_for_trend_midnight = last_midnight - datetime.timedelta(days=days_for_trend) 
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp())
+    trend_counts_and_totals = {}
+    for giocata in latest_giocate:
+        # * skip void giocate
+        if giocata["outcome"] == "void" or giocata["outcome"] == "?":
+            continue
+        lgr.logger.debug(f"{giocata['sport']=} - {giocata['outcome']=}")
+        # * use cashout value for maxexchange giocate
+        giocata_sport = giocata["sport"]
+        # * use strat names as sport for tutto il resto giocate
+        if giocata_sport == "tuttoilresto":
+            giocata_sport = giocata["strategy"]
+        if "cashout" in giocata:
+            outcome_percentage = giocata["cashout"] / 100
+        else:
+            outcome_percentage = get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
+        # * update dict with values
+        if giocata_sport not in trend_counts_and_totals:
+            trend_counts_and_totals[giocata_sport] = (1, outcome_percentage)
+        else:
+            giocate_count, total_percentage = trend_counts_and_totals[giocata_sport]
+            trend_counts_and_totals[giocata_sport] = (giocate_count + 1, total_percentage + outcome_percentage)
+    trend_message = "✍️ LoT TREND\n\n"
+    for key in trend_counts_and_totals:
+        giocate_count, total_percentage = trend_counts_and_totals[key]
+        giocata_sport = spr.sports_container.get_sport(key)
+        if not giocata_sport:
+            giocata_sport = strat.strategies_container.get_strategy(key)
+            if not giocata_sport:
+                raise custom_exceptions.SportNotFoundError(key)
+        sport_trend = round(total_percentage / giocate_count, 2)
+        lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {giocate_count} giocate = {sport_trend}%")
+        trend_emoji = get_trend_emoji(giocata_sport.name, sport_trend)
+        trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {trend_emoji}\n"
+    return trend_message

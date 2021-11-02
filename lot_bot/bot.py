@@ -80,6 +80,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("sblocca_utente", command_handlers.unlock_messages_to_user))
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("trend", command_handlers.get_trend))
     dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
     # ------------ Personal stake commands --------------
     dispatcher.add_handler(CommandHandler("crea_stake", command_handlers.create_personal_stake))

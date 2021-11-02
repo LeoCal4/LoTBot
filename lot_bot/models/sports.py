@@ -9,6 +9,7 @@ class Sport:
     strategies : List[strategies.Strategy] # ! should not partecipate in eq
     show_in_menu : bool = True
     display_name : str = ""
+    emoji : str = "📑"
 
     def __post_init__(self):
         if self.display_name == "":
@@ -41,10 +42,10 @@ _tutto_strategies = [
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD])
-    BASKET : Sport = Sport("basket", _base_strategies)
-    TENNIS : Sport = Sport("tennis", _base_strategies)
-    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB])
+    CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD], emoji="⚽️")
+    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
+    TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
+    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
     # PINGPONG : Sport = Sport("pingpong", _base_strategies + [strats.TRILLED], display_name="Ping Pong")
     # FRECCETTE : Sport = Sport("freccette", _base_strategies + [strats.TRILLED], show_in_menu=False)
