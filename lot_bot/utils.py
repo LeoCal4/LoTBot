@@ -47,7 +47,7 @@ def create_cashout_message(message_text: str) -> str:
     """Creates the cashout message to be broadcasted from a cashout message text.
     The message_text needs to be in the form "#<giocata id> +|-<percentage>.
     The final cashout message has the form:
-    🟢|🔴 CASHOUT Exchange <giocata id> +|-<percentage>% 🟢|🔴 or
+    🟢|🔴 CASHOUT Exchange <giocata id> 🟢|🔴 or
     ⚪️ Exchange #<giocata id> ABBINATA ⚪️
 
     Args:
@@ -64,7 +64,7 @@ def create_cashout_message(message_text: str) -> str:
     if emoji == "⚪️":
         return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"
     else:        
-        return f"{emoji} CASHOUT Exchange #{giocata_num} {cashout_percentage}% {emoji}"
+        return f"{emoji} CASHOUT Exchange #{giocata_num} {emoji}"
 
 
 def parse_float_string_to_int(float_string: str) -> int:
@@ -110,14 +110,16 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
         # * get outcome percentage and relative emoji
         if "cashout" in giocata:
             outcome_percentage = giocata["cashout"] / 100
+            outcome_percentage_string = ""
         else:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+            outcome_percentage_string = f"= {outcome_percentage:.2f}%"
         # TODO only outcome, no need for %
         outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage, giocata["outcome"])
         parsed_quota = giocata["base_quota"] / 100
         parsed_stake = stake / 100
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% = {outcome_percentage:.2f}% {outcome_emoji}\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% {outcome_percentage_string} {outcome_emoji}\n"
     return resoconto_message
 
 
