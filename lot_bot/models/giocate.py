@@ -389,7 +389,7 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
     latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp())
     trend_counts_and_totals = {}
     for giocata in latest_giocate:
-        # * skip void giocate
+        # * skip void and unfinished giocate
         if giocata["outcome"] == "void" or giocata["outcome"] == "?":
             continue
         lgr.logger.debug(f"{giocata['sport']=} - {giocata['outcome']=}")
@@ -398,6 +398,7 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
         # * use strat names as sport for tutto il resto giocate
         if giocata_sport == "tuttoilresto":
             giocata_sport = giocata["strategy"]
+        # * get the outcome percentage
         if "cashout" in giocata:
             outcome_percentage = giocata["cashout"] / 100
         else:
