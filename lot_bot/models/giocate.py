@@ -47,7 +47,7 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
     Returns:
         Tuple[str, str, str]: sport, giocata_num and outcome of the giocata outcome text
     """
-    win_keywords = ["vincente", "vinta", "vittoria", "positiva", "positivo"]
+    win_keywords = ["vincente", "vinta", "vittoria", "vincita", "positiva", "positivo"]
     loss_keywords = ["perdente", "persa", "perdita", "sconfitta", "negativa", "negativo"]
     matches = re.search(filters.get_giocata_outcome_pattern(), giocata_outcome)
     if not matches:
@@ -399,9 +399,14 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
         if giocata_sport == "tuttoilresto":
             giocata_sport = giocata["strategy"]
         # * get the outcome percentage
-        if "cashout" in giocata:
+        if "cashout" in giocata: # maxexchange
             outcome_percentage = giocata["cashout"] / 100
-        else:
+        elif giocata["strategy"] == strat.strategies_container.MB.name: # mb
+            if giocata["outcome"] == "win":
+                outcome_percentage = 0.7
+            elif giocata["outcome"] == "loss":
+                outcome_percentage = -500
+        else: # all the others
             outcome_percentage = get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
         # * update dict with values
         if giocata_sport not in trend_counts_and_totals:
@@ -409,7 +414,9 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
         else:
             giocate_count, total_percentage = trend_counts_and_totals[giocata_sport]
             trend_counts_and_totals[giocata_sport] = (giocate_count + 1, total_percentage + outcome_percentage)
-    trend_message = "✍️ LoT TREND\n\n"
+    start_date = days_for_trend_midnight.strftime("%d/%m/%Y")
+    end_date = last_midnight.strftime("%d/%m/%Y")
+    trend_message = f"✍️ LoT TREND ({start_date} - {end_date})\n\n"
     for key in trend_counts_and_totals:
         giocate_count, total_percentage = trend_counts_and_totals[key]
         giocata_sport = spr.sports_container.get_sport(key)
@@ -417,8 +424,12 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
             giocata_sport = strat.strategies_container.get_strategy(key)
             if not giocata_sport:
                 raise custom_exceptions.SportNotFoundError(key)
-        sport_trend = round(total_percentage / giocate_count, 2)
-        lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {giocate_count} giocate = {sport_trend}%")
-        trend_emoji = get_trend_emoji(giocata_sport.name, sport_trend)
-        trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {trend_emoji}\n"
+        # sport_trend = round(total_percentage / giocate_count, 2)
+        daily_trend = round(total_percentage / days_for_trend, 2)
+        lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {days_for_trend} giorni [{giocate_count} giocate] = {daily_trend}%")
+        trend_emoji = get_trend_emoji(giocata_sport.name, daily_trend)
+        percentage_string = ""
+        if giocata_sport.name != spr.sports_container.EXCHANGE.name:
+            percentage_string = f"Totale: {total_percentage}% - Media (giornaliera): {daily_trend}% - "
+        trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {percentage_string}{trend_emoji}\n"
     return trend_message

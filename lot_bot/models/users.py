@@ -6,9 +6,7 @@ from typing import Dict, List
 from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
-from lot_bot.dao import (sport_subscriptions_manager, user_manager)
-from lot_bot.models import sports as spr
-from lot_bot.models import strategies as strat
+from lot_bot.dao import user_manager
 from telegram import User
 
 # role: user, analyst, admin
@@ -118,41 +116,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
     trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
-    # * create calcio -  sport_subscription
-    sport_subscriptions_calcio_raddoppio_data = {
-        "user_id": user.id,
-        "sport": spr.sports_container.CALCIO.name,
-        "strategy": strat.strategies_container.RADDOPPIO.name,
-    }
-    sub_creation_result = False
-    try:
-        sub_creation_result = sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_raddoppio_data)
-    except Exception as e:
-        lgr.logger.error(f"Could not create subscription {sport_subscriptions_calcio_raddoppio_data} for new user {user_data['_id']} - {str(e)}")
-    sport_subscriptions_calcio_multiple_data = {
-        "user_id": user.id,
-        "sport": spr.sports_container.CALCIO.name,
-        "strategy": strat.strategies_container.MULTIPLA.name,
-    }
-    try:
-        sub_creation_result = sub_creation_result and sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_calcio_multiple_data)
-    except Exception as e:
-        lgr.logger.error(f"Could not create subscription {sport_subscriptions_calcio_multiple_data} for new user {user_data['_id']} - {str(e)}")
-    # * create exchange - maxexchange sport_subscription
-    sport_subscriptions_exchange_data = {
-        "user_id": user.id,
-        "sport": spr.sports_container.EXCHANGE.name,
-        "strategy": strat.strategies_container.MAXEXCHANGE.name,  
-    }
-    try:
-        sub_creation_result = sub_creation_result and sport_subscriptions_manager.create_sport_subscription(sport_subscriptions_exchange_data)
-    except Exception as e:
-        lgr.logger.error(f"Could not create subscription {sport_subscriptions_exchange_data} for new user {user_data['_id']} - {str(e)}")
-    if not sub_creation_result:
-        # send_messages_to_developers(context, [error_message]) # TODO decide if this is the right approach or not
-        pass
     return user_data
-
 
 
 def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
@@ -164,4 +128,3 @@ def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbi
     if not forbidden_roles is None:
         permitted = not user_role in forbidden_roles 
     return permitted
-

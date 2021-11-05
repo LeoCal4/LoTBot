@@ -60,6 +60,18 @@ def retrieve_all_user_ids_sub_to_sport_and_strategy(sport: str, strategy: str) -
         raise e 
 
 
+def retrieve_all_user_ids_sub_to_sport(sport: str) -> List:
+    try:
+        raw_user_ids = list(db.mongo.utenti.find(
+            { "sport_subscriptions.sport" : sport },
+            { "_id": 1 }
+        ))
+        return [raw_user_id["_id"] for raw_user_id in raw_user_ids]
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve all subscribed users to {sport=}")
+        raise e 
+
+
 def retrieve_sport_subscriptions_from_user_id(user_id: int) -> List:
     try:
         sub_result = db.mongo.utenti.find_one(

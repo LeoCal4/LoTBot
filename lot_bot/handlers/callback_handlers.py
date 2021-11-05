@@ -193,7 +193,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    # summing 1 hours for the UTC timezone
+    # summing 1 hour for the UTC timezone
     # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=1)
     # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.SPORT_MENU_MESSAGE

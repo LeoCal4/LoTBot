@@ -50,7 +50,11 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
 
     """
     text = original_text
-    sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
+    # * check if the strategy is all, hence the message has to be sent to all sub to the specified sport
+    if strategy != "all":
+        sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
+    else: 
+        sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport(sport)
     # * check if there are any subscribers to the specified strategy
     if sub_user_ids == []:
         lgr.logger.warning(f"There are no sport_subscriptions for {sport=} {strategy=}")
@@ -205,6 +209,7 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
     update_result = giocate_manager.update_exchange_giocata_outcome(giocata_num, cashout_percentage)
     if not update_result:
         update.effective_message.reply_text(f"ATTENZIONE: il cashout non è stato inviato. La giocata {giocata_num} non è stata trovata")
+        return
     # * create parsed cashout message
     cashout_text = utils.create_cashout_message(cashout_text_raw)
     lgr.logger.info(f"Received cashout message {cashout_text}")

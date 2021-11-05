@@ -114,7 +114,7 @@ SUCC_REFERRED_USER_MESSAGE = "\n\nIl tuo account è stato collegato con successo
 
 # {0}: invalid ref code
 NO_REFERRED_USER_FOUND_MESSAGE = """\n\nPurtroppo non siamo riusciti a trovare nessun utente collegato al codice referral {0}.
-Contatta <a href="https://t.me/LegacyOfTipstersBot">l'Assistenza</a> e riporta il problema nella chat."""
+Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> e riporta il problema nella chat."""
 
 
 # {0}: user id

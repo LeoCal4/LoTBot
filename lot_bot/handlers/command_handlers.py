@@ -112,16 +112,13 @@ def start_command(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     ref_code = None
     if len(context.args) > 0:
-        ref_code = context.args[1]
+        ref_code = context.args[0]
     lgr.logger.debug(f"Received /start command from {user_id}")
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
-    if ref_code and ref_code == user_data["referral_code"]:
-        lgr.logger.info("User attempted to /start with its own ref_code")
-        ref_code = None
     if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code)
-    elif ref_code:
+    elif ref_code and ref_code != user_data["referral_code"]:
         # * connect user to used ref_code
         update_result = False
         try:
@@ -143,28 +140,36 @@ def start_command(update: Update, context: CallbackContext):
 
 def normal_message_to_abbonati_handler(update: Update, context: CallbackContext):
     """Sends a message coming from one of the sports channels to
-    all the users subscribed to the specified sport and strategy.
+    all the users subscribed to the specified sport and (optional) strategy.
     The structure of the message must be:
-    /messaggio_abbonati <sport> - <strategy>
-    <text>
+        /messaggio_abbonati <sport> - [<strategy>]
+        <text>
 
     Args:
         update (Update)
         context (CallbackContext)
     """
     text = update.effective_message.text
+    message_rows = text.split("\n")
+    first_row = message_rows[0].strip()
+    parsed_text = "\n".join(message_rows[1:]).strip()
+    # * check message to send
+    if parsed_text == "":
+        update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
+        return
+    # * obtain sport and eventual strategy
     try:
-        sport, strategy = utils.get_sport_and_strategy_from_normal_message(text)
+        sport, strategy = utils.get_sport_and_strategy_from_normal_message(first_row)
     except custom_exceptions.NormalMessageParsingError as e:
         update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè presenta un errore, si prega di controllare e rimandarlo.\nL'errore è:\n{str(e)}")
         return
     lgr.logger.debug(f"Received normal message")
-    # * remove first line
-    parsed_text = "\n".join(text.split("\n")[1:]).strip()
-    if parsed_text == "":
-        update.effective_message.reply_text(f"ATTENZIONE: il messaggio non è stato inviato perchè è vuoto")
-        return
-    message_handlers.send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy.name)
+    # * check if a strategy was specified
+    if strategy:
+        strategy_name = strategy.name
+    else:
+        strategy_name = "all"
+    message_handlers.send_message_to_all_abbonati(update, context, parsed_text, sport.name, strategy_name)
 
 
 def aggiungi_giorni(update: Update, context: CallbackContext):
@@ -267,8 +272,8 @@ def unlock_messages_to_user(update: Update, context: CallbackContext):
     """/sblocca_utente <username or ID>
 
     Args:
-        update (Update): [description]
-        context (CallbackContext): [description]
+        update (Update)
+        context (CallbackContext)
     """
     set_user_blocked_status(update, context, False, "⚠️ AVVISO ⚠️: sei stato riabilitato al servizio, da ora inizierai di nuovo a ricevere le giocate 🥳")
 
@@ -277,8 +282,8 @@ def block_messages_to_user(update: Update, context: CallbackContext):
     """/blocca_utente <username or ID>
 
     Args:
-        update (Update): [description]
-        context (CallbackContext): [description]
+        update (Update)
+        context (CallbackContext)
     """
     set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza! ❌")
 
@@ -410,7 +415,6 @@ def create_personal_stake(update: Update, context: CallbackContext):
     except custom_exceptions.CommandArgumentsError as e:
         update.effective_message.reply_text(str(e) + "username (o ID), quota max, quota min, stake personale")
         return
-    target_user_identification_data = initial_command_parsing(user_id, context.args, 4, permitted_roles=["admin", "analyst"])
 
     lgr.logger.info(f"Received /crea_stake for {target_user_identification_data}")
     

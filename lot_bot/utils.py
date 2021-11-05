@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
@@ -125,34 +125,34 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
     return resoconto_message
 
 
-def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport, strat.Strategy]:
+def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[spr.Sport, Optional[strat.Strategy]]:
     """Gets the sport and the strategy from the first row of 
     a /messaggio_abbonati command.
 
     Args:
-        message (str): it has the form /messaggio_abbonati <sport> - <strategy>
+        message_first_row (str): it has the form /messaggio_abbonati <sport>[ - <strategy>]
 
     Raises:
         custom_exceptions.NormalMessageParsingError: in case the sport or the strategy are not valid
 
     Returns:
-        Tuple[spr.Sport, strat.Strategy]: the sport and the strategy found
+        Tuple[spr.Sport, strat.Strategy | None]: the sport and the strategy found, if any
     """
     # * text on the first line after the command
-    first_row = message.split("\n")[0]
-    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s-\s([\w\s]+)", first_row)
+    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)(?:\s-\s([\w\s]+))?", message_first_row.strip())
     if not matches:
-        lgr.logger.error(f"Cannot parse {message} with {first_row=}")
+        lgr.logger.error(f"Cannot parse {message_first_row=}")
         raise custom_exceptions.NormalMessageParsingError("messaggio non analizzabile, assicurati che segua la struttura '/messaggio_abbonati nomesport - nomestrategia'")
     sport_token = matches.group(1)
     sport = spr.sports_container.get_sport(sport_token)
     if not sport:
-        lgr.logger.error(f"Sport {sport_token} not valid from normal message {message} - {first_row=}")
+        lgr.logger.error(f"Sport {sport_token} not valid from {message_first_row=}")
         raise custom_exceptions.NormalMessageParsingError(f"sport '{sport_token}' non valido")
     strategy_token = matches.group(2)
     strategy = strat.strategies_container.get_strategy(strategy_token)
-    if not strategy or strategy not in sport.strategies:
-        lgr.logger.error(f"Strategy {strategy_token} not valid from normal message {message} - {first_row=}")
+    # * check that a strategy has been found and if it is valid
+    if strategy and strategy not in sport.strategies:
+        lgr.logger.error(f"Strategy {strategy_token} not valid from {message_first_row=}")
         raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport_token}'")
     return sport, strategy
 

@@ -51,6 +51,8 @@ class StrategyContainer:
         pass
 
     def get_strategy(self, strategy_token: str) -> Optional[Strategy]:
+        if not strategy_token:
+            return None
         strategy_token = strategy_token.upper().strip().replace(" ", "").replace("_", "")
         if hasattr(self, strategy_token):
             return getattr(self, strategy_token)

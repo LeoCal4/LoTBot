@@ -67,6 +67,8 @@ class SportsContainer:
         return dataclasses.astuple(item) in dataclasses.astuple(self)
 
     def get_sport(self, sport_string: str) -> Optional[Sport]:
+        if not sport_string:
+            return None
         parsed_sport_string = sport_string.upper().strip().replace(" ", "").replace("_", "")
         if hasattr(self, parsed_sport_string):
             return getattr(self, parsed_sport_string)
