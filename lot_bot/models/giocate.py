@@ -430,6 +430,6 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
         trend_emoji = get_trend_emoji(giocata_sport.name, daily_trend)
         percentage_string = ""
         if giocata_sport.name != spr.sports_container.EXCHANGE.name:
-            percentage_string = f"Totale: {total_percentage}% - Media (giornaliera): {daily_trend}% - "
+            percentage_string = f"Totale: {total_percentage:.2f}% - Media: {daily_trend:.2f}% - "
         trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {percentage_string}{trend_emoji}\n"
     return trend_message

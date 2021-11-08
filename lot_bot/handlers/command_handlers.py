@@ -238,6 +238,7 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str):
         parsed_text (str)
     """
     all_user_ids = user_manager.retrieve_all_user_ids()
+    lgr.logger.info(f"Starting to send broadcast message in async to approx. {len(all_user_ids)} users")
     for user_id in all_user_ids:
         try:
             context.bot.send_message(                
@@ -259,13 +260,16 @@ def broadcast_handler(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
+    lgr.logger.info("Received /broadcast")
     user_id = update.effective_user.id
     # * check if the user has the permission to use this command
     if not users.check_user_permission(user_id, permitted_roles=["admin"]):
         update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
         return
     parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
-    context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text)
+    # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
+    _send_broadcast_messages(context, parsed_text)
+
 
 
 def unlock_messages_to_user(update: Update, context: CallbackContext):

@@ -121,7 +121,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
 
 def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
     user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
-    lgr.logger.error(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
+    lgr.logger.debug(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
     permitted = True
     if not permitted_roles is None:
         permitted = user_role in permitted_roles
