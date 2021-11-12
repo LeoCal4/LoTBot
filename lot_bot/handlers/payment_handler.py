@@ -98,6 +98,7 @@ def to_payments(update: Update, context: CallbackContext):
     currency = "EUR"
     
     price = user_manager.get_subscription_price_for_user(chat_id)
+    # price = 500
     prices = [LabeledPrice("LoT Abbonamento", price)]
 
     try:

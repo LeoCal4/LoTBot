@@ -25,25 +25,18 @@ _base_strategies = [
 ]
 _tutto_strategies = [
     strats.HOCKEY,
-    strats.IPPICA,
+    strats.BASEBALL,
+    strats.FOOTBALLAMERICANO,
     strats.PALLAVOLO,
     strats.PINGPONG,
-    strats.AUTO,
-    strats.MOTO,
-    strats.RUGBY,
-    strats.FOOTBALLAMERICANO,
-    strats.BASEBALL,
-    strats.ESPORTS,
-    strats.PALLAMANO,
-    strats.FRECCETTE,
-    strats.SHOWTELEVISIVI,
+    strats.MMA
 ]
 
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
     CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD], emoji="⚽️")
-    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
+    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀", display_name="Basket (TEST)")
     TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")

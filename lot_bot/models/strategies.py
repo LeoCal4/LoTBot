@@ -33,6 +33,7 @@ class StrategyContainer:
     PALLAMANO : Strategy = Strategy("pallamano")
     FRECCETTE : Strategy = Strategy("freccette")
     SHOWTELEVISIVI : Strategy = Strategy("showtelevisivi", display_name="Show Televisivi")
+    MMA : Strategy = Strategy("mma", display_name="MMA")
     MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
     MB : Strategy = Strategy("mb", display_name="MB")
 
