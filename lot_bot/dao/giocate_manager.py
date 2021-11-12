@@ -95,6 +95,13 @@ def retrieve_giocate_between_timestamps(max_timestamp: float, min_timestamp: flo
         raise e
 
 
+def retrieve_last_n_giocate(num_of_giocate: int) -> List:
+    try:
+        return list(db.mongo.giocate.find().sort([("_id", 1)]).limit(num_of_giocate))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve last n giocate - {num_of_giocate=}")
+        raise e
+
 
 def update_giocata_outcome(sport: str, giocata_num: str, outcome: str) -> bool:
     """Updates the giocata specified by the combination of sport and giocata_num

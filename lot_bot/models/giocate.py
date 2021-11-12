@@ -353,7 +353,7 @@ def get_calcio_and_tennis_trend_emoji(trend_value: float) -> str:
         return "⬆️"
     elif 2.5 <= trend_value < 5:
         return "↗️"
-    elif 0 < trend_value < 2.5:
+    elif 0 <= trend_value < 2.5:
         return "➡️"
     elif -5 < trend_value < 0:
         return "↘️"
@@ -366,47 +366,68 @@ def get_ping_pong_trend_emoji(trend_value: float) -> str:
         return "⬆️"
     elif 5 <= trend_value < 10:
         return "↗️"
-    elif 0 < trend_value < 5:
+    elif 0 <= trend_value < 5:
         return "➡️"
-    elif -10 < trend_value < 0:
+    elif -10 <= trend_value < 0:
         return "↘️"
     else: # <= -10
         return "⬇️"
 
 
 def get_trend_emoji(sport_name: str, trend_value: float) -> str:
+    """Returns the trend arrow emoji for one of the following sports and the relative value:
+         - Exchange
+         - Calcio
+         - Tennis
+         - Pingpong (Tutto il resto strategy)
+    For all the others, a empty string is returned.
+
+    Args:
+        sport_name (str)
+        trend_value (float)
+
+    Returns:
+        str: the trend arrow emoji relative or an empty string
+    """
     if sport_name == spr.sports_container.EXCHANGE.name:
         return get_exchange_trend_emoji(trend_value)
-    elif sport_name == spr.sports_container.CALCIO.name or spr.sports_container.TENNIS.name:
+    elif sport_name == spr.sports_container.CALCIO.name or sport_name == spr.sports_container.TENNIS.name:
         return get_calcio_and_tennis_trend_emoji(trend_value)
-    if sport_name == strat.strategies_container.PINGPONG:
+    elif sport_name == strat.strategies_container.PINGPONG.name:
         return get_ping_pong_trend_emoji(trend_value)
+    return ""
 
 
-def get_giocate_trend_since_days(days_for_trend: int) -> str:
-    last_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
-    days_for_trend_midnight = last_midnight - datetime.timedelta(days=days_for_trend) 
-    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp())
+def create_trend_counts_and_totals_for_giocate(latest_giocate: List) -> Dict[str, Tuple[int, float]]:
+    """Creates the giocate count and percentage total to be used for a trend message, divided by sport.
+
+    Args:
+        latest_giocate (List): the giocate to count and calculate the percentage sport
+
+    Returns:
+        Dict[str, Tuple[int, float]]: a dict with sport names as keys and the relative giocate count and total percentage as items. 
+    """
     trend_counts_and_totals = {}
     for giocata in latest_giocate:
+        lgr.logger.debug(f"{giocata['sport']=} - {giocata['outcome']=}")
         # * skip void and unfinished giocate
         if giocata["outcome"] == "void" or giocata["outcome"] == "?":
             continue
-        lgr.logger.debug(f"{giocata['sport']=} - {giocata['outcome']=}")
-        # * use cashout value for maxexchange giocate
         giocata_sport = giocata["sport"]
         # * use strat names as sport for tutto il resto giocate
         if giocata_sport == "tuttoilresto":
             giocata_sport = giocata["strategy"]
         # * get the outcome percentage
+        # * (use cashout value for maxexchange giocate)
         if "cashout" in giocata: # maxexchange
             outcome_percentage = giocata["cashout"] / 100
+        # * (use fixed values for MB giocate)
         elif giocata["strategy"] == strat.strategies_container.MB.name: # mb
             if giocata["outcome"] == "win":
                 outcome_percentage = 0.7
             elif giocata["outcome"] == "loss":
                 outcome_percentage = -500
-        else: # all the others
+        else: # * (all the others)
             outcome_percentage = get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
         # * update dict with values
         if giocata_sport not in trend_counts_and_totals:
@@ -414,22 +435,63 @@ def get_giocate_trend_since_days(days_for_trend: int) -> str:
         else:
             giocate_count, total_percentage = trend_counts_and_totals[giocata_sport]
             trend_counts_and_totals[giocata_sport] = (giocate_count + 1, total_percentage + outcome_percentage)
-    start_date = days_for_trend_midnight.strftime("%d/%m/%Y")
-    end_date = last_midnight.strftime("%d/%m/%Y")
-    trend_message = f"✍️ LoT TREND ({start_date} - {end_date})\n\n"
+    return trend_counts_and_totals
+
+
+def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], days_for_trend: int = None) -> str:
+    """Creates the trend message. If days_for_trend is not specified, it uses the giocate counts for the 
+    overall trend, otherwise it is daily based.
+
+    Args:
+        trend_counts_and_totals (Dict[str, Tuple[int, float]])
+        days_for_trend (int, optional): the number of days for the trend. Defaults to None.
+
+    Raises:
+        custom_exceptions.SportNotFoundError: in case one of the specified sports does not exist
+
+    Returns:
+        str: the trend message
+    """
+    trend_message = ""
     for key in trend_counts_and_totals:
         giocate_count, total_percentage = trend_counts_and_totals[key]
+        # * check if the sport/strat exists
         giocata_sport = spr.sports_container.get_sport(key)
         if not giocata_sport:
             giocata_sport = strat.strategies_container.get_strategy(key)
             if not giocata_sport:
                 raise custom_exceptions.SportNotFoundError(key)
-        # sport_trend = round(total_percentage / giocate_count, 2)
-        daily_trend = round(total_percentage / days_for_trend, 2)
-        lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {days_for_trend} giorni [{giocate_count} giocate] = {daily_trend}%")
-        trend_emoji = get_trend_emoji(giocata_sport.name, daily_trend)
+        # * calculate sport trend
+        if days_for_trend:
+            sport_trend = round(total_percentage / days_for_trend, 2)
+            lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {days_for_trend} giorni [{giocate_count} giocate] = {sport_trend}%")
+        else:
+            sport_trend = round(total_percentage / giocate_count, 2)
+            lgr.logger.debug(f"{giocata_sport.display_name}: {total_percentage}% in {giocate_count} giocate = {sport_trend}%")
+        # * create trend entry for sport
+        trend_emoji = get_trend_emoji(giocata_sport.name, sport_trend)
         percentage_string = ""
         if giocata_sport.name != spr.sports_container.EXCHANGE.name:
-            percentage_string = f"Totale: {total_percentage:.2f}% - Media: {daily_trend:.2f}% - "
+            percentage_string = f"Totale: {total_percentage:.2f}% - Media: {sport_trend:.2f}% - "
         trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {percentage_string}{trend_emoji}\n"
+    return trend_message
+
+
+def get_giocate_trend_message_since_days(days_for_trend: int) -> str:
+    last_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
+    days_for_trend_midnight = last_midnight - datetime.timedelta(days=days_for_trend) 
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp())
+    trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
+    trend_message = create_trend_message(trend_counts_and_totals, days_for_trend=days_for_trend)
+    start_date = days_for_trend_midnight.strftime("%d/%m/%Y")
+    end_date = last_midnight.strftime("%d/%m/%Y")
+    trend_message = f"✍️ LoT TREND ({start_date} - {end_date})\n\n" + trend_message
+    return trend_message
+
+
+def get_giocate_trend_for_lastest_n_giocate(num_of_giocate_for_trend: int):
+    latest_giocate = giocate_manager.retrieve_last_n_giocate(num_of_giocate_for_trend)
+    trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
+    trend_message = create_trend_message(trend_counts_and_totals)
+    trend_message = f"✍️ LoT TREND (ultime {num_of_giocate_for_trend} giocate)\n\n" + trend_message
     return trend_message

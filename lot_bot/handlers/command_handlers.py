@@ -374,7 +374,8 @@ def set_user_role(update: Update, context: CallbackContext):
     update.effective_message.reply_text(reply_message)
 
 
-def get_trend(update: Update, context: CallbackContext):
+def get_trend_by_days(update: Update, context: CallbackContext):
+    MAX_DAYS_FOR_TREND = 365 
     user_id = update.effective_user.id
     try:
         initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin", "analyst"], target_user_identification_data_args_index=-1)
@@ -391,8 +392,45 @@ def get_trend(update: Update, context: CallbackContext):
         lgr.logger.error(f"Tried to use {context.args[0]} as days for trend - Exception type: {type(e).__name__}")
         update.effective_message.reply_text(f"ERRORE: '{context.args[0]}' non è un numero di giorni valido")
         return
+    # * check if the number is positive
+    if days_for_trend <= 0:
+        lgr.logger.error(f"Cannot use {days_for_trend} as num of giocate")
+        update.effective_message.reply_text(f"ERRORE: il numero di giorni deve essere maggiore di 0")
+        return
+    # * clamp number of giocate to MAX_GIORNI_FOR_TREND
+    days_for_trend = min(days_for_trend, MAX_DAYS_FOR_TREND)
     # * create giocate trend
-    giocate_trend = giocate.get_giocate_trend_since_days(days_for_trend)
+    giocate_trend = giocate.get_giocate_trend_message_since_days(days_for_trend)
+    update.effective_message.reply_text(giocate_trend)
+
+
+def get_trend_by_events(update: Update, context: CallbackContext):
+    MAX_GIOCATE_FOR_TREND = 200
+    user_id = update.effective_user.id
+    try:
+        initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin", "analyst"], target_user_identification_data_args_index=-1)
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "il numero di giocate da includere")
+        return
+    # * check whetever the events received are actually an integer
+    try:
+        events_for_trend : int = int(context.args[0])
+    except Exception as e:
+        lgr.logger.error(f"Tried to use {context.args[0]} as num of giocate for trend - Exception type: {type(e).__name__}")
+        update.effective_message.reply_text(f"ERRORE: '{context.args[0]}' non è un numero di giocate valido")
+        return
+    # * check if the number is positive
+    if events_for_trend <= 0:
+        lgr.logger.error(f"Cannot use {events_for_trend} as num of giocate")
+        update.effective_message.reply_text(f"ERRORE: il numero di giocate deve essere maggiore di 0")
+        return
+    # * clamp number of giocate to MAX_GIOCATE_FOR_TREND
+    events_for_trend = min(events_for_trend, MAX_GIOCATE_FOR_TREND)
+    # * create giocate trend
+    giocate_trend = giocate.get_giocate_trend_for_lastest_n_giocate(events_for_trend)
     update.effective_message.reply_text(giocate_trend)
 
 
