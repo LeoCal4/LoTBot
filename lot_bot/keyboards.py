@@ -170,7 +170,7 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
             keyboard_sport.append([sport_keyboard_button])
         else:
             keyboard_sport[(i-1)//2].append(sport_keyboard_button)
-    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_homepage")])
+    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_sport)
 
 

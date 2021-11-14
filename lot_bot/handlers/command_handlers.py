@@ -9,7 +9,7 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import user_manager
-from lot_bot.handlers import message_handlers
+from lot_bot.handlers import message_handlers, callback_handlers
 from lot_bot.models import personal_stakes, users, giocate
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
@@ -434,6 +434,51 @@ def get_trend_by_events(update: Update, context: CallbackContext):
     update.effective_message.reply_text(giocate_trend)
 
 
+
+def get_user_resoconto(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    lgr.logger.info(f"Received /get_user_resoconto {context.args[0]} {context.args[1]}")
+    try:
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin", "analyst"])
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "lo username (o l'ID) dell'utente e il numero di giorni da includere nel resoconto")
+        return
+    # * check whetever the days received are actually an integer
+    try:
+        days_for_resoconto = int(context.args[1])
+    except Exception as e:
+        lgr.logger.error(f"Tried to use {context.args[1]} as days for resoconto - Exception type: {type(e).__name__}")
+        update.effective_message.reply_text(f"ERRORE: '{context.args[1]}' non è un numero di giorni valido")
+        return
+    # * check if the number is positive
+    if days_for_resoconto <= 0:
+        lgr.logger.error(f"Cannot use {days_for_resoconto} as num giorni for resoconto utente")
+        update.effective_message.reply_text(f"ERRORE: il numero di giorni deve essere maggiore di 0")
+        return
+
+    # * an actual user_id was sent
+    if type(target_user_identification_data) is int:
+        target_user_id = target_user_identification_data
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Creating resoconto of user with username {target_user_identification_data}")
+        update_result = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id"])
+        if not update_result:
+            reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
+            update.effective_message.reply_text(reply_message)
+            return
+        target_user_id = update_result["_id"]
+    # * create resoconto
+    lgr.logger.debug(f"Creating resoconto of user with user_id {target_user_id}")
+    giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=days_for_resoconto)).timestamp()
+    resoconto_message_header = f"Resoconto utente {target_user_identification_data} -  Ultimi {days_for_resoconto} giorni" # TODO add dates
+    
+    context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
+        
+    
 ############################################ STAKE COMMANDS ############################################
 
 

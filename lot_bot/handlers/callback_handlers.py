@@ -433,34 +433,47 @@ def last_30_days_resoconto(update: Update, context: CallbackContext):
     send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
-def _create_and_send_resoconto(context: CallbackContext, chat_id: int, message_id: int, giocate_since_timestamp: float, resoconto_message_header: str):
+def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_since_timestamp: float, resoconto_message_header: str, edit_messages: bool = True, message_id: int = None):
     user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
     if user_giocate_data == []:
         no_giocata_found_text = resoconto_message_header + "\nNessuna giocata trovata."
-        context.bot.edit_message_text(
-            no_giocata_found_text,
-            chat_id=chat_id,
-            message_id=message_id,
-            reply_markup=kyb.RESOCONTI_KEYBOARD,
-        )
+        if edit_messages:
+            context.bot.edit_message_text(
+                no_giocata_found_text,
+                chat_id=chat_id,
+                message_id=message_id,
+                reply_markup=kyb.RESOCONTI_KEYBOARD,
+            )
+        else:
+            context.bot.send_message(
+                chat_id,
+                no_giocata_found_text,
+            )
         return
     user_giocate_data_dict = {giocata["original_id"]: giocata for giocata in user_giocate_data}
     user_giocate_ids = list(user_giocate_data_dict.keys())
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
     resoconto_message = resoconto_message_header + "\n" + utils.create_resoconto_message(giocate_full_data, user_giocate_data_dict)
-    # * edit last message with resoconto
-    context.bot.edit_message_text(
-        resoconto_message,
-        chat_id=chat_id,
-        message_id=message_id,
-        reply_markup=None,
-    )
-    # * send new message with menu
-    context.bot.send_message(
-        chat_id,
-        cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
-        reply_markup=kyb.RESOCONTI_KEYBOARD,
-    )
+    # * edit last message/send message with resoconto
+    if edit_messages:
+        context.bot.edit_message_text(
+            resoconto_message,
+            chat_id=chat_id,
+            message_id=message_id,
+            reply_markup=None,
+        )
+        # * send new message with menu
+        context.bot.send_message(
+            chat_id,
+            cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
+            reply_markup=kyb.RESOCONTI_KEYBOARD,
+        )
+    else:
+        context.bot.send_message(
+            chat_id,
+            resoconto_message,
+        )
+
 
 
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):
@@ -474,6 +487,7 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     chat_id = update.callback_query.from_user.id
     message_id = update.callback_query.message.message_id
     last_message_text = update.callback_query.message.text
+    # * avoid sending again the same type of resoconto
     if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
         return
-    context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, message_id, giocate_since_timestamp, resoconto_message_header)
+    context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
