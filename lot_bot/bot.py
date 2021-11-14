@@ -127,6 +127,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_outcome_giocata_filter(), message_handlers.outcome_giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), command_handlers.send_file_id))
+    dispatcher.add_handler(MessageHandler(filters.get_broadcast_media_filter(), command_handlers.broadcast_media))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))

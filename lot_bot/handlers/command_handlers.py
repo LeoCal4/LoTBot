@@ -1,6 +1,6 @@
 """Module containing all the message handlers"""
 import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Callable
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -614,7 +614,7 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
 ############################################ OTHER COMMANDS ############################################
 
 def send_file_id(update: Update, _):
-    """/send_file_id + MEDIA
+    """/file_id + MEDIA
 
     Args:
         update (Update)
@@ -628,7 +628,7 @@ def send_file_id(update: Update, _):
     file_id = None
     if not update.effective_message.document is None:
         file_id = update.effective_message.document.file_id
-    elif not update.effective_message.photo is None:
+    elif not update.effective_message.photo is None and update.effective_message.photo != []:
         file_id = update.effective_message.photo[-1].file_id
     elif not update.effective_message.video is None:
         file_id = update.effective_message.video.file_id
@@ -637,3 +637,50 @@ def send_file_id(update: Update, _):
     else:
         reply_message = f"{file_id}"
     update.effective_message.reply_text(reply_message)  
+
+
+def _send_broadcast_media(send_media_function: Callable, file_id: str, caption: str):
+    """Function to be called in async in order to send a broadcast media.
+
+    Args:
+        send_media_function (Callable)
+        file_id (str)
+        caption (str)
+    """
+    all_user_ids = user_manager.retrieve_all_user_ids()
+    lgr.logger.info(f"Starting to send broadcast media in async to approx. {len(all_user_ids)} users")
+    for user_id in all_user_ids:
+        try:
+            send_media_function(                
+                user_id,
+                file_id,
+                caption=caption
+            )
+        except Unauthorized:
+            lgr.logger.info(f"User {user_id} blocked the bot")
+        except Exception as e:
+            lgr.logger.info(f"Error in sending message: {str(e)}")
+
+
+def broadcast_media(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    file_id = None
+    if not update.effective_message.document is None:
+        file_id = update.effective_message.document.file_id
+        send_media_function = context.bot.send_document
+    elif not update.effective_message.photo is None and update.effective_message.photo != []:
+        file_id = update.effective_message.photo[-1].file_id
+        send_media_function = context.bot.send_photo
+    elif not update.effective_message.video is None:
+        file_id = update.effective_message.video.file_id
+        send_media_function = context.bot.send_video
+    if file_id is None:
+        reply_message = "Impossibile ottenere il file_id dal media inviato"
+        update.effective_message.reply_text(reply_message)
+        return
+    caption = " ".join(update.effective_message.caption.split()[1:]).strip()
+    _send_broadcast_media(send_media_function, file_id, caption)

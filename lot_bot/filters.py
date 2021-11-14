@@ -99,6 +99,9 @@ def get_all_filter() -> Filters:
 def get_text_messages_filter() -> Filters:
     return Filters.text
 
+def get_broadcast_media_filter() -> Filters:
+    return Filters.caption(["/broadcast"])
+
 
 # ================================================ PATTERNS ================================================
 
