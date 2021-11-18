@@ -40,14 +40,6 @@ class SportsContainer:
     TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
-    # PINGPONG : Sport = Sport("pingpong", _base_strategies + [strats.TRILLED], display_name="Ping Pong")
-    # FRECCETTE : Sport = Sport("freccette", _base_strategies + [strats.TRILLED], show_in_menu=False)
-    # HOCKEY : Sport  = Sport("hockey", _base_strategies + [strats.TRILLED], show_in_menu=False)
-    # BASEBALL : Sport = Sport("baseball", _base_strategies + [strats.TRILLED], show_in_menu=False)
-    # SPECIALI : Sport = Sport("speciali", _base_strategies, show_in_menu=False)
-    # RUGBY : Sport = Sport("rugby", _base_strategies + [strats.TRILLED], show_in_menu=False)
-    # PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, show_in_menu=False)
-    # IPPICA : Sport = Sport("ippica", _base_strategies, show_in_menu=False)
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

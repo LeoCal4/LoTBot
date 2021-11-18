@@ -11,31 +11,35 @@ class Strategy:
         if self.display_name == "":
             self.display_name = self.name.capitalize()
 
+
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class StrategyContainer:
     RADDOPPIO : Strategy = Strategy("raddoppio")
     MULTIPLA : Strategy = Strategy("multipla")
     SINGOLA : Strategy = Strategy("singola")
-    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong", emoji="🏓")
     SPECIALI : Strategy = Strategy("speciali")
     PDRRADDOPPI : Strategy = Strategy("pdrraddoppi", display_name="PDR Raddoppi")
     PDRHIGHODD : Strategy = Strategy("pdrhighodd", display_name="PDR High Odd")
-    HOCKEY : Strategy = Strategy("hockey")
-    IPPICA : Strategy = Strategy("ippica")
-    PALLAVOLO : Strategy = Strategy("pallavolo")
-    AUTO: Strategy = Strategy("auto")
-    MOTO : Strategy = Strategy("moto")
-    RUGBY : Strategy = Strategy("rugby")
-    FOOTBALLAMERICANO : Strategy = Strategy("footballamericano", display_name="Football Americano")
-    BASEBALL : Strategy = Strategy("baseball")
-    ESPORTS : Strategy = Strategy("esports")
-    PALLAMANO : Strategy = Strategy("pallamano")
-    FRECCETTE : Strategy = Strategy("freccette")
-    SHOWTELEVISIVI : Strategy = Strategy("showtelevisivi", display_name="Show Televisivi")
-    MMA : Strategy = Strategy("mma", display_name="MMA")
+    # * Tutto il resto
+    HOCKEY : Strategy = Strategy("hockey", display_name="Hockey (TEST)")
+    BASEBALL : Strategy = Strategy("baseball", display_name="Baseball (TEST)")
+    FOOTBALLAMERICANO : Strategy = Strategy("footballamericano", display_name="Football Americano (TEST)")
+    PALLAVOLO : Strategy = Strategy("pallavolo", display_name="Pallavolo (TEST)")
+    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong (TEST)", emoji="🏓")
+    MMA : Strategy = Strategy("mma", display_name="MMA (TEST)")
+    # * Exchange
     MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
     MB : Strategy = Strategy("mb", display_name="MB")
+    # IPPICA : Strategy = Strategy("ippica")
+    # AUTO: Strategy = Strategy("auto")
+    # MOTO : Strategy = Strategy("moto")
+    # RUGBY : Strategy = Strategy("rugby")
+    # ESPORTS : Strategy = Strategy("esports")
+    # PALLAMANO : Strategy = Strategy("pallamano")
+    # FRECCETTE : Strategy = Strategy("freccette")
+    # SHOWTELEVISIVI : Strategy = Strategy("showtelevisivi", display_name="Show Televisivi")
+
 
     def astuple(self):
         return tuple([self.__dict__[field.name] for field in dataclasses.fields(self)])

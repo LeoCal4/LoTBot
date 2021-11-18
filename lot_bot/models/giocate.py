@@ -174,6 +174,8 @@ def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
     STRATEGY_ROW = 2
     STRATEGY_INDEX = 1
     played_strategy = " ".join(text.split("\n")[STRATEGY_ROW].split()[STRATEGY_INDEX:-1])
+    if " (TEST)" in played_strategy:
+        played_strategy = " ".join(played_strategy.split()[:-1])
     strategy = strat.strategies_container.get_strategy(played_strategy)
     sport = spr.sports_container.get_sport(sport)
     if strategy and strategy in sport.strategies:

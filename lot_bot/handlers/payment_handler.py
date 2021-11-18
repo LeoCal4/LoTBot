@@ -35,6 +35,17 @@ def to_add_linked_referral_before_payment(update: Update, context: CallbackConte
         int: the REFERRAL state for the ConversationHandler
     """
     chat_id = update.callback_query.message.chat_id
+    user_data = user_manager.retrieve_user_fields_by_user_id(chat_id, ["payments"])
+    # ! TODO REVERT 
+    # * check if the user has already payed
+    if user_data and "payments" in user_data and len(user_data["payments"]) > 0:
+        context.bot.edit_message_text(
+            "Hai già effettuato il pagamento della prevendita!",
+            chat_id=chat_id, 
+            message_id=update.callback_query.message.message_id,
+        )
+        message_handlers.homepage_handler(update, context)
+        return ConversationHandler.END
     referral_text = ref_code_handlers.get_update_linked_referral_message(chat_id)
     message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
     context.bot.edit_message_text(
@@ -87,18 +98,16 @@ def to_payments(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
-    INVOICE_TIMEOUT_SECONDS = 180
+    INVOICE_TIMEOUT_SECONDS = 30
     chat_id = update.callback_query.message.chat_id
-    title = "LoT Abbonamento Premium"
-    description = "LoT Abbonamento Premium"
-    # ! since there is no way to know when the invoice has been sent 
-    # !     once we reach the pre-checkout, we add a timestamp to the base payload
-    # !     so that we can check it during the pre-checkout
-    payload = "pagamento_sport_subscription_" + f"{(datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()}"
+    title = "LoT Abbonamento TEST TITLE"
+    description = "LoT Abbonamento TEST DESCRIPTION"
+    context.user_data["payment_limit_timestamp"] = (datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()
+    payload = "pagamento_sport_subscription"
     currency = "EUR"
     
-    price = user_manager.get_subscription_price_for_user(chat_id)
-    # price = 500
+    # price = user_manager.get_subscription_price_for_user(chat_id)
+    price = 500
     prices = [LabeledPrice("LoT Abbonamento", price)]
 
     try:
@@ -112,7 +121,7 @@ def to_payments(update: Update, context: CallbackContext):
     return ConversationHandler.END
 
 
-def pre_checkout_handler(update: Update, _):
+def pre_checkout_handler(update: Update, context: CallbackContext):
     """This handler is called when the user has clicked on 
     an invoice and has inserted all the needed payment info.
 
@@ -121,17 +130,14 @@ def pre_checkout_handler(update: Update, _):
 
     Args:
         update (Update)
-        _ (CallbackContext)
+        context (CallbackContext)
     """
-    PAYLOAD_TIMESTAMP_INDEX = 3
     query = update.pre_checkout_query
     payload = query.invoice_payload
-    payload_tokens = payload.split("_")
-    payload_base = "_".join(payload_tokens[0:PAYLOAD_TIMESTAMP_INDEX])
-    payload_timestamp = payload_tokens[PAYLOAD_TIMESTAMP_INDEX]
-    if payload_base != "pagamento_sport_subscription":
-        query.answer(ok=False, error_message="Qualcosa è andato storto...")
-    elif float(payload_timestamp) < datetime.datetime.utcnow().timestamp():
+    if payload != "pagamento_sport_subscription":
+        query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza")
+    elif ("payment_limit_timestamp" not in context.user_data or 
+        context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
         query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")
     else:
         query.answer(ok=True)
@@ -153,7 +159,8 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_user"])
     # * extend the user's subscription up to the same day of the next month
-    new_expiration_date: float = users.extend_expiration_date(retrieved_user["lot_subscription_expiration"],30)
+    new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
+    # new_expiration_date: float = users.extend_expiration_date(retrieved_user["lot_subscription_expiration"], 30)
     # * reset user successful referrals
     # * add email to user data
     user_email = update.message.successful_payment.order_info.email

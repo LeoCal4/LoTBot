@@ -113,12 +113,20 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
 ##################################### MESSAGE HANDLERS #####################################
 
 
-def homepage_handler(update: Update, _):
-    update.message.reply_text(
-        cst.HOMEPAGE_MESSAGE,
-        reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-        parse_mode="HTML"
-    )
+def homepage_handler(update: Update, context: CallbackContext):
+    try:
+        update.message.reply_text(
+            cst.HOMEPAGE_MESSAGE,
+            reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+            parse_mode="HTML"
+        )
+    except AttributeError: # * this happens when the homepage handler is called by a method with no "message" field in the update
+        context.bot.send_message(
+            update.effective_user.id,
+            cst.HOMEPAGE_MESSAGE,
+            reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+            parse_mode="HTML"
+        )
 
 
 def bot_configuration_handler(update: Update, _: CallbackContext):

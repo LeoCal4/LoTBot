@@ -69,7 +69,7 @@ REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_gioca
 
 
 service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento (IN ARRIVO) 🌟", callback_data="new")], 
+    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento (IN ARRIVO) 🌟", callback_data="to_add_referral")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
