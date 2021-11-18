@@ -111,9 +111,8 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
             }
     else:
         lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
-    # ! TODO REVERT
-    # trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=7)).timestamp()
-    trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
+    # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
     user_data["lot_subscription_expiration"] = trial_expiration_timestamp
     user_manager.create_user(user_data)
     return user_data

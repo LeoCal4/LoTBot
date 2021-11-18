@@ -237,7 +237,7 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str):
         context (CallbackContext)
         parsed_text (str)
     """
-    all_user_ids = user_manager.retrieve_all_user_ids()
+    all_user_ids = user_manager.retrieve_all_active_user_ids()
     lgr.logger.info(f"Starting to send broadcast message in async to approx. {len(all_user_ids)} users")
     for user_id in all_user_ids:
         try:
@@ -476,7 +476,8 @@ def get_user_resoconto(update: Update, context: CallbackContext):
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=days_for_resoconto)).timestamp()
     resoconto_message_header = f"Resoconto utente {target_user_identification_data} -  Ultimi {days_for_resoconto} giorni" # TODO add dates
     
-    context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
+    # context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
+    callback_handlers._create_and_send_resoconto(context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
         
     
 ############################################ STAKE COMMANDS ############################################
@@ -647,7 +648,7 @@ def _send_broadcast_media(send_media_function: Callable, file_id: str, caption: 
         file_id (str)
         caption (str)
     """
-    all_user_ids = user_manager.retrieve_all_user_ids()
+    all_user_ids = user_manager.retrieve_all_active_user_ids()
     lgr.logger.info(f"Starting to send broadcast media in async to approx. {len(all_user_ids)} users")
     for user_id in all_user_ids:
         try:

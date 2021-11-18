@@ -51,7 +51,7 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
         return None
 
 
-def retrieve_all_user_ids() -> List[int]:
+def retrieve_all_active_user_ids() -> List[int]:
     """Retrieves all the users' IDs.
 
     Raises:
@@ -61,7 +61,7 @@ def retrieve_all_user_ids() -> List[int]:
         List[int]: the list of the users' IDs
     """
     try:
-        results = db.mongo.utenti.find({}, {"_id": 1})
+        results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]
