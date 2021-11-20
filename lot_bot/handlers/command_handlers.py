@@ -110,9 +110,16 @@ def start_command(update: Update, context: CallbackContext):
     # the effective_message field is always present in normal messages
     # from_user gets the user which sent the message
     user_id = update.effective_user.id
+    additional_code = None
     ref_code = None
+    teacherbet_code = None
     if len(context.args) > 0:
-        ref_code = context.args[0]
+        additional_code = context.args[0]
+        if additional_code.endswith("-lot"):
+            ref_code = additional_code
+        elif additional_code.endswith("teacherbet"):
+            # TODO check if it has already been used
+            teacherbet_code = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
     if not user_data:
@@ -135,6 +142,20 @@ def start_command(update: Update, context: CallbackContext):
         else:
             reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
         update.message.reply_text(reply_text, parse_mode="HTML")
+    elif teacherbet_code and utils.check_teacherbet_code_validity():
+        update_result = False
+        try:
+            user_manager.update_user({"teacherbet_code": teacherbet_code})
+            # TODO push "teacherbet" into available sports
+        except Exception as e:
+            lgr.logger.error(f"Error in adding teacherbet code to already existing user from deep linking - {str(e)}")
+            update_result = False
+        if update_result:
+            # reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
+            reply_text = ""
+        else:
+            # reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+            reply_text = ""
     message_handlers.homepage_handler(update, context)
 
 
