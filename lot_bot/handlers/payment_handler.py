@@ -98,7 +98,7 @@ def to_payments(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
-    INVOICE_TIMEOUT_SECONDS = 30
+    INVOICE_TIMEOUT_SECONDS = 300
     chat_id = update.callback_query.message.chat_id
     title = "LoT Abbonamento TEST TITLE"
     description = "LoT Abbonamento TEST DESCRIPTION"
@@ -159,7 +159,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_user"])
     # * extend the user's subscription up to the same day of the next month
-    new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
+    new_expiration_date =  datetime.datetime(2021, 12, 2, hour=22, minute=59).timestamp() # ! TODO REVERT (22 and not 23 because we're at +1)
     # new_expiration_date: float = users.extend_expiration_date(retrieved_user["lot_subscription_expiration"], 30)
     # * reset user successful referrals
     # * add email to user data

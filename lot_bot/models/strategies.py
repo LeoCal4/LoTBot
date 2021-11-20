@@ -26,7 +26,7 @@ class StrategyContainer:
     BASEBALL : Strategy = Strategy("baseball", display_name="Baseball (TEST)")
     FOOTBALLAMERICANO : Strategy = Strategy("footballamericano", display_name="Football Americano (TEST)")
     PALLAVOLO : Strategy = Strategy("pallavolo", display_name="Pallavolo (TEST)")
-    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong (TEST)", emoji="🏓")
+    PINGPONG : Strategy = Strategy("pingpong", display_name="Ping Pong", emoji="🏓")
     MMA : Strategy = Strategy("mma", display_name="MMA (TEST)")
     # * Exchange
     MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
