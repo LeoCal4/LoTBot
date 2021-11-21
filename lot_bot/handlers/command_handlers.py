@@ -58,7 +58,7 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
         return target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
 
 
-def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str):
+def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str = None, teacherbet_code: str = None):
     """Sends welcome messages to the user, then creates two standard
     sport_subscriptions for her/him and creates the user itself.
 
@@ -66,7 +66,7 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         update (Update)
     """
     user = update.effective_user
-    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code)
+    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code)
     trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # * escape chars for HTML
@@ -117,14 +117,14 @@ def start_command(update: Update, context: CallbackContext):
         additional_code = context.args[0]
         if additional_code.endswith("-lot"):
             ref_code = additional_code
-        elif additional_code.endswith("teacherbet"):
+        elif additional_code.endswith("-teacherbet"):
             # TODO check if it has already been used
             teacherbet_code = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
     if not user_data:
         # * the user does not exist yet
-        first_time_user_handler(update, context, ref_code)
+        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
     elif ref_code and ref_code != user_data["referral_code"]:
         # * connect user to used ref_code
         update_result = False

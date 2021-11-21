@@ -85,7 +85,7 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
 
-def create_first_time_user(user: User, ref_code: str) -> Dict:
+def create_first_time_user(user: User, ref_code: str = None) -> Dict:
     """Creates the user using the bot for the first time.
     First, it creates the user itself, setting its expiration date to 7 days 
     from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
@@ -93,6 +93,7 @@ def create_first_time_user(user: User, ref_code: str) -> Dict:
 
     Args:
         user (User)
+        ref_code (str): referral code for the new user. Defaults to None
 
     Returns:
         Dict: the created user data
