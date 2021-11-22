@@ -66,7 +66,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     if is_giocata:
         original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes", "blocked"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked"])
         # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
@@ -77,9 +77,9 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
             lgr.logger.warning(f"User {user_id} is blocked")
             messages_to_be_sent -= 1
             continue
-        # * check if the user has an active subscription
-        if not user_manager.check_user_validity(update.effective_message.date, user_data):
-            lgr.logger.warning(f"User {user_id} is not active")
+        # * check if the user has an active subscription for the given sport
+        if not user_manager.check_user_sport_subscription(update.effective_message.date, user_data["subscriptions"], sport):
+            lgr.logger.warning(f"User {user_id} is not active or does not have access to said sport")
             messages_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Sending message to {user_id}")

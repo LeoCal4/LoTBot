@@ -40,7 +40,7 @@ class SportsContainer:
     TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
-    TEACHERBET : Sport = Sport("teacherbet", [], display_name="Teacherbet", show_in_menu=False)
+    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", show_in_menu=True)
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()
@@ -51,6 +51,11 @@ class SportsContainer:
 
     def __contains__(self, item: Sport):
         return dataclasses.astuple(item) in dataclasses.astuple(self) # wat
+
+    def __eq__(self, __o: object) -> bool:
+        if hasattr(__o, "name"):
+            return self.name == __o.name
+        return False
 
     def get_sport(self, sport_string: str) -> Optional[Sport]:
         if not sport_string:

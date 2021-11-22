@@ -31,6 +31,8 @@ class StrategyContainer:
     # * Exchange
     MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
     MB : Strategy = Strategy("mb", display_name="MB")
+    # * Teacherbet
+    TEACHERBETLUXURY : Strategy = Strategy("teacherbetluxury", display_name="Teacherbet Luxury")
     # IPPICA : Strategy = Strategy("ippica")
     # AUTO: Strategy = Strategy("auto")
     # MOTO : Strategy = Strategy("moto")
