@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
+from lot_bot.models import subscriptions as subs
 from telegram import User
 
 # role: user, analyst, admin
@@ -18,7 +19,7 @@ def create_base_user_data():
         "name": "",
         "username": "",
         "email": "",
-        "lot_subscription_expiration": 0.0,
+        "subscriptions": [],
         "role": "user",
         "referral_code": create_valid_referral_code(),
         "linked_referral_user": {
@@ -32,7 +33,6 @@ def create_base_user_data():
         "giocate": [],
         "payments": [],
         "sport_subscriptions": [],
-        "available_sports": [],
         "personal_stakes": [],
     }
 
@@ -110,11 +110,11 @@ def create_first_time_user(user: User, ref_code: str = None) -> Dict:
                 "linked_user_code": ref_code,
                 "linked_user_id": ref_user_data["_id"]
             }
-    else:
-        lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
+        else:
+            lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
     # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
-    user_data["lot_subscription_expiration"] = trial_expiration_timestamp
+    user_data["subscriptions"].append({"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp})
     user_manager.create_user(user_data)
     return user_data
 
@@ -128,3 +128,20 @@ def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbi
     if not forbidden_roles is None:
         permitted = not user_role in forbidden_roles 
     return permitted
+
+
+def get_user_available_sports_names_from_subscriptions(user_subscriptions: List[Dict]) -> List[str]:
+    user_available_sports = []
+    now_timestamp = datetime.datetime.utcnow().timestamp()
+    for sub_entry in user_subscriptions:
+        sub = subs.sub_container.get_subscription(sub_entry["name"])
+        if sub is None:
+            raise Exception
+        if float(sub_entry["expiration_date"]) < now_timestamp:
+            continue
+        if sub.available_sports == []:
+            return []
+        sports_names = [sub_sport.name for sub_sport in sub.available_sports]
+        user_available_sports.extend(sports_names)
+    return user_available_sports
+        

@@ -7,14 +7,30 @@ from lot_bot.models import sports
 @dataclasses.dataclass
 class Subscription:
     name : str
-    available_sports : List[sports.Sport] = []
-    price : int = 0 # ?
+    display_name : str = ""
+    available_sports : List[sports.Sport] = dataclasses.field(default_factory=list)
+    description : str = ""
+    price : int = 0
+
+    def __post_init__(self):
+        if self.display_name == "":
+            self.display_name = self.name.capitalize()
 
 
 @dataclasses.dataclass
 class SubContainer:
-    LOTCOMPLETE : Subscription = Subscription("lotcomplete")
-    TEACHERBET : Subscription = Subscription("teacherbet", available_sports=[sports.sports_container.TEACHERBET])
+    LOTCOMPLETE : Subscription = Subscription(
+        "lotcomplete", 
+        display_name="LoT Abbonamento Completo", 
+        price=500, 
+        description="Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)"
+    )
+    TEACHERBET : Subscription = Subscription(
+        "teacherbet", 
+        available_sports=[sports.sports_container.TEACHERBET], 
+        price=1500,
+        description="Accesso alla produzione Teacherbet"    
+    )
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

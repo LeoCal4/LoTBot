@@ -12,6 +12,7 @@ from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import subscriptions as subs_model 
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -185,7 +186,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"])
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
         context.bot.send_message(
@@ -193,9 +194,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    # summing 1 hour for the UTC timezone
-    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=1)
-    # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.SPORT_MENU_MESSAGE
     context.bot.edit_message_text(
         tip_text,
@@ -208,9 +206,13 @@ def to_sports_menu(update: Update, context: CallbackContext):
 
 def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "lot_subscription_expiration"])
-    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
-    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"], expiration_date)
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
+    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
+    for sub in user_data["subscriptions"]:
+        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        sub_name = subs_model.sub_container.get_subscription(sub["name"])
+        sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
+        service_status += f"\n- {sub_emoji} {sub_name.display_name}: valido fino a {expiration_date}"
     context.bot.edit_message_text(
         service_status,
         user_id, 
