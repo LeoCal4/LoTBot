@@ -67,7 +67,8 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     """
     user = update.effective_user
     first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1)
+    # * get trial sub and add date visualization offset
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["subscriptions"][0]["expiration_date"]) + datetime.timedelta(hours=1)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # * escape chars for HTML
     parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

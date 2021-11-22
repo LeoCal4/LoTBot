@@ -86,14 +86,14 @@ def test_delete_user(new_user: Dict, monkeypatch):
 def test_check_user_active_validity():
     user_expiration_date = str((datetime.datetime.now() + datetime.timedelta(days=1)).timestamp())
     user_data = {"lot_subscription_expiration": user_expiration_date}
-    validity = user_manager.check_user_validity(datetime.datetime.now(), user_data)
+    validity = user_manager.check_user_sport_subscription(datetime.datetime.now(), user_data)
     assert validity == True
 
 
 def test_check_user_expired_validity():
     user_expiration_date = str((datetime.datetime.now() - datetime.timedelta(days=1)).timestamp())
     user_data = {"lot_subscription_expiration": user_expiration_date}
-    validity = user_manager.check_user_validity(datetime.datetime.now(), user_data)
+    validity = user_manager.check_user_sport_subscription(datetime.datetime.now(), user_data)
     assert validity == False
 
 

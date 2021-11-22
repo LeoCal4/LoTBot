@@ -3,6 +3,9 @@
 - name: str
 - username: str
 - email: str
+- subscriptions: List[Dict]
+    - name: str
+    - expiration_date: float
 - lot_subscription_expiration: timestamp
 - role: str
 - referral_code: str
