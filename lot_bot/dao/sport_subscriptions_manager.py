@@ -86,11 +86,11 @@ def retrieve_sport_subscriptions_from_user_id(user_id: int) -> List:
         raise e    
 
 
-def retrieve_subs_and_available_sports_from_user_id(user_id: int) -> Dict:
+def retrieve_subs_from_user_id(user_id: int) -> Dict:
     try:
         sub_result = db.mongo.utenti.find_one(
             { "_id": user_id },
-            { "sport_subscriptions": 1,  "available_sports": 1}
+            { "sport_subscriptions": 1,  "subscriptions": 1}
         )
         if not sub_result:
             return {}

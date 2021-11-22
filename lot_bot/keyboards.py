@@ -3,6 +3,7 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
 
 from lot_bot import constants as cst
 from lot_bot.models import sports as spr
+from lot_bot.models import users
 from lot_bot.dao import sport_subscriptions_manager
 from lot_bot import logger as lgr
 
@@ -150,9 +151,9 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
 
     chat_id = update.effective_chat.id
     # sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(chat_id)
-    user_data = sport_subscriptions_manager.retrieve_subs_and_available_sports_from_user_id(chat_id)
+    user_data = sport_subscriptions_manager.retrieve_subs_from_user_id(chat_id)
     sport_subscriptions = user_data["sport_subscriptions"]
-    available_sports = user_data["available_sports"]
+    available_sports = users.get_user_available_sports_names_from_subscriptions(user_data["subscriptions"])
     subscribed_sports = [entry["sport"].lower() for entry in sport_subscriptions]
     sports_in_menu = [sport for sport in spr.sports_container if sport.show_in_menu]
     if available_sports == []:
