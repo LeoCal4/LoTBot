@@ -11,6 +11,7 @@ class Subscription:
     available_sports : List[sports.Sport] = dataclasses.field(default_factory=list)
     description : str = ""
     price : int = 0
+    aliases : List[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
         if self.display_name == "":
@@ -23,13 +24,15 @@ class SubContainer:
         "lotcomplete", 
         display_name="LoT Abbonamento Completo", 
         price=500, 
-        description="Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)"
+        description="Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)",
+        aliases=["lot", "lot completo", "lot complete", "lot totale"]
     )
     TEACHERBET : Subscription = Subscription(
         "teacherbet", 
         available_sports=[sports.sports_container.TEACHERBET], 
         price=1500,
-        description="Accesso alla produzione Teacherbet"    
+        description="Accesso alla produzione Teacherbet",
+        aliases=["teacher", "teacher bet", "tb"]
     )
 
     def __iter__(self):

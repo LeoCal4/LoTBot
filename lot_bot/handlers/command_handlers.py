@@ -10,7 +10,7 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import user_manager
 from lot_bot.handlers import message_handlers, callback_handlers
-from lot_bot.models import personal_stakes, users, giocate
+from lot_bot.models import personal_stakes, users, giocate, subscriptions
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -195,10 +195,11 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
 
 
 def aggiungi_giorni(update: Update, context: CallbackContext):
-    """Adds the specified number of positive days to the specified user's LoT subscription. 
+    """Adds the specified number of positive days to the specified user's subscription. 
+    If no subscription is specified, it is assumed to be LoT's complete one.
+
     The structure is:
-        /aggiungi_giorni <username o ID> <days>
-    
+        /aggiungi_giorni <username o ID> <days> [<subscription name>]
 
     Args:
         update (Update)
@@ -215,7 +216,11 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         update.effective_message.reply_text(str(e) + "id (o username) e giorni di prova da aggiungere")
         return
     
+    # TODO check permissions on sub
     giorni_aggiuntivi = context.args[1]
+    subscription_name = ""
+    if len(context.args) > 2:
+        subscription_name = " ".join(context.args[2:]).strip().lower()
     lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_identification_data} and {giorni_aggiuntivi}")
 
     # * check whetever the days received are actually an integer
@@ -229,25 +234,42 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     # * retrieve the user's subscription expiration 
     # TODO check if there is a way to just increment it 
     if type(target_user_identification_data) is int:
-        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_identification_data, ["lot_subscription_expiration"])
+        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_identification_data, ["subscriptions"])
     else:
-        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id", "lot_subscription_expiration"])
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id", "subscriptions"])
     # * check if the user exists
     if target_user_data is None:
         user_not_found_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato (ricorda: gli username sono case-sensitive)"
         update.effective_message.reply_text(user_not_found_message)
         return
-    # * extend the user's subscription
     target_user_id = target_user_data["_id"] 
-    user_expiration_timestamp = target_user_data["lot_subscription_expiration"]
-    new_lot_subscription_expiration = {"lot_subscription_expiration": users.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
-    update_results = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
+    # * reify user sub
+    user_subs_raw = target_user_data["subscriptions"]
+    user_subs_names = [sub["name"] for sub in user_subs_raw] 
+    user_subs = [subscriptions.sub_container.get_subscription(sub_entry) for sub_entry in user_subs_names]
+    # * assume it's base lot sub in case no sub has been specified
+    if subscription_name == "":
+        subscription_name = "lotcomplete"
+    target_sub_name = None
+    for user_sub, raw_user_sub in zip(user_subs, user_subs_raw):
+        # * check if sub name is valid
+        if subscription_name == user_sub.name or subscription_name in user_sub.aliases:
+            # * extend the user's subscription
+            raw_user_sub["expiration_date"] = users.extend_expiration_date(raw_user_sub["expiration_date"], giorni_aggiuntivi)
+            target_sub_name = user_sub.display_name
+            break
+    # * check if user has the specified sub
+    if not target_sub_name:
+        update.effective_message.reply_text(f"ERRORE: impossibile aggiungere giorni, l'utente non possiede l'abbonamento specificato da {subscription_name}")
+        return
+    new_subscriptions = {"subscriptions": user_subs_raw}
+    update_results = user_manager.update_user(target_user_id, new_subscriptions)
     if not update_results:
         update.effective_message.reply_text("ERRORE: impossibile aggiungere giorni")
         return
     # * answer the analyst with the result of the operation and notify the user
-    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
-    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!"
+    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi per l'abbonamento {target_sub_name}"
+    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti per l'abbonamento {target_sub_name}!"
     context.bot.send_message(target_user_id, message_to_user)
     update.effective_message.reply_text(reply_message)
 
@@ -497,7 +519,6 @@ def get_user_resoconto(update: Update, context: CallbackContext):
     lgr.logger.debug(f"Creating resoconto of user with user_id {target_user_id}")
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=days_for_resoconto)).timestamp()
     resoconto_message_header = f"Resoconto utente {target_user_identification_data} -  Ultimi {days_for_resoconto} giorni" # TODO add dates
-    
     # context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
     callback_handlers._create_and_send_resoconto(context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
         
