@@ -1,8 +1,7 @@
 import datetime
+import random
 import re
 from typing import Dict, List, Optional, Tuple
-
-from pymongo import database
 
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
@@ -69,6 +68,24 @@ def get_giocata_outcome_data(giocata_outcome: str) -> Tuple[str, str, str]:
     return sport.name, giocata_num, outcome
 
 
+def get_teacherbet_giocata_outcome_data(tb_giocata_outcome:str) -> Tuple[str, str]:
+    win_keywords = ["✅", "✔️", "☑️"]
+    loss_keywords = ["❌", "❎"]
+    matches = re.search(filters.get_teacherbet_giocata_outcome_pattern(), tb_giocata_outcome)
+    # giocata_num = matches.group(1).strip() + f" {utils.get_month_and_year_string()}"
+    giocata_num = matches.group(1).strip()
+    if re.search(r"\d+/\d+", giocata_num) is None:
+        giocata_num += f" {utils.get_month_and_year_string()}"
+    outcome = matches.group(2).strip()
+    if outcome in win_keywords:
+        outcome = "win"
+    elif outcome in loss_keywords:
+        outcome = "loss"
+    else:
+        outcome = "neutral"
+    return giocata_num, outcome
+
+
 def get_cashout_data(cashout_message: str) -> Tuple[str, int]:
     """Extracts the giocata number and the cashout percentage from a cashout message.
 
@@ -109,9 +126,8 @@ def get_outcome_percentage(outcome: str, stake: int, quota: int) -> float:
     return outcome_percentage
 
 
-def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
-    """TODO only outcome state
-    TODO just create a dict
+def get_outcome_emoji(outcome_state: str) -> str:
+    """TODO just create a dict
 
     Args:
         outcome_percentage (float)
@@ -124,9 +140,9 @@ def get_outcome_emoji(outcome_percentage: float, outcome_state: str) -> str:
         return "⚪"
     if outcome_state == "void":
         return "🟡"
-    if outcome_percentage > 0:
+    if outcome_state == "win":
         outcome_emoji = "🟢"
-    elif outcome_percentage == 0:
+    elif outcome_state == "?":
         outcome_emoji = "🕔" 
     else:
         outcome_emoji = "🔴"
@@ -497,3 +513,49 @@ def get_giocate_trend_for_lastest_n_giocate(num_of_giocate_for_trend: int):
     trend_message = create_trend_message(trend_counts_and_totals)
     trend_message = f"✍️ LoT TREND (ultime {num_of_giocate_for_trend} giocate)\n\n" + trend_message
     return trend_message
+
+
+def parse_teacherbet_giocata(text: str, message_sent_timestamp: float=None, add_month_year_to_raw_text:bool=False) -> List[Dict]:
+    """
+    Example:
+        UPDATE: 21/11/2021 21:51 GMT+1
+
+        NOW GOAL FULL
+
+
+        ⏳ Status: 🔴 1-1 17' 1T
+        🏆 Primera Division de Colombiano-Apertura
+        ⚽️ Atletico Nacional Medellin - Millonarios
+        💰 Alert BTTS ▶️
+        #65
+
+    Args:
+        text (str): [description]
+        message_sent_timestamp (float, optional): [description]. Defaults to None.
+        add_month_year_to_raw_text (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        List[Dict]: [description]
+    """
+    parsed_giocate = []
+    # regex_pattern = r"⏳(?:[^▶️]?[^▶]?)+[▶️▶]" if is_raw else r"⏳[^#]+#\d+"
+    regex_pattern = r"⏳[^#]+#\d+(?:\s\d+/\d+)?"
+    raw_giocate = re.findall(regex_pattern, text)
+    if not message_sent_timestamp:
+        message_sent_timestamp = datetime.datetime.utcnow().timestamp()
+    base_giocata = create_base_giocata()
+    base_giocata["sport"] = spr.sports_container.TEACHERBET.name
+    base_giocata["strategy"] = strat.strategies_container.TEACHERBETLUXURY.name
+    del base_giocata["base_quota"]
+    del base_giocata["base_stake"]
+    for raw_giocata in raw_giocate:
+        parsed_giocata = base_giocata.copy()
+        parsed_giocata["giocata_num"] = re.search(r"#(\d+(?:\s\d+/\d+)?)", raw_giocata).group(1)
+        if add_month_year_to_raw_text:
+            month_and_year_string = utils.get_month_and_year_string()
+            raw_giocata += f" {month_and_year_string}"
+            if re.search(r"\s+\d+/\d+", parsed_giocata["giocata_num"]) is None:
+                parsed_giocata["giocata_num"] += f" {month_and_year_string}"
+        parsed_giocata["raw_text"] = raw_giocata
+        parsed_giocate.append(parsed_giocata)
+    return parsed_giocate

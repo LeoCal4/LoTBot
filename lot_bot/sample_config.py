@@ -22,6 +22,7 @@ class Config(object):
     TESTING = False
     SPORTS_CHANNELS_ID = {}
     NEW_USERS_CHANNEL_ID = None
+    TEACHERBET_CHANNEL_ID = None
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
@@ -51,6 +52,7 @@ class Development(Config):
     VIDEO_FILE_IDS = {} # TBA
     VIDEO_FILE_EXTENSIONS = (".mp4") # TBA
     NEW_USERS_CHANNEL_ID = None # TBA
+    TEACHERBET_CHANNEL_ID = None # TBA
     
 
 
@@ -67,6 +69,7 @@ class Testing(Config):
     MONGO_DB_NAME = None # TBA
     MONGO_DB_URL = None
     SPORTS_CHANNELS_ID = {} # TBA
+    TEACHERBET_CHANNEL_ID = None # TBA
     VIDEO_FILE_NAMES = [] # TBA
     VIDEO_FILE_IDS = [] # TBA
     # to get the following two, use the following guide
@@ -117,6 +120,7 @@ def create_config():
         if dev_chat_ids != []:
             config.DEVELOPER_CHAT_IDS = json.loads(dev_chat_ids)
             config.DEVELOPER_CHAT_IDS = [int(chat_id) for chat_id in config.DEVELOPER_CHAT_IDS]
+        config.TEACHERBET_CHANNEL_ID = int(os.getenv("TEACHERBET_CHANNEL_ID", None))
         config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
         config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
         config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())

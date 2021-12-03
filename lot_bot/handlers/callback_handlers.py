@@ -344,16 +344,26 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
     # * modify message text to specify that the giocata has been registered
-    giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
+    giocata_text_rows = giocata_text.split("\n")
+    giocata_text_without_answer_row = "\n".join(giocata_text_rows[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
+    # * identify the giocata type and parse it accordingly
+    if "status:" not in giocata_text_rows[0].lower():
+        lgr.logger.debug("Parsing LoT giocata")
+        parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    else:
+        lgr.logger.debug("Parsing TB giocata")
+        parsed_giocata = giocata_model.parse_teacherbet_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)[0]
     # * retrieve and save the giocata for the user
-    parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
+    if not retrieved_giocata:
+        lgr.logger.error(f"Cannot retrieve giocata upon giocata acceptation - {parsed_giocata['giocata_num']=} {parsed_giocata['sport']=}")
+        raise Exception("Cannot retrieve giocata upon giocata acceptation")
     personal_user_giocata = giocata_model.create_user_giocata()
     personal_user_giocata["original_id"] = retrieved_giocata["_id"]
     personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
     # * check for differences in the saved stake and the current one (personalized stake)
-    if parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
+    if "base_stake" in parsed_giocata and parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
         personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
     user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     context.bot.edit_message_text(
