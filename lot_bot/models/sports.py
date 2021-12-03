@@ -18,28 +18,31 @@ class Sport:
 
 strats = strategies.StrategyContainer()
 _base_strategies = [
+    strats.BASE,
+    strats.TEST,
+]
+_adv_strategies = [
     strats.SINGOLA,
     strats.MULTIPLA, 
     strats.RADDOPPIO, 
     strats.SPECIALI,
-]
-_tutto_strategies = [
-    strats.HOCKEY,
-    strats.BASEBALL,
-    strats.FOOTBALLAMERICANO,
-    strats.PALLAVOLO,
-    strats.PINGPONG,
-    strats.MMA
+    strats.TEST
 ]
 
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", _base_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD], emoji="⚽️")
-    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀", display_name="Basket (TEST)")
-    TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
+    CALCIO : Sport = Sport("calcio", _adv_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD], emoji="⚽️")
+    BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀", display_name="Basket")
+    TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
-    TUTTOILRESTO : Sport = Sport("tuttoilresto", _tutto_strategies, display_name="Tutto il Resto")
+    HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
+    BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
+    FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
+    PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
+    PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
+    MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
+    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto")
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()
