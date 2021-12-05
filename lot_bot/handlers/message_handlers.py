@@ -196,6 +196,10 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
         return
     updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
     strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
+    if strategy is None:
+        lgr.logger.error(f"Could not find strategy {updated_giocata['strategy']} for sport {sport.name}")
+        update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la strategia {updated_giocata['strategy']} non è valida per lo sport {updated_giocata['sport']}. Si prega di ricontrollare e rimandare l'esito.")
+        return
     send_message_to_all_abbonati(update, context, text, sport, strategy.name)
 
 

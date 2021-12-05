@@ -395,7 +395,7 @@ def get_trend_emoji(sport_name: str, trend_value: float) -> str:
         return get_exchange_trend_emoji(trend_value)
     elif sport_name == spr.sports_container.CALCIO.name or sport_name == spr.sports_container.TENNIS.name:
         return get_calcio_and_tennis_trend_emoji(trend_value)
-    elif sport_name == strat.strategies_container.PINGPONG.name:
+    elif sport_name == spr.sports_container.PINGPONG.name:
         return get_ping_pong_trend_emoji(trend_value)
     return ""
 
@@ -462,7 +462,9 @@ def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], 
         if not giocata_sport:
             giocata_sport = strat.strategies_container.get_strategy(key)
             if not giocata_sport:
-                raise custom_exceptions.SportNotFoundError(key)
+                lgr.logger.error(f"Could not find sport or strategy {key}")
+                # raise custom_exceptions.SportNotFoundError(key)
+                continue
         # * calculate sport trend
         if days_for_trend:
             sport_trend = round(total_percentage / days_for_trend, 2)
