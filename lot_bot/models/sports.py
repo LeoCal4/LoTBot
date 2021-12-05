@@ -32,7 +32,7 @@ _adv_strategies = [
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", _adv_strategies + [strats.PDRRADDOPPI, strats.PDRHIGHODD], emoji="⚽️")
+    CALCIO : Sport = Sport("calcio", [strats.PDRRADDOPPI, strats.PDRHIGHODD] + _adv_strategies, emoji="⚽️")
     BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀", display_name="Basket")
     TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
