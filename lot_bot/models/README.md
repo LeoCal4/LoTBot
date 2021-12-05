@@ -36,7 +36,7 @@
 - sport_subscriptions: []
     - sport: str
     - strategies: List[str]
-- available_sports: [] TODO
+- available_sports: []
     - sport: str
     - strategies: List[str]
 - personal_stakes: []

@@ -75,15 +75,17 @@ def add_handlers(dispatcher: Dispatcher):
     """
     # ================ COMMAND HANDLERS ================
     dispatcher.add_handler(CommandHandler("start", command_handlers.start_command))
+    dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    # ------------ Users managing commands --------------
+    dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
+    dispatcher.add_handler(CommandHandler("resoconto_utente", command_handlers.get_user_resoconto))
+    dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
     dispatcher.add_handler(CommandHandler("cambia_ruolo", command_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("blocca_utente", command_handlers.block_messages_to_user))
     dispatcher.add_handler(CommandHandler("sblocca_utente", command_handlers.unlock_messages_to_user))
-    dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
-    dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    # ------------ Trend commands --------------
     dispatcher.add_handler(CommandHandler("trend_giorni", command_handlers.get_trend_by_days))
     dispatcher.add_handler(CommandHandler("trend_eventi", command_handlers.get_trend_by_events))
-    dispatcher.add_handler(CommandHandler("resoconto_utente", command_handlers.get_user_resoconto))
-    dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
     # ------------ Personal stake commands --------------
     dispatcher.add_handler(CommandHandler("crea_stake", command_handlers.create_personal_stake))
     dispatcher.add_handler(CommandHandler("visualizza_stake", command_handlers.visualize_personal_stakes))
