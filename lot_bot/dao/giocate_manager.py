@@ -85,19 +85,23 @@ def retrieve_giocate_from_ids(ids_list: List[int]) -> List[Dict]:
         raise e
 
 
-def retrieve_giocate_between_timestamps(max_timestamp: float, min_timestamp: float) -> List:
+def retrieve_giocate_between_timestamps(max_timestamp: float, min_timestamp: float, include_only_giocate_with_outcome: bool=False) -> List:
+    query_filter = {"sent_timestamp": {"$gt": min_timestamp, "$lt": max_timestamp}}
+    if include_only_giocate_with_outcome:
+        query_filter["outcome"] = {"$ne": "?"}
     try:
-        return list(db.mongo.giocate.find(
-            { "sent_timestamp": {"$gt": min_timestamp, "$lt": max_timestamp}}
-        ))
+        return list(db.mongo.giocate.find(query_filter))
     except Exception as e:
         lgr.logger.error(f"Error during retrieve giocate since timestamp - {max_timestamp=} - {min_timestamp=}")
         raise e
 
 
-def retrieve_last_n_giocate(num_of_giocate: int) -> List:
+def retrieve_last_n_giocate(num_of_giocate: int, include_only_giocate_with_outcome: bool=False) -> List:
+    only_giocate_with_outcome_filter = {}
+    if include_only_giocate_with_outcome:
+        only_giocate_with_outcome_filter = {"outcome": {"$ne": "?"}}
     try:
-        return list(db.mongo.giocate.find().sort([("_id", 1)]).limit(num_of_giocate))
+        return list(db.mongo.giocate.find(only_giocate_with_outcome_filter).sort([("_id", -1)]).limit(num_of_giocate))
     except Exception as e:
         lgr.logger.error(f"Error during retrieve last n giocate - {num_of_giocate=}")
         raise e
