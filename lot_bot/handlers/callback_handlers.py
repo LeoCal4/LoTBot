@@ -502,4 +502,5 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     # * avoid sending again the same type of resoconto
     if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
         return
-    context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
+    # context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
+    _create_and_send_resoconto(context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)

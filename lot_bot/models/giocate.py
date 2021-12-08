@@ -411,7 +411,7 @@ def get_trend_emoji(sport_name: str, trend_value: float) -> str:
         return get_exchange_trend_emoji(trend_value)
     elif sport_name == spr.sports_container.CALCIO.name or sport_name == spr.sports_container.TENNIS.name:
         return get_calcio_and_tennis_trend_emoji(trend_value)
-    elif sport_name == strat.strategies_container.PINGPONG.name:
+    elif sport_name == spr.sports_container.PINGPONG.name:
         return get_ping_pong_trend_emoji(trend_value)
     return ""
 
@@ -478,7 +478,9 @@ def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], 
         if not giocata_sport:
             giocata_sport = strat.strategies_container.get_strategy(key)
             if not giocata_sport:
-                raise custom_exceptions.SportNotFoundError(key)
+                lgr.logger.error(f"Could not find sport or strategy {key}")
+                # raise custom_exceptions.SportNotFoundError(key)
+                continue
         # * calculate sport trend
         if days_for_trend:
             sport_trend = round(total_percentage / days_for_trend, 2)
@@ -498,7 +500,8 @@ def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], 
 def get_giocate_trend_message_since_days(days_for_trend: int) -> str:
     last_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
     days_for_trend_midnight = last_midnight - datetime.timedelta(days=days_for_trend) 
-    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp())
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp(), include_only_giocate_with_outcome=True)
+    lgr.logger.info(f"Retrieving giocate from {days_for_trend_midnight} to {last_midnight}")
     trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
     trend_message = create_trend_message(trend_counts_and_totals, days_for_trend=days_for_trend)
     start_date = days_for_trend_midnight.strftime("%d/%m/%Y")
@@ -508,7 +511,8 @@ def get_giocate_trend_message_since_days(days_for_trend: int) -> str:
 
 
 def get_giocate_trend_for_lastest_n_giocate(num_of_giocate_for_trend: int):
-    latest_giocate = giocate_manager.retrieve_last_n_giocate(num_of_giocate_for_trend)
+    lgr.logger.info(f"Retrieving last {num_of_giocate_for_trend} giocate to create trend")
+    latest_giocate = giocate_manager.retrieve_last_n_giocate(num_of_giocate_for_trend, include_only_giocate_with_outcome=True)
     trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
     trend_message = create_trend_message(trend_counts_and_totals)
     trend_message = f"✍️ LoT TREND (ultime {num_of_giocate_for_trend} giocate)\n\n" + trend_message

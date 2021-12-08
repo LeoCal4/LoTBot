@@ -120,7 +120,9 @@ def create_config():
         if dev_chat_ids != []:
             config.DEVELOPER_CHAT_IDS = json.loads(dev_chat_ids)
             config.DEVELOPER_CHAT_IDS = [int(chat_id) for chat_id in config.DEVELOPER_CHAT_IDS]
-        config.TEACHERBET_CHANNEL_ID = int(os.getenv("TEACHERBET_CHANNEL_ID", None))
+        config.TEACHERBET_CHANNEL_ID = os.getenv("TEACHERBET_CHANNEL_ID", None)
+        if not config.TEACHERBET_CHANNEL_ID is None:
+            config.TEACHERBET_CHANNEL_ID = int(config.TEACHERBET_CHANNEL_ID)
         config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
         config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
         config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())
