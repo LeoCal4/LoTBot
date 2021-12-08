@@ -20,10 +20,11 @@ class Subscription:
 
 @dataclasses.dataclass
 class SubContainer:
+    # * available_sports is not set, meaning that every one of the is included 
     LOTCOMPLETE : Subscription = Subscription(
         "lotcomplete", 
         display_name="LoT Abbonamento Completo", 
-        price=500, 
+        price=7900, 
         description="Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)",
         aliases=["lot", "lot completo", "lot complete", "lot totale"]
     )

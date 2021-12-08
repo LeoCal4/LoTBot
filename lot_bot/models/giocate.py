@@ -431,28 +431,31 @@ def create_trend_counts_and_totals_for_giocate(latest_giocate: List) -> Dict[str
         # * skip void and unfinished giocate
         if giocata["outcome"] == "void" or giocata["outcome"] == "?":
             continue
-        giocata_sport = giocata["sport"]
+        giocata_sport = spr.sports_container.get_sport(giocata["sport"])
+        giocata_strategy = strat.strategies_container.get_strategy(giocata["strategy"])
         # * use strat names as sport for tutto il resto giocate
-        if giocata_sport == "tuttoilresto":
-            giocata_sport = giocata["strategy"]
+        if giocata_sport == spr.sports_container.TUTTOILRESTO and giocata_strategy != strat.strategies_container.BASE and giocata_strategy != strat.strategies_container.TEST:
+            giocata_sport = giocata_strategy
         # * get the outcome percentage
         # * (use cashout value for maxexchange giocate)
         if "cashout" in giocata: # maxexchange
             outcome_percentage = giocata["cashout"] / 100
         # * (use fixed values for MB giocate)
-        elif giocata["strategy"] == strat.strategies_container.MB.name: # mb
+        elif giocata_strategy == strat.strategies_container.MB: # mb
             if giocata["outcome"] == "win":
                 outcome_percentage = 0.7
             elif giocata["outcome"] == "loss":
                 outcome_percentage = -500
-        else: # * (all the others)
+        elif "base_stake" in giocata and "base_quota" in giocata: # * (most of the others)
             outcome_percentage = get_outcome_percentage(giocata["outcome"], giocata["base_stake"], giocata["base_quota"])
-        # * update dict with values
-        if giocata_sport not in trend_counts_and_totals:
-            trend_counts_and_totals[giocata_sport] = (1, outcome_percentage)
         else:
-            giocate_count, total_percentage = trend_counts_and_totals[giocata_sport]
-            trend_counts_and_totals[giocata_sport] = (giocate_count + 1, total_percentage + outcome_percentage)
+            outcome_percentage = ""
+        # * update dict with values
+        if giocata_sport.name not in trend_counts_and_totals:
+            trend_counts_and_totals[giocata_sport.name] = (1, outcome_percentage)
+        else:
+            giocate_count, total_percentage = trend_counts_and_totals[giocata_sport.name]
+            trend_counts_and_totals[giocata_sport.name] = (giocate_count + 1, total_percentage + outcome_percentage)
     return trend_counts_and_totals
 
 
@@ -492,7 +495,7 @@ def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], 
         trend_emoji = get_trend_emoji(giocata_sport.name, sport_trend)
         percentage_string = ""
         if giocata_sport.name != spr.sports_container.EXCHANGE.name:
-            percentage_string = f"Totale: {total_percentage:.2f}% - Media: {sport_trend:.2f}% - "
+            percentage_string = f"Totale: {total_percentage:.2f}% - Media: {sport_trend:.2f}% "
         trend_message += f"{giocata_sport.emoji} {giocata_sport.display_name}: {percentage_string}{trend_emoji}\n"
     return trend_message
 
@@ -500,7 +503,10 @@ def create_trend_message(trend_counts_and_totals: Dict[str, Tuple[int, float]], 
 def get_giocate_trend_message_since_days(days_for_trend: int) -> str:
     last_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
     days_for_trend_midnight = last_midnight - datetime.timedelta(days=days_for_trend) 
-    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), days_for_trend_midnight.timestamp(), include_only_giocate_with_outcome=True)
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(last_midnight.timestamp(), 
+        days_for_trend_midnight.timestamp(), 
+        include_only_giocate_with_outcome=True, 
+        exclude_sports_not_in_trend=True)
     lgr.logger.info(f"Retrieving giocate from {days_for_trend_midnight} to {last_midnight}")
     trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
     trend_message = create_trend_message(trend_counts_and_totals, days_for_trend=days_for_trend)
@@ -512,7 +518,9 @@ def get_giocate_trend_message_since_days(days_for_trend: int) -> str:
 
 def get_giocate_trend_for_lastest_n_giocate(num_of_giocate_for_trend: int):
     lgr.logger.info(f"Retrieving last {num_of_giocate_for_trend} giocate to create trend")
-    latest_giocate = giocate_manager.retrieve_last_n_giocate(num_of_giocate_for_trend, include_only_giocate_with_outcome=True)
+    latest_giocate = giocate_manager.retrieve_last_n_giocate(num_of_giocate_for_trend, 
+        include_only_giocate_with_outcome=True, 
+        exclude_sports_not_in_trend=True)
     trend_counts_and_totals = create_trend_counts_and_totals_for_giocate(latest_giocate)
     trend_message = create_trend_message(trend_counts_and_totals)
     trend_message = f"✍️ LoT TREND (ultime {num_of_giocate_for_trend} giocate)\n\n" + trend_message
