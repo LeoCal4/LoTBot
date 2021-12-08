@@ -62,10 +62,7 @@ Scegli il tipo di resoconto"""
 
 
 # {0}: user first name
-# {1}: the expiration date for the user
-SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 il tuo abbonamento è attivo fino al {1}.
-
-Status Servizio: ✅ nessuna manutenzione programmata."""
+SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 lo status dei tuoi abbonamenti è il seguente:\n"""
 
 # {1}: linked referral code
 # {2}: user successful_referrals_since_last_payment

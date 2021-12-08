@@ -10,7 +10,7 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import user_manager
 from lot_bot.handlers import message_handlers, callback_handlers
-from lot_bot.models import personal_stakes, users, giocate
+from lot_bot.models import personal_stakes, users, giocate, subscriptions
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -58,7 +58,7 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
         return target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
 
 
-def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str):
+def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str = None, teacherbet_code: str = None):
     """Sends welcome messages to the user, then creates two standard
     sport_subscriptions for her/him and creates the user itself.
 
@@ -66,8 +66,9 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         update (Update)
     """
     user = update.effective_user
-    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code)
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1)
+    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code)
+    # * get trial sub and add date visualization offset
+    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["subscriptions"][0]["expiration_date"]) + datetime.timedelta(hours=1)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # * escape chars for HTML
     parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -110,14 +111,21 @@ def start_command(update: Update, context: CallbackContext):
     # the effective_message field is always present in normal messages
     # from_user gets the user which sent the message
     user_id = update.effective_user.id
+    additional_code = None
     ref_code = None
+    teacherbet_code = None
     if len(context.args) > 0:
-        ref_code = context.args[0]
+        additional_code = context.args[0]
+        if additional_code.endswith("-lot"):
+            ref_code = additional_code
+        elif additional_code.endswith("-teacherbet"):
+            # TODO check if it has already been used
+            teacherbet_code = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
     if not user_data:
         # * the user does not exist yet
-        first_time_user_handler(update, context, ref_code)
+        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
     elif ref_code and ref_code != user_data["referral_code"]:
         # * connect user to used ref_code
         update_result = False
@@ -135,6 +143,20 @@ def start_command(update: Update, context: CallbackContext):
         else:
             reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
         update.message.reply_text(reply_text, parse_mode="HTML")
+    elif teacherbet_code and utils.check_teacherbet_code_validity():
+        update_result = False
+        try:
+            user_manager.update_user({"teacherbet_code": teacherbet_code})
+            # TODO push "teacherbet" into available sports
+        except Exception as e:
+            lgr.logger.error(f"Error in adding teacherbet code to already existing user from deep linking - {str(e)}")
+            update_result = False
+        if update_result:
+            # reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
+            reply_text = ""
+        else:
+            # reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+            reply_text = ""
     message_handlers.homepage_handler(update, context)
 
 
@@ -173,10 +195,11 @@ def normal_message_to_abbonati_handler(update: Update, context: CallbackContext)
 
 
 def aggiungi_giorni(update: Update, context: CallbackContext):
-    """Adds the specified number of positive days to the specified user's LoT subscription. 
+    """Adds the specified number of positive days to the specified user's subscription. 
+    If no subscription is specified, it is assumed to be LoT's complete one.
+
     The structure is:
-        /aggiungi_giorni <username o ID> <days>
-    
+        /aggiungi_giorni <username o ID> <days> [<subscription name>]
 
     Args:
         update (Update)
@@ -193,7 +216,11 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         update.effective_message.reply_text(str(e) + "id (o username) e giorni di prova da aggiungere")
         return
     
+    # TODO check permissions on sub
     giorni_aggiuntivi = context.args[1]
+    subscription_name = ""
+    if len(context.args) > 2:
+        subscription_name = " ".join(context.args[2:]).strip().lower()
     lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_identification_data} and {giorni_aggiuntivi}")
 
     # * check whetever the days received are actually an integer
@@ -207,25 +234,42 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     # * retrieve the user's subscription expiration 
     # TODO check if there is a way to just increment it 
     if type(target_user_identification_data) is int:
-        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_identification_data, ["lot_subscription_expiration"])
+        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_identification_data, ["subscriptions"])
     else:
-        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id", "lot_subscription_expiration"])
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id", "subscriptions"])
     # * check if the user exists
     if target_user_data is None:
         user_not_found_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato (ricorda: gli username sono case-sensitive)"
         update.effective_message.reply_text(user_not_found_message)
         return
-    # * extend the user's subscription
     target_user_id = target_user_data["_id"] 
-    user_expiration_timestamp = target_user_data["lot_subscription_expiration"]
-    new_lot_subscription_expiration = {"lot_subscription_expiration": users.extend_expiration_date(user_expiration_timestamp, giorni_aggiuntivi)}
-    update_results = user_manager.update_user(target_user_id, new_lot_subscription_expiration)
+    # * reify user sub
+    user_subs_raw = target_user_data["subscriptions"]
+    user_subs_names = [sub["name"] for sub in user_subs_raw] 
+    user_subs = [subscriptions.sub_container.get_subscription(sub_entry) for sub_entry in user_subs_names]
+    # * assume it's base lot sub in case no sub has been specified
+    if subscription_name == "":
+        subscription_name = "lotcomplete"
+    target_sub_name = None
+    for user_sub, raw_user_sub in zip(user_subs, user_subs_raw):
+        # * check if sub name is valid
+        if subscription_name == user_sub.name or subscription_name in user_sub.aliases:
+            # * extend the user's subscription
+            raw_user_sub["expiration_date"] = users.extend_expiration_date(raw_user_sub["expiration_date"], giorni_aggiuntivi)
+            target_sub_name = user_sub.display_name
+            break
+    # * check if user has the specified sub
+    if not target_sub_name:
+        update.effective_message.reply_text(f"ERRORE: impossibile aggiungere giorni, l'utente non possiede l'abbonamento specificato da {subscription_name}")
+        return
+    new_subscriptions = {"subscriptions": user_subs_raw}
+    update_results = user_manager.update_user(target_user_id, new_subscriptions)
     if not update_results:
         update.effective_message.reply_text("ERRORE: impossibile aggiungere giorni")
         return
     # * answer the analyst with the result of the operation and notify the user
-    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi"
-    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti!"
+    reply_message = f"Operazione avvenuta con successo: l'utente {target_user_identification_data} ha ottenuto {giorni_aggiuntivi} giorni aggiuntivi per l'abbonamento {target_sub_name}"
+    message_to_user = f"Complimenti!\nHai ricevuto {giorni_aggiuntivi} giorni aggiuntivi gratuiti per l'abbonamento {target_sub_name}!"
     context.bot.send_message(target_user_id, message_to_user)
     update.effective_message.reply_text(reply_message)
 
@@ -475,7 +519,6 @@ def get_user_resoconto(update: Update, context: CallbackContext):
     lgr.logger.debug(f"Creating resoconto of user with user_id {target_user_id}")
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=days_for_resoconto)).timestamp()
     resoconto_message_header = f"Resoconto utente {target_user_identification_data} -  Ultimi {days_for_resoconto} giorni" # TODO add dates
-    
     # context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
     callback_handlers._create_and_send_resoconto(context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
         

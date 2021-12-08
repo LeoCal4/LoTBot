@@ -20,6 +20,14 @@ def get_giocata_filter() -> Filters:
     return sport_channels_filter & giocata_text_filter
 
 
+def get_teacherbet_giocata_filter() -> Filters:
+    tb_channel_filter = Filters.chat()
+    tb_channel_filter.add_chat_ids(cfg.config.TEACHERBET_CHANNEL_ID)
+    giocata_text_filter = Filters.regex(r"^UPDATE:")
+    return tb_channel_filter & giocata_text_filter
+
+
+
 def get_normal_messages_filter() -> Filters:
     """Creates the filter that gets all the non-command
     text messages.
@@ -89,6 +97,21 @@ def get_outcome_giocata_filter() -> Filters:
     return sport_channels_filter & Filters.regex(get_giocata_outcome_pattern())
 
 
+def get_teacherbet_giocata_outcome_filter() -> Filters:
+    """
+    Example:
+        #65✅
+        #65❌
+
+    Returns:
+        Filters: [description]
+    """
+    tb_channel_filter = Filters.chat()
+    tb_channel_filter.add_chat_ids(cfg.config.TEACHERBET_CHANNEL_ID)
+    giocata_text_filter = Filters.regex(get_teacherbet_giocata_outcome_pattern())
+    return tb_channel_filter & giocata_text_filter
+
+
 def get_send_file_id_filter() -> Filters:
     return Filters.caption(["/file_id"])
 
@@ -134,6 +157,10 @@ def get_giocata_outcome_pattern() -> str:
         str: giocata outcome regex pattern
     """
     return rf"([\w\s]+)\s*{get_giocata_num_pattern()}\s*([a-zA-Z]+)"
+
+
+def get_teacherbet_giocata_outcome_pattern() -> str:
+    return r"^#(\d+(?:\s+\d+/\d+)?)\s*([✅✔️☑️❌❎])"
 
 
 def get_cashout_pattern() -> str:

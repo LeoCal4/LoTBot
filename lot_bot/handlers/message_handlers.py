@@ -66,7 +66,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     if is_giocata:
         original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes", "blocked"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked"])
         # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
@@ -77,9 +77,9 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
             lgr.logger.warning(f"User {user_id} is blocked")
             messages_to_be_sent -= 1
             continue
-        # * check if the user has an active subscription
-        if not user_manager.check_user_validity(update.effective_message.date, user_data):
-            lgr.logger.warning(f"User {user_id} is not active")
+        # * check if the user has an active subscription for the given sport
+        if not user_manager.check_user_sport_subscription(update.effective_message.date, user_data["subscriptions"], sport):
+            lgr.logger.warning(f"User {user_id} is not active or does not have access to said sport")
             messages_to_be_sent -= 1
             continue
         lgr.logger.debug(f"Sending message to {user_id}")
@@ -175,6 +175,19 @@ def giocata_handler(update: Update, context: CallbackContext):
     send_message_to_all_abbonati(update, context, text, sport, strategy, is_giocata=True)
 
 
+def teacherbet_giocata_handler(update: Update, context: CallbackContext):
+    text = update.effective_message.text
+    parsed_giocate = giocata_model.parse_teacherbet_giocata(text, add_month_year_to_raw_text=True)
+    for parsed_giocata in parsed_giocate:
+        # TODO OPTIMIZATION: only one access to the db to store them
+        try:
+            giocate_manager.create_giocata(parsed_giocata)
+        except custom_exceptions.GiocataCreationError:
+            update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè la combinazione '#{parsed_giocata['giocata_num']}' - '{parsed_giocata['sport']}' è già stata utilizzata.")
+            return
+        send_message_to_all_abbonati(update, context, parsed_giocata["raw_text"], spr.sports_container.TEACHERBET.name, strat.strategies_container.TEACHERBETLUXURY.name, is_giocata=True)
+
+
 def outcome_giocata_handler(update: Update, context: CallbackContext):
     """Sends the outcome of the giocata to all the abbonati of that
     giocata sport and strategy.
@@ -200,6 +213,28 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not find strategy {updated_giocata['strategy']} for sport {sport.name}")
         update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la strategia {updated_giocata['strategy']} non è valida per lo sport {updated_giocata['sport']}. Si prega di ricontrollare e rimandare l'esito.")
         return
+    send_message_to_all_abbonati(update, context, text, sport, strategy.name)
+
+
+def teacherbet_giocata_outcome_handler(update: Update, context: CallbackContext):
+    text = update.effective_message.text
+    try:
+        giocata_num, outcome = giocata_model.get_teacherbet_giocata_outcome_data(text)
+    except custom_exceptions.GiocataOutcomeParsingError as e:
+        error_message = f"ATTENZIONE: il risultato non è stato inviato perchè presenta un errore. Si prega di ricontrollare e rimandarlo.\nErrore: {str(e)}"
+        update.effective_message.reply_text(error_message)
+        return
+    sport = spr.sports_container.TEACHERBET.name
+    update_result = giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
+    if not update_result:
+        # * the giocata may be from previous month, check that first 
+        giocata_num = giocata_num[:-5] + f"{utils.get_month_and_year_string(previous_month=True)}"
+        update_result = giocate_manager.update_giocata_outcome(sport, giocata_num, outcome)
+        if not update_result:
+            update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stata inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
+            return
+    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
+    strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
     send_message_to_all_abbonati(update, context, text, sport, strategy.name)
 
 

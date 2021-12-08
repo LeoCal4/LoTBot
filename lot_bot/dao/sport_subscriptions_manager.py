@@ -1,14 +1,14 @@
-from typing import List
+from typing import List, Dict
 from lot_bot import database as db
 from lot_bot import logger as lgr
 from pymongo.results import UpdateResult
 
 
-def create_sport_subscription(sport_sub_data : dict) -> bool:
+def create_sport_subscription(sport_sub_data : Dict) -> bool:
     """Creates an sport_subscription using sport_sub_data
 
     Args:
-        sport_sub_data (dict)
+        sport_sub_data (Dict)
 
     Returns:
         bool: True if the sport_subscription was inserted,
@@ -86,6 +86,20 @@ def retrieve_sport_subscriptions_from_user_id(user_id: int) -> List:
         raise e    
 
 
+def retrieve_subs_from_user_id(user_id: int) -> Dict:
+    try:
+        sub_result = db.mongo.utenti.find_one(
+            { "_id": user_id },
+            { "sport_subscriptions": 1,  "subscriptions": 1}
+        )
+        if not sub_result:
+            return {}
+        return sub_result
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve sport subscriptions for user id - {user_id=}")
+        raise e      
+
+
 def retrieve_subscribed_strats_from_user_id_and_sport(user_id: int, sport: str) -> List:
     """Returns the user's sport subscription for a certain sport.
 
@@ -114,11 +128,11 @@ def retrieve_subscribed_strats_from_user_id_and_sport(user_id: int, sport: str) 
         raise e
 
 
-def delete_sport_subscription(sport_sub_data: dict) -> bool:
+def delete_sport_subscription(sport_sub_data: Dict) -> bool:
     """Deletes any sport_subscription with data equal to sport_sub_data.
 
     Args:
-        sport_sub_data (dict)
+        sport_sub_data (Dict)
 
     Returns:
         bool: True if the operation was successful,

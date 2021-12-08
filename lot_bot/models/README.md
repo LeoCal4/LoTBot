@@ -3,6 +3,9 @@
 - name: str
 - username: str
 - email: str
+- subscriptions: List[Dict]
+    - name: str
+    - expiration_date: float
 - lot_subscription_expiration: timestamp
 - role: str
 - referral_code: str
@@ -33,7 +36,7 @@
 - sport_subscriptions: []
     - sport: str
     - strategies: List[str]
-- available_sports: [] TODO
+- available_sports: []
     - sport: str
     - strategies: List[str]
 - personal_stakes: []

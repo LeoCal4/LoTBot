@@ -12,6 +12,7 @@ from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import subscriptions as subs_model 
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -185,7 +186,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"])
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
         context.bot.send_message(
@@ -193,9 +194,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    # summing 1 hour for the UTC timezone
-    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=1)
-    # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.SPORT_MENU_MESSAGE
     context.bot.edit_message_text(
         tip_text,
@@ -208,9 +206,13 @@ def to_sports_menu(update: Update, context: CallbackContext):
 
 def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "lot_subscription_expiration"])
-    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
-    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"], expiration_date)
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
+    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
+    for sub in user_data["subscriptions"]:
+        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        sub_name = subs_model.sub_container.get_subscription(sub["name"])
+        sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
+        service_status += f"\n- {sub_emoji} {sub_name.display_name}: valido fino a {expiration_date}"
     context.bot.edit_message_text(
         service_status,
         user_id, 
@@ -342,16 +344,26 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
     # * modify message text to specify that the giocata has been registered
-    giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
+    giocata_text_rows = giocata_text.split("\n")
+    giocata_text_without_answer_row = "\n".join(giocata_text_rows[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
+    # * identify the giocata type and parse it accordingly
+    if "status:" not in giocata_text_rows[0].lower():
+        lgr.logger.debug("Parsing LoT giocata")
+        parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    else:
+        lgr.logger.debug("Parsing TB giocata")
+        parsed_giocata = giocata_model.parse_teacherbet_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)[0]
     # * retrieve and save the giocata for the user
-    parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
+    if not retrieved_giocata:
+        lgr.logger.error(f"Cannot retrieve giocata upon giocata acceptation - {parsed_giocata['giocata_num']=} {parsed_giocata['sport']=}")
+        raise Exception("Cannot retrieve giocata upon giocata acceptation")
     personal_user_giocata = giocata_model.create_user_giocata()
     personal_user_giocata["original_id"] = retrieved_giocata["_id"]
     personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
     # * check for differences in the saved stake and the current one (personalized stake)
-    if parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
+    if "base_stake" in parsed_giocata and parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
         personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
     user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     context.bot.edit_message_text(

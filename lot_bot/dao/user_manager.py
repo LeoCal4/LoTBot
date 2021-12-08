@@ -7,6 +7,10 @@ from lot_bot import logger as lgr
 from pymongo.collection import ReturnDocument
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
 
+from lot_bot.models import subscriptions as subs
+from lot_bot.models import sports as sprt
+
+
 
 def create_user(user_data: Dict) -> bool:
     """Creates a user using the data found in user_data
@@ -401,19 +405,43 @@ def delete_all_users() -> bool:
         raise e
 
 
-def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> bool:
-    """Checks if the user subscription is still valid.
-    # TODO move to user model 
+def check_user_subscription_validity(message_date: datetime.datetime, user_subscriptions: Dict, sub_name: str = "") -> bool:
+    """Checks if the user subscription is still valid for a given message date, for any subscription or a specific one.
 
     Args:
         message_date (datetime): the date of the message being checked
-
+        user_subscriptions (List)
+        sub_name (str): name of the subscription to check; all of them are checked in case none is specified.
 
     Returns:
-        bool: True if the the user's subscription is still valid, 
-            False otherwise
+        bool: True if the the user's subscription is still valid, False otherwise
     """
-    return float(user_data["lot_subscription_expiration"]) > message_date.timestamp()
+    message_timestamp = message_date.timestamp()
+    # * check if any sub is active
+    if sub_name == "":
+        for sub in user_subscriptions:
+            if float(sub["expiration_date"]) > message_timestamp:
+                return True
+        return False
+    # * check if the specified sub is active
+    else:
+        user_subs_names = [sub["name"] for sub in user_subscriptions]
+        if not sub_name in user_subs_names:
+            return False
+        sub_expiration = [sub["expiration_date"] for sub in user_subscriptions if sub["name"] == sub_name][0]
+        return float(sub_expiration) > message_timestamp
+
+
+def check_user_sport_subscription(message_date: datetime.datetime, user_subscriptions: Dict, sport_name: str) -> bool:
+    for sub_entry in user_subscriptions:
+        sub = subs.sub_container.get_subscription(sub_entry["name"])
+        sport = sprt.sports_container.get_sport(sport_name)
+        if sub is None or sport is None:
+            raise Exception
+        if sub.available_sports == [] or sport in sub.available_sports:
+            if check_user_subscription_validity(message_date, user_subscriptions, sub_name=sub.name):
+                return True
+    return False
 
 
 def get_subscription_price_for_user(user_id: int) -> float:

@@ -36,6 +36,7 @@ class SportsContainer:
     BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀", display_name="Basket")
     TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
+    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", show_in_menu=False)
     HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
@@ -52,7 +53,12 @@ class SportsContainer:
         yield
 
     def __contains__(self, item: Sport):
-        return dataclasses.astuple(item) in dataclasses.astuple(self)
+        return dataclasses.astuple(item) in dataclasses.astuple(self) # wat
+
+    def __eq__(self, __o: object) -> bool:
+        if hasattr(__o, "name"):
+            return self.name == __o.name
+        return False
 
     def get_sport(self, sport_string: str) -> Optional[Sport]:
         if not sport_string:

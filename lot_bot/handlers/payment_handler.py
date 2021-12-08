@@ -9,7 +9,7 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
 from lot_bot.handlers import callback_handlers, message_handlers, ref_code_handlers
-from lot_bot.models import users
+from lot_bot.models import users, subscriptions as subs
 from telegram import LabeledPrice, Update
 from telegram.ext.conversationhandler import ConversationHandler
 from telegram.ext.dispatcher import CallbackContext
@@ -93,31 +93,27 @@ def to_payments(update: Update, context: CallbackContext):
     receives a discout that is calculated based on the user.
     Before sending the invoice, the last message sent by the bot (supposedly the 
     referral one) is deleted.
-
+    TODO UPDATE 
     Args:
         update (Update)
         context (CallbackContext)
     """
     INVOICE_TIMEOUT_SECONDS = 300
+    CURRENCY = "EUR"
     chat_id = update.callback_query.message.chat_id
-    title = "LoT Abbonamento TEST TITLE"
-    description = "LoT Abbonamento TEST DESCRIPTION"
     context.user_data["payment_limit_timestamp"] = (datetime.datetime.utcnow() + datetime.timedelta(seconds=INVOICE_TIMEOUT_SECONDS)).timestamp()
-    payload = "pagamento_sport_subscription"
-    currency = "EUR"
-    
-    # price = user_manager.get_subscription_price_for_user(chat_id)
-    price = 500
-    prices = [LabeledPrice("LoT Abbonamento", price)]
-
     try:
         callback_handlers.delete_message_if_possible(update, context)
     except Exception as e:
         lgr.logger.warning(f"Could not delete previous message before sending invoice - {str(e)}")
-    context.bot.send_invoice(
-        chat_id, title, description, payload, cfg.config.PAYMENT_TOKEN, currency, prices,
-        need_email=True, need_name=True, start_parameter="Paga"
-    )
+    for sub in subs.sub_container:
+        payload = f"payment_{sub.name}"
+        # price = user_manager.get_subscription_price_for_user(chat_id)
+        prices = [LabeledPrice(sub.display_name, sub.price)]
+        context.bot.send_invoice(
+            chat_id, sub.display_name, sub.description, payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
+            need_email=True, need_name=True, start_parameter="Paga"
+        )
     return ConversationHandler.END
 
 
@@ -134,13 +130,16 @@ def pre_checkout_handler(update: Update, context: CallbackContext):
     """
     query = update.pre_checkout_query
     payload = query.invoice_payload
-    if payload != "pagamento_sport_subscription":
+    context.user_data["payment_payload"] = payload
+    if payload != "payment_lotcomplete" and payload != "payment_teacherbet": # TODO create method to check if valid
         query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza")
     elif ("payment_limit_timestamp" not in context.user_data or 
         context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
         query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")
     else:
         query.answer(ok=True)
+    if "payment_limit_timestamp" in context.user_data:
+        del context.user_data["payment_limit_timestamp"]
 
 
 def successful_payment_callback(update: Update, context: CallbackContext):
@@ -157,15 +156,26 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     """
     payment_final_message = f"Grazie per aver acquistato il nostro servizio!"
     user_id = update.effective_user.id
-    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "linked_referral_user"])
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "linked_referral_user"])
+    retrieved_user_subs = retrieved_user["subscriptions"]
+    # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
+    sub_name = "_".join(context.user_data["payment_payload"].split("_")[1:])
     # * extend the user's subscription up to the same day of the next month
-    new_expiration_date =  datetime.datetime(2021, 12, 2, hour=22, minute=59).timestamp() # ! TODO REVERT (22 and not 23 because we're at +1)
-    # new_expiration_date: float = users.extend_expiration_date(retrieved_user["lot_subscription_expiration"], 30)
+    if sub_name not in retrieved_user_subs:
+        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).timestamp()
+        retrieved_user_subs.append({"name": sub_name, "expiration_date": new_expiration_date})
+    else:
+        base_exp_date = retrieved_user_subs[sub_name]["expiration_date"]
+        new_expiration_date: float = users.extend_expiration_date(base_exp_date, 30)
+        for sub_entry in retrieved_user_subs:
+            if sub_entry["name"] == sub_name:
+                sub_entry["expiration_date"] = new_expiration_date
+                break
     # * reset user successful referrals
     # * add email to user data
     user_email = update.message.successful_payment.order_info.email
     user_data = {
-        "lot_subscription_expiration": new_expiration_date,
+        "subscriptions": retrieved_user_subs,
         "successful_referrals_since_last_payment": [],
         "email": user_email,
     }
@@ -215,6 +225,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
             dev_message += f"{str(payment_data)}"
             message_handlers.send_messages_to_developers(context, [dev_message])
     # * send final payment message and homepage
+    del context.user_data["payment_payload"]
     update.message.reply_text(payment_final_message)
     message_handlers.homepage_handler(update, context)
 

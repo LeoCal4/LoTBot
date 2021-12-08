@@ -1,3 +1,4 @@
+import datetime
 import re
 from typing import Dict, List, Optional, Tuple
 
@@ -102,26 +103,32 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
-        stake = giocata["base_stake"]
-        # * check for a personalized stake
-        personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
-        if personalized_stake != 0:
-            stake = personalized_stake
+        stake_section = ""
+        if "base_stake" in giocata:
+            stake = giocata["base_stake"]
+            # * check for a personalized stake
+            personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
+            if personalized_stake != 0:
+                stake = personalized_stake
+            parsed_stake = stake / 100
+            stake_section = f"Stake {parsed_stake:.2f}%"
+        # * not outcome percentage for teacherbet or exchange
+        if giocata["sport"] == spr.sports_container.TEACHERBET.name or giocata["sport"] == spr.sports_container.EXCHANGE.name:
+            outcome_percentage_string = ""
+        # elif "cashout" in giocata:
+            # outcome_percentage = giocata["cashout"] / 100
         # * get outcome percentage
-        if "cashout" in giocata:
-            outcome_percentage = giocata["cashout"] / 100
         else:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
-            outcome_percentage_string = f"= {outcome_percentage:.2f}%"
-        # * not outcome percentage for exchange
-        if giocata["sport"] == "exchange":
-            outcome_percentage_string = ""
-        # TODO only outcome, no need for %
-        outcome_emoji = giocata_model.get_outcome_emoji(outcome_percentage, giocata["outcome"])
-        parsed_quota = giocata["base_quota"] / 100
-        parsed_stake = stake / 100
+            outcome_percentage_string = f"= {outcome_percentage:.2f}% "
+        outcome_emoji = giocata_model.get_outcome_emoji(giocata["outcome"])
+        # * get quota
+        quota_section = ""
+        if "base_quota" in giocata:
+            parsed_quota = giocata["base_quota"] / 100
+            quota_section = f"@{parsed_quota:.2f} "
         sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} Stake {parsed_stake:.2f}% {outcome_percentage_string} {outcome_emoji}\n"
+        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: {quota_section}{stake_section}{outcome_percentage_string}{outcome_emoji}\n"
     return resoconto_message
 
 
@@ -160,3 +167,10 @@ def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[
 def create_personal_referral_updated_text(updated_referral: str) -> str:
     referral_link = f"https://t.me/SportSignalsBot?start={updated_referral}"
     return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)
+
+
+def get_month_and_year_string(previous_month:bool=False):
+    target_time = datetime.datetime.utcnow()
+    if previous_month:
+        target_time = target_time.replace(day=1) - datetime.timedelta(days=2)
+    return datetime.datetime.strftime(target_time, "%m/%Y").replace("/20", "/") # will need to change this in 2100

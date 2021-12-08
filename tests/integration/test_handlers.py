@@ -19,7 +19,7 @@ def user_exists_and_is_valid(user_id: int) -> bool:
     ret_user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
     if not ret_user_data:
         assert False, f"User does not exist: {ret_user_data=}"
-    validity = user_manager.check_user_validity(datetime.datetime.now(), ret_user_data)
+    validity = user_manager.check_user_sport_subscription(datetime.datetime.now(), ret_user_data)
     if not validity:
         assert False, f"User not valid: {validity=}"
     return True
