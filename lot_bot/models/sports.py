@@ -10,6 +10,7 @@ class Sport:
     show_in_menu : bool = True
     display_name : str = ""
     emoji : str = "📑"
+    outcome_percentage_in_resoconto : bool = True
 
     def __post_init__(self):
         if self.display_name == "":
@@ -36,14 +37,14 @@ class SportsContainer:
     BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀", display_name="Basket")
     TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB], emoji="📊")
-    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", show_in_menu=False)
     HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
     PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
     PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
-    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto")
+    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
+    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", show_in_menu=True, outcome_percentage_in_resoconto=False)
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

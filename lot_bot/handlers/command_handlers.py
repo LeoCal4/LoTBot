@@ -481,7 +481,6 @@ def get_trend_by_events(update: Update, context: CallbackContext):
 
 def get_user_resoconto(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    lgr.logger.info(f"Received /get_user_resoconto {context.args[0]} {context.args[1]}")
     try:
         target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin", "analyst"])
     except custom_exceptions.UserPermissionError as e:
@@ -490,6 +489,7 @@ def get_user_resoconto(update: Update, context: CallbackContext):
     except custom_exceptions.CommandArgumentsError as e:
         update.effective_message.reply_text(str(e) + "lo username (o l'ID) dell'utente e il numero di giorni da includere nel resoconto")
         return
+    lgr.logger.info(f"Received /get_user_resoconto {context.args[0]} {context.args[1]}")
     # * check whetever the days received are actually an integer
     try:
         days_for_resoconto = int(context.args[1])

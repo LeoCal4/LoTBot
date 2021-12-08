@@ -104,6 +104,7 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
         stake_section = ""
+        sport = spr.sports_container.get_sport(giocata['sport'])
         if "base_stake" in giocata:
             stake = giocata["base_stake"]
             # * check for a personalized stake
@@ -112,23 +113,19 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
                 stake = personalized_stake
             parsed_stake = stake / 100
             stake_section = f"Stake {parsed_stake:.2f}%"
-        # * not outcome percentage for teacherbet or exchange
-        if giocata["sport"] == spr.sports_container.TEACHERBET.name or giocata["sport"] == spr.sports_container.EXCHANGE.name:
-            outcome_percentage_string = ""
-        # elif "cashout" in giocata:
-            # outcome_percentage = giocata["cashout"] / 100
         # * get outcome percentage
-        else:
+        if sport.outcome_percentage_in_resoconto:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
             outcome_percentage_string = f"= {outcome_percentage:.2f}% "
+        else:
+            outcome_percentage_string = ""
         outcome_emoji = giocata_model.get_outcome_emoji(giocata["outcome"])
         # * get quota
         quota_section = ""
         if "base_quota" in giocata:
             parsed_quota = giocata["base_quota"] / 100
             quota_section = f"@{parsed_quota:.2f} "
-        sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: {quota_section}{stake_section}{outcome_percentage_string}{outcome_emoji}\n"
+        resoconto_message += f"{index}) {sport.display_name} #{giocata['giocata_num']}: {quota_section}{stake_section}{outcome_percentage_string}{outcome_emoji}\n"
     return resoconto_message
 
 
