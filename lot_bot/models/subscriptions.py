@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 from typing import Optional, List
 
 from lot_bot.models import sports
@@ -58,5 +59,10 @@ class SubContainer:
                     return sub
         return None
 
-
 sub_container = SubContainer()
+
+
+
+def create_teacherbet_base_sub():
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=3)).timestamp()
+    return {"name": sub_container.TEACHERBET.name, "expiration_date": trial_expiration_timestamp}

@@ -85,7 +85,7 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
 
-def create_first_time_user(user: User, ref_code: str = None) -> Dict:
+def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: str = None) -> Dict:
     """Creates the user using the bot for the first time.
     First, it creates the user itself, setting its expiration date to 7 days 
     from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
@@ -94,6 +94,8 @@ def create_first_time_user(user: User, ref_code: str = None) -> Dict:
     Args:
         user (User)
         ref_code (str): referral code for the new user. Defaults to None
+        teacherbet_code (str): Teacherbet code for the new user. If it is present, activates the TB subscription trial
+        instead of the LoT one. Defaults to None
 
     Returns:
         Dict: the created user data
@@ -112,9 +114,13 @@ def create_first_time_user(user: User, ref_code: str = None) -> Dict:
             }
         else:
             lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
     # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
-    user_data["subscriptions"].append({"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp})
+    if not teacherbet_code:
+        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
+        sub = {"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
+    else:
+        sub = subs.create_teacherbet_base_sub()
+    user_data["subscriptions"].append(sub)
     user_manager.create_user(user_data)
     return user_data
 

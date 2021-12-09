@@ -92,7 +92,8 @@ USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 # ================================== FIRST USAGE =========================================
 
 # {0}: first name of the user
-# {1}: subscription expiration date 
+# {1}: subscription name
+# {2}: subscription expiration date 
 WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 
 <i>Questo Bot ti aiuta a gestire i tuoi investimenti e notifica eventi sportivi analizzati dal nostro Team</i> ❗️
@@ -101,16 +102,22 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 
 -Scrivi in <b>Assistenza</b> per <i>personalizzare la tua esperienza</i> in base alle tue preferenze e obiettivi
 
-<b>La tua prova gratuita scadrà il {1}</b>
+<b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>
 
 Versione 1.00"""
 
 
 # {0}: valid ref code
-SUCC_REFERRED_USER_MESSAGE = "\n\nIl tuo account è stato collegato con successo tramite il codice {0}!"
+SUCC_REFERRED_USER_MESSAGE = "Il tuo account è stato collegato con successo tramite il codice {0}!"
 
 # {0}: invalid ref code
-NO_REFERRED_USER_FOUND_MESSAGE = """\n\nPurtroppo non siamo riusciti a trovare nessun utente collegato al codice referral {0}.
+NO_REFERRED_USER_FOUND_MESSAGE = """Purtroppo non siamo riusciti a trovare nessun utente collegato al codice referral {0}.
+Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> e riporta il problema nella chat."""
+
+
+SUCC_TEACHERBET_TRIAL_MESSAGE = "Il tuo account ha ottenuto 3 giorni di prova gratuita per l'abbonamento Teacherbet!"
+ALREADY_USED_TEACHERBET_TRIAL_MESSAGE = "Il tuo account non può più utilizzare la prova gratuita per l'abbonamento Teacherbet."
+FAILED_TEACHERBET_TRIAL_MESSAGE = """Purtroppo non siamo riusciti ad attivare la prova gratuita di Teacherbet.
 Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> e riporta il problema nella chat."""
 
 

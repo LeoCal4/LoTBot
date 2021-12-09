@@ -72,21 +72,23 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         update (Update)
     """
     user = update.effective_user
-    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code)
+    first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code, teacherbet_code=teacherbet_code)
     # * get trial sub and add date visualization offset
+    user_main_sub = subscriptions.sub_container.get_subscription(first_time_user_data["subscriptions"][0]["name"])
     trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["subscriptions"][0]["expiration_date"]) + datetime.timedelta(hours=1)
     trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # * escape chars for HTML
     parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, trial_expiration_date_string)
+    welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, user_main_sub.display_name, trial_expiration_date_string)
     # * check if the referral code was successfulyl added 
     if ref_code:
         if first_time_user_data["linked_referral_user"]["linked_user_id"] is None:
-            welcome_message += cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+            welcome_message += f"\n\n{cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)}"
         else:
-            welcome_message += cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
-    # the messages are sent only if the previous operations succeeded, this is fundamental
-    #   for the integration tests too
+            welcome_message += f"\n\n{cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)}"
+    # * check if there was a tb code and notify user
+    if teacherbet_code:
+        welcome_message += f"\n\n{cst.SUCC_TEACHERBET_TRIAL_MESSAGE}"
     new_user_channel_message = cst.NEW_USER_MESSAGE.format(
         update.effective_user.id, 
         update.effective_user.first_name, 
@@ -101,38 +103,7 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="HTML")
 
 
-
-################################## COMMANDS ########################################
-
-
-def start_command(update: Update, context: CallbackContext):
-    """Checks wheter the user is a first timer or not, then,
-    in case it is, it creates it; otherwise, it opens the canali 
-    menu with a welcome back message.
-
-    Args:
-        update (Update): the Update containing the command message
-        context (CallbackContext)
-    """
-    # the effective_message field is always present in normal messages
-    # from_user gets the user which sent the message
-    user_id = update.effective_user.id
-    additional_code = None
-    ref_code = None
-    teacherbet_code = None
-    if len(context.args) > 0:
-        additional_code = context.args[0]
-        if additional_code.endswith("-lot"):
-            ref_code = additional_code
-        elif additional_code.endswith("-teacherbet"):
-            # TODO check if it has already been used
-            teacherbet_code = additional_code
-    lgr.logger.debug(f"Received /start command from {user_id}")
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code"])
-    if not user_data:
-        # * the user does not exist yet
-        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
-    elif ref_code and ref_code != user_data["referral_code"]:
+def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
         # * connect user to used ref_code
         update_result = False
         try:
@@ -149,20 +120,72 @@ def start_command(update: Update, context: CallbackContext):
         else:
             reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
         update.message.reply_text(reply_text, parse_mode="HTML")
-    elif teacherbet_code and utils.check_teacherbet_code_validity():
+
+
+def existing_user_activating_teacherbet_trial_handler(update: Update, user_id:int, user_subscriptions: List, teacherbet_code: str):
+        # * add tb trial only if the user did not already use it or if it was not subscribed already
+        already_sub_to_tb = False
+        if len(user_subscriptions) > 0:
+            # * check if tb is already there and do not give it trial
+            for user_sub in user_subscriptions:
+                if user_sub["name"] == subscriptions.sub_container.TEACHERBET.name:
+                    already_sub_to_tb = True
+        # * update subs with tf's one if it's not there instead
+        user_data_update = {"teacherbet_code": teacherbet_code}
+        if not already_sub_to_tb:
+            tb_sub = subscriptions.create_teacherbet_base_sub()
+            user_data_update["subscriptions"] = user_subscriptions
+            user_data_update["subscriptions"].append(tb_sub)
         update_result = False
         try:
-            user_manager.update_user({"teacherbet_code": teacherbet_code})
-            # TODO push "teacherbet" into available sports
+            update_result =  user_manager.update_user(user_id, user_data_update)
         except Exception as e:
-            lgr.logger.error(f"Error in adding teacherbet code to already existing user from deep linking - {str(e)}")
+            lgr.logger.error(f"Error in adding Teacherbet trial to already existing user from deep linking - {str(e)}")
             update_result = False
         if update_result:
-            # reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
-            reply_text = ""
+            if already_sub_to_tb:
+                reply_text = cst.ALREADY_USED_TEACHERBET_TRIAL_MESSAGE
+            else:
+                reply_text = cst.SUCC_TEACHERBET_TRIAL_MESSAGE
         else:
-            # reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
-            reply_text = ""
+            reply_text = cst.FAILED_TEACHERBET_TRIAL_MESSAGE
+        update.message.reply_text(reply_text, parse_mode="HTML")
+
+
+################################## COMMANDS ########################################
+
+
+def start_command(update: Update, context: CallbackContext):
+    """Checks wheter the user is a first timer or not, then,
+    in case it is, it creates it; otherwise, it opens the homepage with a welcome back message.
+
+    Args:
+        update (Update): the Update containing the command message
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    additional_code = None
+    ref_code = None
+    teacherbet_code = None
+    # * check if a code has been specified
+    if len(context.args) > 0:
+        additional_code = context.args[0]
+        if additional_code.endswith("-lot"):
+            ref_code = additional_code
+        elif additional_code.endswith("-teacherbet"):
+            teacherbet_code = additional_code
+    lgr.logger.debug(f"Received /start command from {user_id}")
+    # * check if the user exists
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions"])
+    if not user_data:
+        # * the user does not exist yet
+        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
+    # * existing user wants to link a referral code
+    elif ref_code and ref_code != user_data["referral_code"]:
+        existing_user_linking_ref_code_handler(update, user_id, ref_code)
+    # * existing user wants to activate teacherbet trial
+    elif (teacherbet_code and ("teacherbet_code" not in user_data or user_data["teacherbet_code"] is None)):
+        existing_user_activating_teacherbet_trial_handler(update, user_id, user_data["subscriptions"], teacherbet_code)
     message_handlers.homepage_handler(update, context)
 
 
