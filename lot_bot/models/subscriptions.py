@@ -43,6 +43,9 @@ class SubContainer:
     def __next__(self):
         yield
 
+    def astuple(self):
+        return tuple([self.__dict__[field.name] for field in dataclasses.fields(self)])
+
     def get_subscription(self, sub_string: str) -> Optional[Subscription]:
         if not sub_string:
             return None
@@ -50,7 +53,10 @@ class SubContainer:
         if hasattr(self, parsed_sub_string):
             return getattr(self, parsed_sub_string)
         else:
-            return None
+            for sub in self.astuple():
+                if sub_string in sub.aliases:
+                    return sub
+        return None
 
 
 sub_container = SubContainer()

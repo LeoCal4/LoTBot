@@ -1,6 +1,6 @@
 """Module containing all the message handlers"""
 import datetime
-from typing import List, Optional, Union, Callable
+from typing import List, Optional, Union, Callable, Tuple
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -21,7 +21,7 @@ from telegram.ext.dispatcher import CallbackContext
 
 
 def initial_command_parsing(user_id: int, context_args: List[str], min_num_args: int, permitted_roles: List[str] = None, 
-        forbidden_roles: List[str] = None, target_user_identification_data_args_index: int = 0) -> Optional[Union[int, str]]:
+        forbidden_roles: List[str] = None, target_user_identification_data_args_index: int = 0, return_user_role: bool=False) -> Optional[Union[int, str, Tuple[int, str], Tuple[str, str]]]:
     """Parses the command, checking if the user has the permission to use it, 
     if there are enough arguments and retrieving the target user's ID or username.
 
@@ -33,6 +33,7 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
         forbidden_roles (List[str], optional): the roles that cannot use the command. Defaults to None.
         target_user_identification_data_args_index (int, optional): the index of the target user identification data among 
         the arguments list. If it is equal to -1, it is not search. Defaults to 1.
+        return_user_role (bool): flag to make the method return the user's role. Defaults to False.
 
     Raises:
         custom_exceptions.UserPermissionError: in case the user does not have the permission to use the command
@@ -42,7 +43,8 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
         Optional[Union[int, str]]: the target user id or username, or None if it is not needed
     """
     # * check if the user has the permission to use this command
-    if not users.check_user_permission(user_id, permitted_roles=permitted_roles, forbidden_roles=forbidden_roles):
+    user_role = users.check_user_permission(user_id, permitted_roles=permitted_roles, forbidden_roles=forbidden_roles)
+    if not user_role:
         raise custom_exceptions.UserPermissionError()
     # * check if there is the minimum amount of arguments required
     if len(context_args) < min_num_args:
@@ -51,11 +53,15 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
     if target_user_identification_data_args_index == -1:
         return 
     target_user_identification_data = context_args[target_user_identification_data_args_index]
+    to_return = None
     try:
         target_user_id = int(target_user_identification_data)
-        return target_user_id
+        to_return = target_user_id
     except ValueError:
-        return target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
+        to_return = target_user_identification_data[1:] if target_user_identification_data[0] == "@" else target_user_identification_data
+    if return_user_role: 
+        to_return = (to_return, user_role)
+    return to_return
 
 
 def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str = None, teacherbet_code: str = None):
@@ -208,7 +214,7 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     # * standard command parsing
     try:
-        target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin", "analyst"])
+        target_user_identification_data, user_role = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin", "analyst", "teacherbet"], return_user_role=True)
     except custom_exceptions.UserPermissionError as e:
         update.effective_message.reply_text(str(e))
         return
@@ -216,12 +222,26 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         update.effective_message.reply_text(str(e) + "id (o username) e giorni di prova da aggiungere")
         return
     
-    # TODO check permissions on sub
     giorni_aggiuntivi = context.args[1]
+    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_identification_data} and {giorni_aggiuntivi}")
     subscription_name = ""
     if len(context.args) > 2:
         subscription_name = " ".join(context.args[2:]).strip().lower()
-    lgr.logger.debug(f"Received /aggiungi_giorni with {target_user_identification_data} and {giorni_aggiuntivi}")
+    # * assume it's base lot sub in case no sub has been specified
+    if subscription_name == "":
+        subscription = subscriptions.sub_container.LOTCOMPLETE
+    else:
+        subscription = subscriptions.sub_container.get_subscription(subscription_name)
+    # * check if the subscription exists
+    if subscription is None:
+        update.effective_message.reply_text(f"ERRORE: l'abbonamento {subscription_name} non esiste")
+        return 
+    # * check permissions on subscription
+    # TODO make modular
+    if subscription == subscriptions.sub_container.LOTCOMPLETE and user_role == "teacherbet":
+        update.effective_message.reply_text(f"ERRORE: non hai i permessi necessari per incrementare i giorni dell'abbonamento {subscription.display_name}")
+        return        
+
 
     # * check whetever the days received are actually an integer
     try:
@@ -243,17 +263,15 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
         update.effective_message.reply_text(user_not_found_message)
         return
     target_user_id = target_user_data["_id"] 
-    # * reify user sub
+
+    # * reify user subs
     user_subs_raw = target_user_data["subscriptions"]
     user_subs_names = [sub["name"] for sub in user_subs_raw] 
     user_subs = [subscriptions.sub_container.get_subscription(sub_entry) for sub_entry in user_subs_names]
-    # * assume it's base lot sub in case no sub has been specified
-    if subscription_name == "":
-        subscription_name = "lotcomplete"
     target_sub_name = None
     for user_sub, raw_user_sub in zip(user_subs, user_subs_raw):
         # * check if sub name is valid
-        if subscription_name == user_sub.name or subscription_name in user_sub.aliases:
+        if subscription == user_sub:
             # * extend the user's subscription
             raw_user_sub["expiration_date"] = users.extend_expiration_date(raw_user_sub["expiration_date"], giorni_aggiuntivi)
             target_sub_name = user_sub.display_name

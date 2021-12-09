@@ -1,7 +1,7 @@
 import datetime
 import random
 import string
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
@@ -11,7 +11,7 @@ from lot_bot.models import subscriptions as subs
 from telegram import User
 
 # role: user, analyst, admin
-ROLES = ["user", "analyst", "admin"]
+ROLES = ["user", "analyst", "admin", "teacherbet"]
 
 def create_base_user_data():
     return {
@@ -119,14 +119,25 @@ def create_first_time_user(user: User, ref_code: str = None) -> Dict:
     return user_data
 
 
-def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None):
+def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None) -> Union[str, bool]:
+    """Checks if the users specified by the user_id has the right permissions, based either on its presence in
+    permitted_roles or its absence in forbidden_roles. Only one of them can be specified at a time.
+
+    Args:
+        user_id (int): [description]
+        permitted_roles (List[str], optional): Defaults to None.
+        forbidden_roles (List[str], optional): Defaults to None.
+
+    Returns:
+        Union[str, bool]: the user role if has the permission, False otherwise
+    """
     user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
     lgr.logger.debug(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
     permitted = True
     if not permitted_roles is None:
-        permitted = user_role in permitted_roles
+        permitted = user_role if user_role in permitted_roles else False
     if not forbidden_roles is None:
-        permitted = not user_role in forbidden_roles 
+        permitted = user_role if not user_role in forbidden_roles else False
     return permitted
 
 
