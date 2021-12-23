@@ -190,6 +190,18 @@ def get_explanation_pattern() -> str:
         pattern += strategy.name + "|"
     return pattern[:-1] + ")"
 
+def get_strat_text_explanation_pattern() -> str: #related to text explanations (not video!)
+    """
+    text_explanation_(<str1>|<str2>|...|<strN>)
+
+    Returns:
+        str: [description]
+    """
+    pattern = "text_explanation_("
+    for strategy in strat.strategies_container:
+        pattern += strategy.name + "|"
+    return pattern[:-1] + ")"
+
 
 
 # ==============================================================================================================

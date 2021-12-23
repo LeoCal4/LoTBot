@@ -165,8 +165,8 @@ def test_parse_personal_stake_sport_parsing(sport: str, no_error: bool):
 @pytest.mark.parametrize(
     "sport, strategies, no_error",
     [
-        ("calcio", ["singola"], True),
-        ("calcio", ["singola", "singola"], True),
+        ("calcio", ["singolalow"], True),
+        ("calcio", ["singolalow", "singolalow"], True),
         ("calcio", ["multipla", "fake"], False),
         ("calcio", ["ippica"], False),
     ]

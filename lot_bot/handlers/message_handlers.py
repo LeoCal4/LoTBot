@@ -64,7 +64,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
     # * eventually add giocata text at the end of the message
     if is_giocata:
-        original_text += "\n\nHai effettuato la giocata?"
+        original_text += "\n\nSeguirai questo evento?"
     for user_id in sub_user_ids:
         user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked"])
         # * check if the user actually exists

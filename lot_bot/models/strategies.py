@@ -1,4 +1,5 @@
 from typing import Optional
+from lot_bot import constants as cst
 import dataclasses
 
 @dataclasses.dataclass
@@ -6,27 +7,36 @@ class Strategy:
     name : str
     display_name : str = ""
     emoji : str = "📑"
+    explanation : str = cst.DEFAULT_STRAT_EXPLANATION_TEXT # Aggiunto l'attributo explanation
 
     def __post_init__(self):
         if self.display_name == "":
             self.display_name = self.name.capitalize()
 
 
+
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class StrategyContainer:
-    RADDOPPIO : Strategy = Strategy("raddoppio")
-    MULTIPLA : Strategy = Strategy("multipla")
-    SINGOLA : Strategy = Strategy("singola")
-    SPECIALI : Strategy = Strategy("speciali")
-    PDRRADDOPPI : Strategy = Strategy("pdrraddoppi", display_name="PDR Raddoppi")
-    PDRHIGHODD : Strategy = Strategy("pdrhighodd", display_name="PDR High Odd")
-    # * Base strategies
-    BASE : Strategy = Strategy("base")
-    TEST : Strategy = Strategy("test", display_name="TEST")
+    SINGOLALOW : Strategy = Strategy("singolalow", display_name="Singola Low")
+    SINGOLAHIGH : Strategy = Strategy("singolahigh", display_name="Singola High")
+    RADDOPPIO : Strategy = Strategy("raddoppio", explanation = cst.RADDOPPIO_EXPL_TEXT) #
+    SPECIALI : Strategy = Strategy("speciali", explanation = cst.SPECIALI_EXPL_TEXT)
+    LIVE : Strategy = Strategy("live", explanation = cst.LIVE_EXPL_TEXT)
+    MULTIPLALIGHT : Strategy = Strategy("multiplalight", display_name="Multipla Light", explanation = cst.MULTIPLALIGHT_EXPL_TEXT)
+    PDR : Strategy = Strategy("pdr", display_name="PDR", explanation = cst.PDR_EXPL_TEXT)
     # * Exchange
-    MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange")
-    MB : Strategy = Strategy("mb", display_name="MB")
+    MAXEXCHANGE : Strategy = Strategy("maxexchange", display_name="MaxExchange", explanation = cst.MAXEXCHANGE_EXPL_TEXT)
+    MB : Strategy = Strategy("mb", display_name="MB", explanation = cst.MB_EXPL_TEXT)
+    SCALPING : Strategy = Strategy("scalping", display_name="Scalping", explanation = cst.SCALPING_EXPL_TEXT) 
+    # * Base strategies
+    BASE : Strategy = Strategy("base", explanation = cst.BASE_EXPL_TEXT)
+    TEST : Strategy = Strategy("test", display_name="TEST", explanation = cst.TEST_EXPL_TEXT)
+    # * Analisi Miste
+    INSTAGRAMFREE : Strategy = Strategy("instagramfree", display_name="Instagram Free", explanation = cst.INSTAGRAMFREE_EXPL_TEXT)
+    COMMUNITYBET : Strategy = Strategy("communitybet", display_name="Community Bet", explanation = cst.COMMUNITYBET_EXPL_TEXT)
+    MULTIPLA : Strategy = Strategy("multipla", display_name="Multipla", explanation = cst.MULTIPLA_EXPL_TEXT)
+    SOFAR : Strategy = Strategy("sofar", display_name="So Far", explanation = cst.SOFAR_EXPL_TEXT)
     # * Teacherbet
     TEACHERBETLUXURY : Strategy = Strategy("teacherbetluxury", display_name="Teacherbet Luxury")
     # HOCKEY : Strategy = Strategy("hockey", display_name="Hockey (TEST)")
