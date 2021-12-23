@@ -137,6 +137,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_use_guide_filter(), message_handlers.use_guide_handler))
 
     # ============ ERROR HANDLERS =============
     dispatcher.add_error_handler(message_handlers.error_handler)

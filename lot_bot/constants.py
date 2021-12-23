@@ -88,6 +88,25 @@ BOT_CONFIG_BUTTON_TEXT = "⚙️ Configurazione Bot 🤖"
 EXPERIENCE_BUTTON_TEXT = "🚥 Gestione Esperienza 🚥"
 USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 
+#TODO change these messages
+BOT_CONFIG_MENU_MESSAGE = """<b>Configurazione Bot</b> 📱
+
+👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+
+<b>Fatto in  🇮🇹  con</b> ♥️"""
+
+EXPERIENCE_MENU_MESSAGE = """<b>Gestione Esperienza</b> 📱
+
+👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+
+<b>Fatto in  🇮🇹  con</b> ♥️"""
+
+USE_GUIDE_MENU_MESSAGE = """<b>Guida all' uso</b> 📱
+
+👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+
+<b>Fatto in  🇮🇹  con</b> ♥️"""
+
 
 # ================================== FIRST USAGE =========================================
 
@@ -140,7 +159,7 @@ LIVE_EXPL_TEXT = """Solo eventi Live, in generale di tipo Singola"""
 MULTIPLALIGHT_EXPL_TEXT = """Pochi selezionati eventi per un moltiplicatore massimo di 9.90"""
 PDR_EXPL_TEXT = """Analisi del Prof_Dei_Raddoppi, nostro partner e collega"""
 MAXEXCHANGE_EXPL_TEXT = """L'Exchange di LoT perfetto sia per i neofiti che per gli esperti"""
-MB_EXPL_TEXT = """Matched Betting significa accoppiare quote su diversi bookmakers per avere una percentuale di presa pari al 100%.\nSuggeriamo di Contattarci per usare al meglio questa strategi"""
+MB_EXPL_TEXT = """Matched Betting significa accoppiare quote su diversi bookmakers per avere una percentuale di presa pari al 100%.\nSuggeriamo di Contattarci per usare al meglio questa strategia"""
 SCALPING_EXPL_TEXT = """Scalping significa lavorare sulla variazione di quota e spesso trarre profitto prima che il match inizi grazie a notizie e informazioni che alterano il valore di quota.\nSuggeriamo di contattarci per usare al meglio questa strategia"""
 BASE_EXPL_TEXT = """Analisi generali di eventi per sport che non hanno ancora sufficiente storico per diversificare le analisi"""
 TEST_EXPL_TEXT = """Dedicata al team serve per testare nuove strategie, analisi, parametri etc."""

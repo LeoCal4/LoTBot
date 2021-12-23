@@ -222,7 +222,7 @@ def test_check_stakes_overlapping():
     random_stake_data["min_quota"] = str(0.5)
     random_stake_data["max_quota"] = str(1.5)
     random_stake_data["sport"] = "calcio"
-    random_stake_data["strategies"] = ["singola", "multipla"]
+    random_stake_data["strategies"] = ["singolalow", "multipla"]
     fake_command_args = get_fake_stake_command_args(random_stake_data)
     parsed_stake_with_sports_and_strat = personal_stakes.parse_personal_stake(fake_command_args)
     assert personal_stakes.check_stakes_overlapping(parsed_stake, non_overlapping_stakes)
@@ -231,7 +231,7 @@ def test_check_stakes_overlapping():
     random_stake_data["min_quota"] = str(1.5)
     random_stake_data["max_quota"] = str(2.5)
     random_stake_data["sport"] = "calcio"
-    random_stake_data["strategies"] = ["singola"]
+    random_stake_data["strategies"] = ["singolalow"]
     fake_command_args = get_fake_stake_command_args(random_stake_data)
     parsed_stake = personal_stakes.parse_personal_stake(fake_command_args)
     assert personal_stakes.check_stakes_overlapping(parsed_stake, [parsed_stake_with_sports_and_strat])

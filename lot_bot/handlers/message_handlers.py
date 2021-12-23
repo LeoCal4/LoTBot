@@ -131,7 +131,7 @@ def homepage_handler(update: Update, context: CallbackContext):
 
 def bot_configuration_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
-        cst.HOMEPAGE_MESSAGE,
+        cst.BOT_CONFIG_MENU_MESSAGE,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
@@ -139,8 +139,15 @@ def bot_configuration_handler(update: Update, _: CallbackContext):
 
 def experience_settings_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
-        cst.HOMEPAGE_MESSAGE,
+        cst.EXPERIENCE_MENU_MESSAGE,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
+    )
+
+def use_guide_handler(update: Update, _: CallbackContext):
+    update.message.reply_text(
+        cst.USE_GUIDE_MENU_MESSAGE,
+        reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
     )
 

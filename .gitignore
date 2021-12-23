@@ -10,6 +10,7 @@ lot_bot/config.py
 prova*
 gcloud/
 add_giocate_batch*
+activate_vm.bat
 
 scripts/
 pyvenv.cfg

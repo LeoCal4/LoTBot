@@ -41,25 +41,25 @@ BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_co
 # ===================================== CONFIGURAZIONE BOT SUBMENU =====================================
 #todo cancellare
 _strategies_with_explanation = ["singolalow","singolahigh","multipla","raddoppio","speciali","live","multiplalight","pdr","maxexchange","mb","base","test","instagramfree","communitybet","multipla","sofar"]
-_strategies_explanation_buttons = [
-    [InlineKeyboardButton(text="📖  Singola Low  📈", callback_data="explanation_singola_low")], 
-    [InlineKeyboardButton(text="📖  Singola High  📈", callback_data="explanation_singola_high")], 
-    [InlineKeyboardButton(text="📖  Multipla Light 📈", callback_data="explanation_multipla_light")], 
-    [InlineKeyboardButton(text="📖  Raddoppio   📈", callback_data="explanation_raddoppio")],
-    [InlineKeyboardButton(text="📖  Speciali  📈", callback_data="explanation_speciali")],
-    [InlineKeyboardButton(text="📖  LIVE  📈", callback_data="explanation_live")],
-    [InlineKeyboardButton(text="📖  Multipla Light  📈", callback_data="explanation_multipla_light")],
-    [InlineKeyboardButton(text="📖  PDR  📈", callback_data="explanation_pdr")],
-    [InlineKeyboardButton(text="📖  MaxExchange  📈", callback_data="explanation_maxexchange")],
-    [InlineKeyboardButton(text="📖  MB  📈", callback_data="explanation_mb")],
-    [InlineKeyboardButton(text="📖  Base  📈", callback_data="explanation_base")],
-    [InlineKeyboardButton(text="📖  TEST  📈", callback_data="explanation_test")],
-    [InlineKeyboardButton(text="📖  Instagram Free  📈", callback_data="explanation_instagram_free")],
-    [InlineKeyboardButton(text="📖  Community Bet  📈", callback_data="explanation_community_bet")],
-    [InlineKeyboardButton(text="📖  Multipla  📈", callback_data="explanation_multipla")],
-    [InlineKeyboardButton(text="📖  To The Moon  📈", callback_data="explanation_so_far")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
-]
+#_strategies_explanation_buttons = [
+#    [InlineKeyboardButton(text="📖  Singola Low  📈", callback_data="explanation_singola_low")], 
+#    [InlineKeyboardButton(text="📖  Singola High  📈", callback_data="explanation_singola_high")], 
+#    [InlineKeyboardButton(text="📖  Multipla Light 📈", callback_data="explanation_multipla_light")], 
+#    [InlineKeyboardButton(text="📖  Raddoppio   📈", callback_data="explanation_raddoppio")],
+#    [InlineKeyboardButton(text="📖  Speciali  📈", callback_data="explanation_speciali")],
+#    [InlineKeyboardButton(text="📖  LIVE  📈", callback_data="explanation_live")],
+#    [InlineKeyboardButton(text="📖  Multipla Light  📈", callback_data="explanation_multipla_light")],
+#    [InlineKeyboardButton(text="📖  PDR  📈", callback_data="explanation_pdr")],
+#    [InlineKeyboardButton(text="📖  MaxExchange  📈", callback_data="explanation_maxexchange")],
+#    [InlineKeyboardButton(text="📖  MB  📈", callback_data="explanation_mb")],
+#    [InlineKeyboardButton(text="📖  Base  📈", callback_data="explanation_base")],
+#    [InlineKeyboardButton(text="📖  TEST  📈", callback_data="explanation_test")],
+#    [InlineKeyboardButton(text="📖  Instagram Free  📈", callback_data="explanation_instagram_free")],
+#    [InlineKeyboardButton(text="📖  Community Bet  📈", callback_data="explanation_community_bet")],
+#    [InlineKeyboardButton(text="📖  Multipla  📈", callback_data="explanation_multipla")],
+#    [InlineKeyboardButton(text="📖  To The Moon  📈", callback_data="explanation_so_far")],
+#    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
+#]
 #EXPLANATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_strategies_explanation_buttons)
 
 _back_to_strategies_explanation_buttons = [
@@ -98,7 +98,7 @@ REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_gioca
 
 
 service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento (IN ARRIVO) 🌟", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento 🌟", callback_data="to_add_referral")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)

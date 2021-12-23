@@ -18,8 +18,8 @@ class Strategy:
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class StrategyContainer:
-    SINGOLALOW : Strategy = Strategy("singolalow", display_name="Singola Low")
-    SINGOLAHIGH : Strategy = Strategy("singolahigh", display_name="Singola High")
+    SINGOLALOW : Strategy = Strategy("singolalow", display_name="Singola Low", explanation=cst.SINGOLALOW_EXPL_TEXT)
+    SINGOLAHIGH : Strategy = Strategy("singolahigh", display_name="Singola High", explanation=cst.SINGOLAHIGH_EXPL_TEXT)
     RADDOPPIO : Strategy = Strategy("raddoppio", explanation = cst.RADDOPPIO_EXPL_TEXT) #
     SPECIALI : Strategy = Strategy("speciali", explanation = cst.SPECIALI_EXPL_TEXT)
     LIVE : Strategy = Strategy("live", explanation = cst.LIVE_EXPL_TEXT)

@@ -152,28 +152,34 @@ def to_homepage(update: Update, context: CallbackContext):
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text = cst.BOT_CONFIG_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_experience_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.EXPERIENCE_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_use_guide_menu(update: Update, context: CallbackContext):
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.USE_GUIDE_MENU_MESSAGE,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
@@ -231,7 +237,7 @@ def to_strat_expl_menu(update: Update, context: CallbackContext):
 
     """
     user_id = update.effective_user.id
-    text = "Seleziona una strategia per vederne la spiegazione"
+    text = "📊 Questo è l'elenco delle strategie! Selezionane una per scoprire di cosa si tratta ! 📊"
     #context.bot.edit_message_text(
     #    text,
     #    user_id,

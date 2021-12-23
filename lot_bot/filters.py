@@ -77,6 +77,9 @@ def get_bot_config_filter() -> Filters:
 def get_experience_settings_filter() -> Filters:
     return Filters.regex(r"[Gg]estione [Ee]sperienza")
 
+def get_use_guide_filter() -> Filters:
+    return Filters.regex(r"[Gg]uida [Aa]ll'[Uu]so")
+
 
 def get_assistance_filter() -> Filters:
     return Filters.regex(r"[Aa]ssistenza")
