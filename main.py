@@ -36,6 +36,24 @@ def check_components():
         lgr.logger.info("Bot object created")
 
 
+def staging_webhook(request):
+    """Staging webhook function which will be called at each test bot request.
+
+    Args:
+        request: the Flask request object containing the request 
+
+    Returns:
+        str
+    """
+    check_components()
+    if request.method != "POST":
+        lgr.logger.error(f"Staging bot received {request.method} request")
+        return
+    update = Update.de_json(request.get_json(force=True), bot.bot)
+    bot.dispatcher.process_update(update)
+    return "Ok"
+
+
 def webhook(request):
     """Webhook function which will be called at each bot request.
 

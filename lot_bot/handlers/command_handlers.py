@@ -184,7 +184,7 @@ def start_command(update: Update, context: CallbackContext):
     elif ref_code and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
     # * existing user wants to activate teacherbet trial
-    elif (teacherbet_code and ("teacherbet_code" not in user_data or user_data["teacherbet_code"] is None)):
+    elif teacherbet_code and ("teacherbet_code" not in user_data or user_data["teacherbet_code"] is None):
         existing_user_activating_teacherbet_trial_handler(update, user_id, user_data["subscriptions"], teacherbet_code)
     message_handlers.homepage_handler(update, context)
 

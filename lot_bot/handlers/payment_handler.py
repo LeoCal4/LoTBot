@@ -35,17 +35,17 @@ def to_add_linked_referral_before_payment(update: Update, context: CallbackConte
         int: the REFERRAL state for the ConversationHandler
     """
     chat_id = update.callback_query.message.chat_id
-    user_data = user_manager.retrieve_user_fields_by_user_id(chat_id, ["payments"])
-    # ! TODO REVERT 
-    # * check if the user has already payed
-    if user_data and "payments" in user_data and len(user_data["payments"]) > 0:
-        context.bot.edit_message_text(
-            "Hai già effettuato il pagamento della prevendita!",
-            chat_id=chat_id, 
-            message_id=update.callback_query.message.message_id,
-        )
-        message_handlers.homepage_handler(update, context)
-        return ConversationHandler.END
+    # user_data = user_manager.retrieve_user_fields_by_user_id(chat_id, ["payments"])
+    # # ! TODO REVERT 
+    # # * check if the user has already payed
+    # if user_data and "payments" in user_data and len(user_data["payments"]) > 0:
+    #     context.bot.edit_message_text(
+    #         "Hai già effettuato il pagamento della prevendita!",
+    #         chat_id=chat_id, 
+    #         message_id=update.callback_query.message.message_id,
+    #     )
+    #     message_handlers.homepage_handler(update, context)
+    #     return ConversationHandler.END
     referral_text = ref_code_handlers.get_update_linked_referral_message(chat_id)
     message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
     context.bot.edit_message_text(
@@ -168,14 +168,16 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "linked_referral_user"])
     retrieved_user_subs = retrieved_user["subscriptions"]
+    user_subs_name = [entry["name"] for entry in retrieved_user_subs]
     # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
     sub_name = "_".join(context.user_data["payment_payload"].split("_")[1:])
     # * extend the user's subscription up to the same day of the next month
-    if sub_name not in retrieved_user_subs:
+    if sub_name not in user_subs_name:
         new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).timestamp()
         retrieved_user_subs.append({"name": sub_name, "expiration_date": new_expiration_date})
     else:
-        base_exp_date = retrieved_user_subs[sub_name]["expiration_date"]
+        base_exp_date = [entry["expiration_date"] for entry in retrieved_user_subs if entry["name"] == sub_name][0]
+        # base_exp_date = retrieved_user_subs[sub_name]["expiration_date"]
         new_expiration_date: float = users.extend_expiration_date(base_exp_date, 30)
         for sub_entry in retrieved_user_subs:
             if sub_entry["name"] == sub_name:

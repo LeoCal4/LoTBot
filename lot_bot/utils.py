@@ -2,6 +2,7 @@ import datetime
 import re
 from typing import Dict, List, Optional, Tuple
 
+from lot_bot import config as cfg
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
 from lot_bot.models import giocate as giocata_model
@@ -162,7 +163,7 @@ def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[
 
 
 def create_personal_referral_updated_text(updated_referral: str) -> str:
-    referral_link = f"https://t.me/SportSignalsBot?start={updated_referral}"
+    referral_link = f"https://t.me/{cfg.config.BOT_NAME}?start={updated_referral}"
     return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)
 
 
