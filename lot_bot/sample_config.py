@@ -17,6 +17,7 @@ config = None
 
 class Config(object):
     ENV = None
+    BOT_NAME = None
     TOKEN = None
     PAYMENT_TOKEN = None
     TESTING = False
@@ -41,9 +42,11 @@ class Config(object):
 class Development(Config):
     ENV = "development"
     # ====== Add the values of the following variables ====== 
+    BOT_NAME = None
     SPORTS_CHANNELS_ID = {
         "exchange": 0, # at least exchange must be present
     }
+    TEACHERBET_CHANNEL_ID = None
     MONGO_DB_URL = None
     TOKEN = None # TBA
     DEVELOPER_CHAT_IDS = [] # TBA
@@ -61,6 +64,7 @@ class Testing(Config):
     TESTING = True
     LOG_ON_FILE = False
     # ====== Add the values of the following variables ====== 
+    BOT_NAME = None # TBA
     BOT_TEST_USERNAME = None # TBA
     TOKEN = None # TBA
     MONGO_DB_USER = None # TBA
@@ -79,6 +83,41 @@ class Testing(Config):
 
 
 
+def load_env_variables():
+    global config
+    config = Config()
+    config.TOKEN = os.getenv("TOKEN", None) # gcloud secret
+    config.PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN", None) # gcloud secret
+    config.MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", None) # gcloud secret
+    config.MONGO_DB_URL = os.getenv("MONGO_DB_URL", None) # gcloud secret
+    config.BOT_NAME = os.getenv("BOT_NAME", None)
+    config.TESTING = os.getenv("TESTING", False)
+    config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
+    config.LOG_PATH = os.getenv("LOG_PATH", None)
+
+    config.NEW_USERS_CHANNEL_ID = os.getenv("NEW_USERS_CHANNEL_ID", None)
+    if not config.NEW_USERS_CHANNEL_ID is None:
+        config.NEW_USERS_CHANNEL_ID = int(config.NEW_USERS_CHANNEL_ID)
+
+    channels_id = os.getenv("SPORTS_CHANNELS_ID", {})
+    if channels_id != {}:
+        config.SPORTS_CHANNELS_ID = json.loads(channels_id)
+        config.SPORTS_CHANNELS_ID = {key: int(value) for key, value in config.SPORTS_CHANNELS_ID.items()}
+
+    dev_chat_ids = os.getenv("DEVELOPER_CHAT_IDS", [])
+    if dev_chat_ids != []:
+        config.DEVELOPER_CHAT_IDS = json.loads(dev_chat_ids)
+        config.DEVELOPER_CHAT_IDS = [int(chat_id) for chat_id in config.DEVELOPER_CHAT_IDS]
+
+    config.TEACHERBET_CHANNEL_ID = os.getenv("TEACHERBET_CHANNEL_ID", None)
+    if not config.TEACHERBET_CHANNEL_ID is None:
+        config.TEACHERBET_CHANNEL_ID = int(config.TEACHERBET_CHANNEL_ID)
+        
+    config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
+    config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
+    config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())
+
+
 def create_config():
     """Creates the config object that will be used by all
     the other modules to access config data.
@@ -88,49 +127,28 @@ def create_config():
     """
     global config
     print("Creating config")
-    # dotenv handles the .env file, which we can use to store
-    #  environmental variables needed for the application
-    # this next line loads the variables stored in the .env file
-    load_dotenv()
 
     # to load an env variable, use os.getenv("NAME", default)
     #   if the "NAME" variable is not present in the environment, 
     #   the default value will be used
-    ENV = os.getenv("ENV", False)
+    ENV = os.getenv("ENV", "development")
 
     # if the .env file exists, load vars from there
-    #   (this should happen only for production)
+    #   (this should happen only for production and staging)
     if ENV == "dotenv":
-        config = Config()
-        config.TOKEN = os.getenv("TOKEN", None)
-        config.PAYMENT_TOKEN = os.getenv("PAYMENT_TOKEN", None)
-        config.MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", None)
-        config.MONGO_DB_URL = os.getenv("MONGO_DB_URL", None)
-        config.TESTING = os.getenv("TESTING", False)
-        config.LOG_ON_FILE = os.getenv("LOG_ON_FILE", True)
-        config.LOG_PATH = os.getenv("LOG_PATH", None)
-        config.NEW_USERS_CHANNEL_ID = os.getenv("NEW_USERS_CHANNEL_ID", None)
-        if not config.NEW_USERS_CHANNEL_ID is None:
-            config.NEW_USERS_CHANNEL_ID = int(config.NEW_USERS_CHANNEL_ID)
-        channels_id = os.getenv("SPORTS_CHANNELS_ID", {})
-        if channels_id != {}:
-            config.SPORTS_CHANNELS_ID = json.loads(channels_id)
-            config.SPORTS_CHANNELS_ID = {key: int(value) for key, value in config.SPORTS_CHANNELS_ID.items()}
-        dev_chat_ids = os.getenv("DEVELOPER_CHAT_IDS", [])
-        if dev_chat_ids != []:
-            config.DEVELOPER_CHAT_IDS = json.loads(dev_chat_ids)
-            config.DEVELOPER_CHAT_IDS = [int(chat_id) for chat_id in config.DEVELOPER_CHAT_IDS]
-        config.TEACHERBET_CHANNEL_ID = os.getenv("TEACHERBET_CHANNEL_ID", None)
-        if not config.TEACHERBET_CHANNEL_ID is None:
-            config.TEACHERBET_CHANNEL_ID = int(config.TEACHERBET_CHANNEL_ID)
-        config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
-        config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
-        config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())
-
+        # dotenv handles the .env file, which we can use to store
+        #  environmental variables needed for the application
+        # this next line loads the variables stored in the .env file
+        load_dotenv()
+        load_env_variables()
+        print("Production config created")
+    elif ENV == "staging":
+        load_dotenv("staging.env")
+        load_env_variables()
+        print("Staging config created")
+    elif ENV == "testing":
+        config = Testing()
+        print("Testing config created")
     else:
-        if ENV == "testing":
-            config = Testing()
-            print("Testing config created")
-        else:
-            config = Development()
-            print("Dev config created")
+        config = Development()
+        print("Dev config created")
