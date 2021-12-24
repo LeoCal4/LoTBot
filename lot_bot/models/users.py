@@ -84,10 +84,10 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
         base_timestamp = expiration_date_timestamp
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
-
+#TODO find a better way to add default sport subscriptions
 def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: str = None) -> Dict:
     """Creates the user using the bot for the first time.
-    First, it creates the user itself, setting its expiration date to 7 days 
+    First, it creates the user itself, setting its expiration date to 2 days 
     from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
     one to exchange - maxexchange. 
 
@@ -105,6 +105,21 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
+    user_data["sport_subscriptions"] = [
+        {'sport':'calcio', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'basket', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'tennis', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'exchange', 'strategies': ['maxexchange']},
+        {'sport':'hockey', 'strategies': ['base']},
+        {'sport':'baseball', 'strategies': ['base']},
+        {'sport':'footballamericano', 'strategies': ['base']},
+        {'sport':'pallavolo', 'strategies': ['base']},
+        {'sport':'pingpong', 'strategies': ['base']},
+        {'sport':'mma', 'strategies': ['base']},
+        {'sport':'tuttoilresto', 'strategies': ['base']},
+        {'sport':'freelot', 'strategies': ['communitybet']}
+        ]
+
     if ref_code:
         ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
         if ref_user_data:

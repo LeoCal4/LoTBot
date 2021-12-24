@@ -152,28 +152,34 @@ def to_homepage(update: Update, context: CallbackContext):
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text = cst.BOT_CONFIG_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_experience_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.EXPERIENCE_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_use_guide_menu(update: Update, context: CallbackContext):
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.USE_GUIDE_MENU_MESSAGE,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
@@ -208,7 +214,7 @@ def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
     service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
-    for sub in user_data["subscriptions"]:
+    for sub in user_data["subscriptions"]: 
         expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
         sub_name = subs_model.sub_container.get_subscription(sub["name"])
         sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
@@ -220,6 +226,58 @@ def to_service_status(update: Update, context: CallbackContext):
         reply_markup=kyb.SERVICE_STATUS_KEYBOARD
     )
 
+#related to text explanations (not video!)
+def to_strat_expl_menu(update: Update, context: CallbackContext): 
+    """Shows the inline keyboard containing all strategies,
+        user clicks a button to see the strategy's explanation 
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    """
+    user_id = update.effective_user.id
+    text = "📊 Questo è l'elenco delle strategie! Selezionane una per scoprire di cosa si tratta ! 📊"
+    #context.bot.edit_message_text(
+    #    text,
+    #    user_id,
+    #    message_id=update.callback_query.message.message_id,
+    #    reply_markup=kyb.create_strategies_expl_inline_keyboard(update),
+    #)
+    context.bot.edit_message_text(
+        text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.create_strategies_expl_inline_keyboard(update),
+        parse_mode="HTML"
+    )
+
+#related to text explanations (not video!)
+def strategy_text_explanation(update: Update, context: CallbackContext):
+    """Shows the choosen strategy's explanation
+    Triggered by callback <strategy name>_explanation
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    Raises:
+        Exception: raised in case the strategy is not valid 
+    """
+    strategy_token = update.callback_query.data.replace("text_explanation_", "")
+    strategy = strat.strategies_container.get_strategy(strategy_token)
+    text = cst.DEFAULT_STRAT_EXPLANATION_TEXT
+    if not strategy:
+        lgr.logger.error(f"Could not find strategy {strategy_token} to show its explanation, showing default text instead")
+    else:
+        text = f"{strategy.display_name}:\n\n"+strategy.explanation
+    context.bot.edit_message_text(
+        text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.BACK_TO_EXPL_STRAT_MENU_KEYBOARD,
+        parse_mode="HTML"
+    )
 
 def feature_to_be_added(_: Update, __: CallbackContext):
     return
@@ -281,6 +339,7 @@ def to_referral(update: Update, context: CallbackContext, send_new: bool = False
             reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
             parse_mode="HTML",
         )
+
 
 
 def strategy_explanation(update: Update, context: CallbackContext):

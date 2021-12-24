@@ -64,7 +64,7 @@ def send_message_to_all_abbonati(update: Update, context: CallbackContext, origi
     lgr.logger.info(f"Found {messages_to_be_sent} sport_subscriptions for {sport} - {strategy}")
     # * eventually add giocata text at the end of the message
     if is_giocata:
-        original_text += "\n\nHai effettuato la giocata?"
+        original_text += "\n\nSeguirai questo evento?"
     for user_id in sub_user_ids:
         user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked"])
         # * check if the user actually exists
@@ -131,7 +131,7 @@ def homepage_handler(update: Update, context: CallbackContext):
 
 def bot_configuration_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
-        cst.HOMEPAGE_MESSAGE,
+        cst.BOT_CONFIG_MENU_MESSAGE,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
@@ -139,8 +139,15 @@ def bot_configuration_handler(update: Update, _: CallbackContext):
 
 def experience_settings_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
-        cst.HOMEPAGE_MESSAGE,
+        cst.EXPERIENCE_MENU_MESSAGE,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
+    )
+
+def use_guide_handler(update: Update, _: CallbackContext):
+    update.message.reply_text(
+        cst.USE_GUIDE_MENU_MESSAGE,
+        reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
     )
 

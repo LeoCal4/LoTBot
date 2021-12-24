@@ -77,6 +77,9 @@ def get_bot_config_filter() -> Filters:
 def get_experience_settings_filter() -> Filters:
     return Filters.regex(r"[Gg]estione [Ee]sperienza")
 
+def get_use_guide_filter() -> Filters:
+    return Filters.regex(r"[Gg]uida [Aa]ll'[Uu]so")
+
 
 def get_assistance_filter() -> Filters:
     return Filters.regex(r"[Aa]ssistenza")
@@ -186,6 +189,18 @@ def get_explanation_pattern() -> str:
         str: [description]
     """
     pattern = "explanation_("
+    for strategy in strat.strategies_container:
+        pattern += strategy.name + "|"
+    return pattern[:-1] + ")"
+
+def get_strat_text_explanation_pattern() -> str: #related to text explanations (not video!)
+    """
+    text_explanation_(<str1>|<str2>|...|<strN>)
+
+    Returns:
+        str: [description]
+    """
+    pattern = "text_explanation_("
     for strategy in strat.strategies_container:
         pattern += strategy.name + "|"
     return pattern[:-1] + ")"

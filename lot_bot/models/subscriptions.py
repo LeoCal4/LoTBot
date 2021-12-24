@@ -24,9 +24,9 @@ class SubContainer:
     # * available_sports is not set, meaning that every one of the is included 
     LOTCOMPLETE : Subscription = Subscription(
         "lotcomplete", 
-        display_name="LoT Abbonamento Completo", 
-        price=7900, 
-        description="Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)",
+        display_name="LoT Abbonamento Completo",
+        price=2490, 
+        description= "Accesso completo a tutta la produzione LoT (include tutti gli abbonamenti)", #"Comprende 1 mese di accesso illimitato a tutte le funzioni del BoT di LoT, l'accesso al gruppo privato LoT Meister, l'accesso anticipato a nuove funzioni e servizi!"
         aliases=["lot", "lot completo", "lot complete", "lot totale"]
     )
     TEACHERBET : Subscription = Subscription(

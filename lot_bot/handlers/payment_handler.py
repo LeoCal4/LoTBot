@@ -106,14 +106,24 @@ def to_payments(update: Update, context: CallbackContext):
         callback_handlers.delete_message_if_possible(update, context)
     except Exception as e:
         lgr.logger.warning(f"Could not delete previous message before sending invoice - {str(e)}")
+    '''#TODO rimettere per far apparire sia l'abbonamento lot che quello di teacherbet
     for sub in subs.sub_container:
         payload = f"payment_{sub.name}"
         # price = user_manager.get_subscription_price_for_user(chat_id)
         prices = [LabeledPrice(sub.display_name, sub.price)]
         context.bot.send_invoice(
-            chat_id, sub.display_name, sub.description, payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
+            chat_id, sub.display_name, sub.description, payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices, 
             need_email=True, need_name=True, start_parameter="Paga"
         )
+    '''
+    sub = subs.sub_container.get_subscription("lotcomplete")
+    payload = f"payment_{sub.name}"
+    # price = user_manager.get_subscription_price_for_user(chat_id)
+    prices = [LabeledPrice(sub.display_name, sub.price)]
+    context.bot.send_invoice(
+        chat_id, "1 Mese di SportSignalsBot by LoT", "Comprende 1 mese di accesso illimitato a tutte le funzioni del BoT di LoT, l'accesso al gruppo privato LoT Meister, l'accesso anticipato a nuove funzioni e servizi!", payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
+        need_email=True, need_name=True, start_parameter="Paga"
+    )
     return ConversationHandler.END
 
 

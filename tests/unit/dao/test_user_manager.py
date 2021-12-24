@@ -139,7 +139,7 @@ def test_update_user_succ_referrals(new_user: Dict):
         assert succ_refs in payment_ids
         assert normal_refs in payment_ids
 
-
+#TODO fix prices - maybe prices are wrong
 def test_get_subscription_price_for_user(new_user: Dict, monkeypatch):
     user_id = new_user["_id"]
     # * new user 50% discount

@@ -104,7 +104,9 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_gestione_budget_menu, pattern=r"^to_gestione_budget_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern())) 
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) #related to text explanations (not video!)
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_resoconti, pattern=r"^to_resoconti$"))
@@ -135,6 +137,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_use_guide_filter(), message_handlers.use_guide_handler))
 
     # ============ ERROR HANDLERS =============
     dispatcher.add_error_handler(message_handlers.error_handler)
