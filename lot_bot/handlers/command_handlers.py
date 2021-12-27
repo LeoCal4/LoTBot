@@ -561,7 +561,7 @@ def get_user_resoconto(update: Update, context: CallbackContext):
     giocate_since_timestamp = (datetime.datetime.utcnow() - datetime.timedelta(days=days_for_resoconto)).timestamp()
     resoconto_message_header = f"Resoconto utente {target_user_identification_data} -  Ultimi {days_for_resoconto} giorni" # TODO add dates
     # context.dispatcher.run_async(callback_handlers._create_and_send_resoconto, context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
-    callback_handlers._create_and_send_resoconto(context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False)
+    callback_handlers._create_and_send_resoconto(context, target_user_id, giocate_since_timestamp, resoconto_message_header, edit_messages=False, receiver_user_id=user_id)
         
     
 ############################################ STAKE COMMANDS ############################################

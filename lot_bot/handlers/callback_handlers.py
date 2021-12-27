@@ -504,20 +504,22 @@ def last_30_days_resoconto(update: Update, context: CallbackContext):
     send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
-def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_since_timestamp: float, resoconto_message_header: str, edit_messages: bool = True, message_id: int = None):
+def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_since_timestamp: float, resoconto_message_header: str, edit_messages: bool = True, message_id: int = None, receiver_user_id: int = None):
     user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
+    if receiver_user_id is None:
+        receiver_user_id = chat_id
     if user_giocate_data == []:
         no_giocata_found_text = resoconto_message_header + "\nNessuna giocata trovata."
         if edit_messages:
             context.bot.edit_message_text(
                 no_giocata_found_text,
-                chat_id=chat_id,
+                chat_id=receiver_user_id,
                 message_id=message_id,
                 reply_markup=kyb.RESOCONTI_KEYBOARD,
             )
         else:
             context.bot.send_message(
-                chat_id,
+                receiver_user_id,
                 no_giocata_found_text,
             )
         return
@@ -529,19 +531,19 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
     if edit_messages:
         context.bot.edit_message_text(
             resoconto_message,
-            chat_id=chat_id,
+            chat_id=receiver_user_id,
             message_id=message_id,
             reply_markup=None,
         )
         # * send new message with menu
         context.bot.send_message(
-            chat_id,
+            receiver_user_id,
             cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
             reply_markup=kyb.RESOCONTI_KEYBOARD,
         )
     else:
         context.bot.send_message(
-            chat_id,
+            receiver_user_id,
             resoconto_message,
         )
 

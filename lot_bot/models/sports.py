@@ -28,7 +28,8 @@ _adv_strategies = [
     strats.MULTIPLALIGHT, 
     strats.RADDOPPIO, 
     strats.SPECIALI,
-    strats.LIVE
+    strats.LIVE,
+    strats.TEST
 ]
 _analisi_miste_strategies = [
     strats.INSTAGRAMFREE, 
@@ -36,11 +37,12 @@ _analisi_miste_strategies = [
     strats.MULTIPLA, 
     strats.SOFAR
 ]
+
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
     CALCIO : Sport = Sport("calcio", [strats.PDR] + _adv_strategies, emoji="⚽️")
-    BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀", display_name="Basket")
+    BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀")
     TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB, strats.SCALPING, strats.TEST], emoji="📊")
     HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
@@ -50,7 +52,7 @@ class SportsContainer:
     PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
-    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", show_in_menu=True, outcome_percentage_in_resoconto=False)
+    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False)
     ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
 
     def __iter__(self):
