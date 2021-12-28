@@ -14,7 +14,6 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
                          user_manager)
-from lot_bot.handlers.ref_code_handlers import update_linked_referral
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import personal_stakes
 from lot_bot.models import sports as spr
@@ -140,7 +139,8 @@ def send_messages_to_developers(context: CallbackContext, messages_to_send: List
                 lgr.logger.error(f"{str(e)}") # cannot raise e since it would loop with the error handler
 
 
-def send_message_to_all_subscribers(update: Update, context: CallbackContext, original_text: str, sport: str, strategy: str, is_giocata: bool = False):
+def send_message_to_all_subscribers(update: Update, context: CallbackContext, original_text: str, sport: str, strategy: str, 
+                                        is_giocata: bool = False):
     """Sends a message to all the user subscribed to a certain sport's strategy.
     If the message is a giocata, the reply_keyboard is the one used for the giocata registration.
 
@@ -169,7 +169,7 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
     if is_giocata:
         original_text += "\n\nHai effettuato la giocata?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["lot_subscription_expiration", "personal_stakes", "budget"])
         # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
@@ -185,6 +185,10 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
             text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
+            user_budget = user_data["budget"]
+            if not user_budget is None:
+                user_budget = int(user_budget)
+                text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget)
         # * otherwise, keep the original text and resend the base keyboard
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
@@ -647,8 +651,11 @@ def get_user_budget(update: Update, context: CallbackContext):
     if not user_data:
         update.effective_message.reply_text(f"ERRORE: utente non trovato")
         return
+    if user_data["budget"] is None:
+        update.effective_message.reply_text(f"Il budget dell'utente non è stato impostato")
+        return
     user_budget = int(user_data["budget"]) / 100
-    update.effective_message.reply_text(f"Il budget dell'utente {target_user_identification_data} è {user_budget:.2f}")
+    update.effective_message.reply_text(f"Il budget dell'utente {target_user_identification_data} è {user_budget:.2f}€")
 
 
 def set_user_budget(update: Update, context: CallbackContext):
@@ -775,11 +782,37 @@ def outcome_giocata_handler(update: Update, context: CallbackContext):
     if not updated_giocata:
         update.effective_message.reply_text(f"ATTENZIONE: il risultato non è stato inviato perchè la giocata non è stata trovata nel database. Si prega di ricontrollare e rimandare l'esito.")
         return
-    strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
+    # strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
     # * send outcome
-    send_message_to_all_subscribers(update, context, text, sport, strategy.name)
+    send_giocata_outcome(context, updated_giocata["_id"],  text)
+    # send_message_to_all_subscribers(update, context, text, giocata_num, sport, strategy.name)#, is_outcome=True, outcome_data={"giocata_num": giocata_num, "outcome": outcome})
     # * update the budget of all the user's who accepted the giocata
     users.update_users_budget_with_giocata(updated_giocata)
+
+
+def send_giocata_outcome(context: CallbackContext, giocata_id: str, outcome_text: str):
+    giocata = giocate_manager.retrieve_giocate_from_ids([giocata_id])[0]
+    target_users_data = user_manager.retrieve_users_who_played_giocata(giocata_id)
+    for user_data in target_users_data:
+        outcome_text_to_send = outcome_text
+        user_id = user_data["_id"]
+        user_budget = user_data["budget"]
+        if not user_budget is None:
+            user_personal_stake = int(user_data["giocate"]["personal_stake"])
+            if user_personal_stake:
+                stake = user_personal_stake
+            else:
+                stake = giocata["base_stake"]
+            outcome_text_to_send = giocata_model.update_outcome_text_with_money_value(outcome_text_to_send, user_budget, stake, giocata["base_quota"], giocata["outcome"])
+        try:
+            context.bot.send_message(
+                user_id, 
+                outcome_text_to_send)
+        # * check if the user has blocked the bot
+        except Unauthorized:
+            lgr.logger.warning(f"Could not send message: user {user_id} blocked the bot")
+        except Exception as e:
+            lgr.logger.error(f"Could not send message {outcome_text} to user {user_id} - {str(e)}")
 
 
 def exchange_cashout_handler(update: Update, context: CallbackContext):
@@ -872,7 +905,3 @@ def error_handler(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not send error message to user")
         lgr.logger.error(f"Update: {str(update)}")
         lgr.logger.error(f"Exception: {str(e)}")
-
-
-def error_test(update, _):
-    raise Exception

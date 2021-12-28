@@ -357,10 +357,12 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     # * update user budget if giocata has an outcome
     giocata_outcome = retrieved_giocata["outcome"]
     if giocata_outcome == "win" or giocata_outcome == "loss":
-        user_budget = int(user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"])
-        update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
-        if not update_result:
-            context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
+        user_budget = user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"]
+        if not user_budget is None:
+            user_budget = int(user_budget)
+            update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
+            if not update_result:
+                context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     context.bot.edit_message_text(
         updated_giocata_text,
         chat_id=user_chat_id,

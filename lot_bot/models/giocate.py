@@ -346,3 +346,31 @@ def create_personal_giocata_from_new_giocata(retrieved_giocata: Dict, stake_from
         personal_user_giocata["personal_stake"] = stake_from_giocata_message
     return personal_user_giocata
 
+
+def update_text_with_stake_money_value(text: str, user_budget: int, stake: int) -> str:
+    try:
+        percentage_index = text.index("%")
+    except ValueError:
+        print("VALUE ERROR ON UPDATE TEXT WIT STAKE MONEY VALUE")
+        return text
+    stake_money_value = (user_budget / 100) * (stake / 10000)
+    print(f"{stake_money_value=}")
+    return f"{text[:percentage_index+1]} ({stake_money_value:.2f}€){text[percentage_index+1:]}"
+
+
+def update_giocata_text_with_stake_money_value(text: str, user_budget: int) -> str:
+    parsed_giocata = parse_giocata(text)
+    stake = parsed_giocata["base_stake"]
+    return update_text_with_stake_money_value(text, user_budget, stake)
+
+
+def update_outcome_text_with_money_value(text: str, user_budget: int, stake: int, quota: int, outcome: str) -> str:
+    try:
+        percentage_index = text.index("%")
+    except ValueError:
+        print("VALUE ERROR ON UPDATE TEXT WIT STAKE MONEY VALUE")
+        return text
+    outcome_percentage = get_outcome_percentage(outcome, stake, quota)
+    outcome_money_value = (user_budget / 100) *  (outcome_percentage/ 100)
+    print(f"{outcome_money_value=} - {user_budget=} - {outcome_percentage=} - {outcome=} - {stake=} - {quota=}")
+    return f"{text[:percentage_index+1]} ({outcome_money_value:.2f}€){text[percentage_index+1:]}"
