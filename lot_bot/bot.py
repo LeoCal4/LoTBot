@@ -7,7 +7,7 @@ from telegram.ext.dispatcher import Dispatcher
 from lot_bot import config as cfg
 from lot_bot import filters
 from lot_bot.handlers import (callback_handlers, message_handlers,
-                              payment_handler, ref_code_handlers)
+                              payment_handler, ref_code_handlers, budget_handlers)
 
 
 bot = None
@@ -66,6 +66,27 @@ def update_referral_conversation_handler() -> ConversationHandler:
     return update_ref_code_conv_handler
 
 
+def get_set_budget_conversation_handler() -> ConversationHandler:
+    """Creates the conversation handler to contain the budget update.
+
+    Returns:
+        ConversationHandler
+    """
+    set_budget_conversation_handler = ConversationHandler(
+        entry_points=[CallbackQueryHandler(budget_handlers.to_set_budget_menu, pattern=r"^to_set_budget_menu$")],
+        states={
+            budget_handlers.SET_BUDGET: [
+                MessageHandler(filters.get_float_filter(), budget_handlers.received_new_budget),
+                CallbackQueryHandler(budget_handlers.to_set_budget_menu, pattern=r"^to_set_budget_menu$")
+                ],
+        },
+        fallbacks=[
+            MessageHandler(filters.get_normal_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
+            ],
+    )
+    return set_budget_conversation_handler
+
+
 def add_handlers(dispatcher: Dispatcher):
     """Adds all the bot's handlers to the dispatcher.
 
@@ -108,9 +129,11 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_24_hours_resoconto, pattern=r"^resoconto_24_hours$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_7_days_resoconto, pattern=r"^resoconto_7_days$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_30_days_resoconto, pattern=r"^resoconto_30_days$"))
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.to_budget_menu, pattern=r"^to_budget_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
 
-    
+    dispatcher.add_handler(get_set_budget_conversation_handler())
+
     # =========== PAYMENTS HANDLERS ===========
     dispatcher.add_handler(get_referral_conversation_handler())
     dispatcher.add_handler(PreCheckoutQueryHandler(payment_handler.pre_checkout_handler))

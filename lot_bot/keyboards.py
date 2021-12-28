@@ -45,11 +45,23 @@ _explanation_test_buttons = [
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 _gestione_budget_buttons = [
+    [InlineKeyboardButton(text="📈  Il mio budget  🧮", callback_data="to_budget_menu")],
     [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
     [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 GESTIONE_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_gestione_budget_buttons)
+
+_budget_menu_buttons = [
+    [InlineKeyboardButton(text="🔍 Imposta Budget 📊", callback_data="to_set_budget_menu")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_gestione_budget_menu")]
+]
+BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_budget_menu_buttons)
+
+_set_budget_menu_buttons = [
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budget_menu")]
+]
+SET_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_set_budget_menu_buttons)
 
 _to_resoconti_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 

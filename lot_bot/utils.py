@@ -67,6 +67,14 @@ def create_cashout_message(message_text: str) -> str:
         return f"{emoji} CASHOUT Exchange #{giocata_num} {cashout_percentage}% {emoji}"
 
 
+def parse_float_string(float_string: str) -> float:
+    try:
+        return float(float_string.strip().replace(",", "."))
+    except Exception as e:
+        lgr.logger.error(f"Error during parsing of {float_string} to float - {str(e)}")
+        raise e
+
+
 def parse_float_string_to_int(float_string: str) -> int:
     """Converts a string containing a float to int, multiplying it by 100, in order
     to keep the first 2 floating point digits.
@@ -78,7 +86,7 @@ def parse_float_string_to_int(float_string: str) -> int:
         int: the float represented as an int (float to int * 100)
     """
     try:
-        return int(float(float_string.strip().replace(",", ".")) * 100)
+        return int(parse_float_string(float_string) * 100)
     except Exception as e:
         lgr.logger.error(f"Error during parsing of {float_string} to int * 100 - {str(e)}")
         raise e

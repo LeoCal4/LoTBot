@@ -160,3 +160,5 @@ def get_successful_payment_filter() -> Filters:
     return Filters.successful_payment
 
 
+def get_float_filter() -> Filters:
+    return Filters.regex(r"\d+(?:[.,]\d+)?")
