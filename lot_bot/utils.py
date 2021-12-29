@@ -112,12 +112,13 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
+        user_giocata = user_giocate_data_dict[giocata["_id"]]
         stake_section = ""
         sport = spr.sports_container.get_sport(giocata['sport'])
         if "base_stake" in giocata:
             stake = giocata["base_stake"]
             # * check for a personalized stake
-            personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
+            personalized_stake = user_giocata["personal_stake"]
             if personalized_stake != 0:
                 stake = personalized_stake
             parsed_stake = stake / 100
@@ -125,17 +126,18 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
         # * get outcome percentage
         if sport.outcome_percentage_in_resoconto:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
-            outcome_percentage_string = f"= {outcome_percentage:.2f}% "
+            outcome_percentage_string = f" = {outcome_percentage:.2f}%"
             if "pre_giocata_budget" in user_giocata:
                 user_old_budget = int(user_giocata["pre_giocata_budget"]) / 100
                 stake_money = user_old_budget * parsed_stake / 100
-                parsed_stake_string += f" ({stake_money:.2f}€)"
+                if stake_section != "":
+                    stake_section += f" ({stake_money:.2f}€)"
                 outcome_money = user_old_budget * outcome_percentage / 100
                 outcome_sign = "" if outcome_money < 0 else "+"
                 outcome_percentage_string += f" ({outcome_sign}{outcome_money:.2f}€)"
         else:
             outcome_percentage_string = ""
-        outcome_emoji = giocata_model.OUTCOME_EMOJIS[giocata["outcome"]]
+        outcome_emoji = f" {giocata_model.OUTCOME_EMOJIS[giocata['outcome']]}"
         # * get quota
         quota_section = ""
         if "base_quota" in giocata:

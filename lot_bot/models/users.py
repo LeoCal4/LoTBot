@@ -9,6 +9,7 @@ from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import subscriptions as subs
+from telegram import User 
 
 # role: user, analyst, admin
 ROLES = ["user", "analyst", "admin", "teacherbet"]
@@ -103,16 +104,19 @@ def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personal
         stake = personalized_stake
     # * get outcome percentage
     if "cashout" in giocata:
+        lgr.logger.debug(f"{giocata['cashout']=}")
         outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "abbinata") # just to be sure to avoid abbinate
     else:
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
     # * update budget with outcome percentange
     budget_difference = (user_budget * round(outcome_percentage / 100, 2))
     new_budget = user_budget + budget_difference
+    lgr.logger.debug(f"New budget calculated: {user_budget=}  - {outcome_percentage=} - {budget_difference=}")
     return new_budget
 
 
-def update_single_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, giocata_data: Dict, user_personal_stake: int = None) -> bool:
+def update_single_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, 
+                                            giocata_data: Dict, user_personal_stake: int = None) -> bool:
     """Calculates the new user's budget given the giocata, updates it and saves the pre-giocata budget in the personal user's giocata.
 
     Args:
@@ -149,6 +153,8 @@ def update_users_budget_with_giocata(updated_giocata: Dict):
     if not users_who_played_giocata:
         return
     for target_user in users_who_played_giocata:
+        if target_user["budget"] is None:
+            continue
         target_user_budget = int(target_user["budget"])
         target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
         update_single_user_budget_with_giocata(

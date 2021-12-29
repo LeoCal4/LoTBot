@@ -22,8 +22,11 @@ def to_budget_menu(update: Update, context: CallbackContext, send_new: bool = Fa
             reply_markup=kyb.BUDGET_MENU_KEYBOARD,
         )
         return
-    user_budget = int(retrieved_data["budget"]) / 100
-    budget_message = f"Budget: {user_budget:.2f}"
+    if not retrieved_data["budget"] is None:
+        user_budget = int(retrieved_data["budget"]) / 100
+        budget_message = f"Budget: {user_budget:.2f}€"
+    else:
+        budget_message = f"Il budget non è stato impostato."
     if not send_new:
         context.bot.edit_message_text(
             budget_message,
@@ -77,7 +80,7 @@ def received_new_budget(update: Update, context: CallbackContext) -> int:
     user_manager.update_user(chat_id, {"budget": new_budget_to_int})
     lgr.logger.debug(f"Correctly updated budget {new_budget_to_int} for user {chat_id}")
     # * send success message
-    message_text = f"Budget aggiornato con successo in <b>{new_budget:.2f}</b>!"
+    message_text = f"Budget aggiornato con successo: <b>{new_budget:.2f}€</b>!"
     update.message.reply_text(
         message_text,
         parse_mode="HTML"

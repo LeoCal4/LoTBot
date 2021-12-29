@@ -44,7 +44,7 @@ class SportsContainer:
     CALCIO : Sport = Sport("calcio", [strats.PDR] + _adv_strategies, emoji="⚽️")
     BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀")
     TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
-    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB, strats.SCALPING, strats.TEST], emoji="📊")
+    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB, strats.SCALPING, strats.TEST], emoji="📊", outcome_percentage_in_resoconto=False)
     HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")

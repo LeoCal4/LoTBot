@@ -16,6 +16,7 @@ from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import users
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -197,7 +198,7 @@ def teacherbet_giocata_handler(update: Update, context: CallbackContext):
         except custom_exceptions.GiocataCreationError:
             update.effective_message.reply_text(f"ATTENZIONE: la giocata non è stata inviata perchè la combinazione '#{parsed_giocata['giocata_num']}' - '{parsed_giocata['sport']}' è già stata utilizzata.")
             return
-        send_message_to_all_abbonati(update, context, parsed_giocata["raw_text"], spr.sports_container.TEACHERBET.name, strat.strategies_container.TEACHERBETLUXURY.name, is_giocata=True)
+        send_message_to_all_subscribers(update, context, parsed_giocata["raw_text"], spr.sports_container.TEACHERBET.name, strat.strategies_container.TEACHERBETLUXURY.name, is_giocata=True)
 
 
 def outcome_giocata_handler(update: Update, context: CallbackContext):
@@ -271,7 +272,7 @@ def teacherbet_giocata_outcome_handler(update: Update, context: CallbackContext)
             return
     updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(giocata_num, sport)
     strategy = strat.strategies_container.get_strategy(updated_giocata["strategy"])
-    send_message_to_all_abbonati(update, context, text, sport, strategy.name)
+    send_message_to_all_subscribers(update, context, text, sport, strategy.name)
 
 
 
@@ -305,7 +306,7 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         strat.strategies_container.MAXEXCHANGE.name
     )
     # * update the budget of all the user's who accepted the giocata
-    users.update_users_budget_with_giocata(updated_giocata)
+    # users.update_users_budget_with_giocata(updated_giocata)
 
 
 def unrecognized_message(update: Update, _):

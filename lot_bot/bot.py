@@ -111,8 +111,8 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("visualizza_stake", command_handlers.visualize_personal_stakes))
     dispatcher.add_handler(CommandHandler("elimina_stake", command_handlers.delete_personal_stakes))
     # ---------------- Budget commands -----------------
-    dispatcher.add_handler(CommandHandler("visualizza_budget", message_handlers.get_user_budget))
-    dispatcher.add_handler(CommandHandler("imposta_budget", message_handlers.set_user_budget))
+    dispatcher.add_handler(CommandHandler("visualizza_budget", command_handlers.get_user_budget))
+    dispatcher.add_handler(CommandHandler("imposta_budget", command_handlers.set_user_budget))
 
 
     # ======= CALLBACK QUERIES HANDLERS =======
