@@ -1,6 +1,8 @@
+import datetime
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from lot_bot import config as cfg
 from lot_bot import custom_exceptions, filters
 from lot_bot import logger as lgr
 from lot_bot.models import giocate as giocata_model
@@ -47,7 +49,7 @@ def create_cashout_message(message_text: str) -> str:
     """Creates the cashout message to be broadcasted from a cashout message text.
     The message_text needs to be in the form "#<giocata id> +|-<percentage>.
     The final cashout message has the form:
-    🟢|🔴 CASHOUT Exchange <giocata id> +|-<percentage>% 🟢|🔴 or
+    🟢|🔴 CASHOUT Exchange <giocata id> 🟢|🔴 or
     ⚪️ Exchange #<giocata id> ABBINATA ⚪️
 
     Args:
@@ -58,13 +60,13 @@ def create_cashout_message(message_text: str) -> str:
             or an empty string in case of errors
     """
     matches = re.search(filters.get_cashout_pattern(), message_text)
-    giocata_num = matches.group(1)
+    giocata_num = matches.group(1).split()[0]
     cashout_percentage = matches.group(2)
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
     if emoji == "⚪️":
         return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"
     else:        
-        return f"{emoji} CASHOUT Exchange #{giocata_num} {cashout_percentage}% {emoji}"
+        return f"{emoji} CASHOUT Exchange #{giocata_num} {emoji}"
 
 
 def parse_float_string(float_string: str) -> float:
@@ -92,73 +94,96 @@ def parse_float_string_to_int(float_string: str) -> int:
         raise e
 
 
-def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict):
-    # Resoconto 24-09-2021
-    # 1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
+def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) -> str:
+    """Creates the resoconto message, given the base giocate and adding additional personalized
+    stake data if any.
+    Base structure:
+        <index>) <Sport>#<giocata_num> @<Quota> Stake <(personalized) stake> = <outcome percentage>% 
+    Example:
+        1) Calcio#1124 @2.20 Stake 3%(3€) = +3,60%(+3,60€)
+
+    Args:
+        giocate (List[Dict])
+        user_giocate_data_dict (Dict): user giocate for the personalized stakes
+
+    Returns:
+        str: the resoconto message
+    """
     lgr.logger.debug(f"Creating resoconto with giocate {giocate}")
-    # resoconto_message = f"Resoconto {datetime.date.today().strftime('%d-%m-%Y')}\n"
     resoconto_message = ""
     for index, giocata in enumerate(giocate, 1):
-        user_giocata = user_giocate_data_dict[giocata["_id"]]
-        stake = giocata["base_stake"]
-        # * check for a personalized stake
-        personalized_stake = user_giocata["personal_stake"]
-        if personalized_stake != 0:
-            stake = personalized_stake
-        # * get outcome percentage and relative emoji
-        if "cashout" in giocata:
-            outcome_percentage = giocata["cashout"] / 100
-        else:
+        stake_section = ""
+        sport = spr.sports_container.get_sport(giocata['sport'])
+        if "base_stake" in giocata:
+            stake = giocata["base_stake"]
+            # * check for a personalized stake
+            personalized_stake = user_giocate_data_dict[giocata["_id"]]["personal_stake"]
+            if personalized_stake != 0:
+                stake = personalized_stake
+            parsed_stake = stake / 100
+            stake_section = f"Stake {parsed_stake:.2f}%"
+        # * get outcome percentage
+        if sport.outcome_percentage_in_resoconto:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+            outcome_percentage_string = f"= {outcome_percentage:.2f}% "
+            if "pre_giocata_budget" in user_giocata:
+                user_old_budget = int(user_giocata["pre_giocata_budget"]) / 100
+                stake_money = user_old_budget * parsed_stake / 100
+                parsed_stake_string += f" ({stake_money:.2f}€)"
+                outcome_money = user_old_budget * outcome_percentage / 100
+                outcome_sign = "" if outcome_money < 0 else "+"
+                outcome_percentage_string += f" ({outcome_sign}{outcome_money:.2f}€)"
+        else:
+            outcome_percentage_string = ""
         outcome_emoji = giocata_model.OUTCOME_EMOJIS[giocata["outcome"]]
-        parsed_quota = giocata["base_quota"] / 100
-        parsed_stake = stake / 100
-        parsed_stake_string = f"Stake {parsed_stake:.2f}%"
-        outcome_percentage_string = f"{outcome_percentage:.2f}%"
-        if "pre_giocata_budget" in user_giocata:
-            user_old_budget = int(user_giocata["pre_giocata_budget"]) / 100
-            stake_money = user_old_budget * parsed_stake / 100
-            parsed_stake_string += f" ({stake_money:.2f}€)"
-            outcome_money = user_old_budget * outcome_percentage / 100
-            outcome_sign = "" if outcome_money < 0 else "+"
-            outcome_percentage_string += f" ({outcome_sign}{outcome_money:.2f}€)"
-        sport_name = spr.sports_container.get_sport(giocata['sport']).display_name
-        resoconto_message += f"{index}) {sport_name} #{giocata['giocata_num']}: @{parsed_quota:.2f} {parsed_stake_string} = {outcome_percentage_string} {outcome_emoji}\n"
+        # * get quota
+        quota_section = ""
+        if "base_quota" in giocata:
+            parsed_quota = giocata["base_quota"] / 100
+            quota_section = f"@{parsed_quota:.2f} "
+        resoconto_message += f"{index}) {sport.display_name} #{giocata['giocata_num']}: {quota_section}{stake_section}{outcome_percentage_string}{outcome_emoji}\n"
     return resoconto_message
 
 
-def get_sport_and_strategy_from_normal_message(message: str) -> Tuple[spr.Sport, strat.Strategy]:
+def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[spr.Sport, Optional[strat.Strategy]]:
     """Gets the sport and the strategy from the first row of 
     a /messaggio_abbonati command.
 
     Args:
-        message (str): it has the form /messaggio_abbonati <sport> - <strategy>
+        message_first_row (str): it has the form /messaggio_abbonati <sport>[ - <strategy>]
 
     Raises:
         custom_exceptions.NormalMessageParsingError: in case the sport or the strategy are not valid
 
     Returns:
-        Tuple[spr.Sport, strat.Strategy]: the sport and the strategy found
+        Tuple[spr.Sport, strat.Strategy | None]: the sport and the strategy found, if any
     """
-    # text on the first line after the command
-    first_row = message.split("\n")[0]
-    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)\s*-\s*([\w\s]+)", first_row)
+    # * text on the first line after the command
+    matches = re.search(r"^\/messaggio_abbonati\s*([\w\s]+)(?:\s-\s([\w\s]+))?", message_first_row.strip())
     if not matches:
-        lgr.logger.error(f"Cannot parse {message} with {first_row=}")
+        lgr.logger.error(f"Cannot parse {message_first_row=}")
         raise custom_exceptions.NormalMessageParsingError("messaggio non analizzabile, assicurati che segua la struttura '/messaggio_abbonati nomesport - nomestrategia'")
     sport_token = matches.group(1)
     sport = spr.sports_container.get_sport(sport_token)
     if not sport:
-        lgr.logger.error(f"Sport {sport_token} not valid from normal message {message} - {first_row=}")
+        lgr.logger.error(f"Sport {sport_token} not valid from {message_first_row=}")
         raise custom_exceptions.NormalMessageParsingError(f"sport '{sport_token}' non valido")
     strategy_token = matches.group(2)
     strategy = strat.strategies_container.get_strategy(strategy_token)
-    if not strategy or strategy not in sport.strategies:
-        lgr.logger.error(f"Strategy {strategy_token} not valid from normal message {message} - {first_row=}")
-        raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport}'")
+    # * check that a strategy has been found and if it is valid
+    if strategy and strategy not in sport.strategies:
+        lgr.logger.error(f"Strategy {strategy_token} not valid from {message_first_row=}")
+        raise custom_exceptions.NormalMessageParsingError(f"strategia '{strategy_token}' non valida per lo sport '{sport_token}'")
     return sport, strategy
 
 
 def create_personal_referral_updated_text(updated_referral: str) -> str:
-    referral_link = f"https://t.me/SportSignalsBot?start={updated_referral}"
+    referral_link = f"https://t.me/{cfg.config.BOT_NAME}?start={updated_referral}"
     return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)
+
+
+def get_month_and_year_string(previous_month:bool=False):
+    target_time = datetime.datetime.utcnow()
+    if previous_month:
+        target_time = target_time.replace(day=1) - datetime.timedelta(days=2)
+    return datetime.datetime.strftime(target_time, "%m/%Y").replace("/20", "/") # will need to change this in 2100

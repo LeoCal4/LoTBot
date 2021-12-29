@@ -83,6 +83,35 @@ def retrieve_giocate_from_ids(ids_list: List[int]) -> List[Dict]:
         raise e
 
 
+def retrieve_giocate_between_timestamps(max_timestamp: float, 
+                                        min_timestamp: float, 
+                                        include_only_giocate_with_outcome: bool=False,
+                                        exclude_sports_not_in_trend: bool=False) -> List:
+    query_filter = {"sent_timestamp": {"$gt": min_timestamp, "$lt": max_timestamp}}
+    if include_only_giocate_with_outcome:
+        query_filter["outcome"] = {"$ne": "?"}
+    if exclude_sports_not_in_trend:
+        query_filter["sport"] = {"$ne": "teacherbet"}
+    try:
+        return list(db.mongo.giocate.find(query_filter))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve giocate since timestamp - {max_timestamp=} - {min_timestamp=}")
+        raise e
+
+
+def retrieve_last_n_giocate(num_of_giocate: int, include_only_giocate_with_outcome: bool=False, exclude_sports_not_in_trend: bool=False) -> List:
+    query_filter = {}
+    if include_only_giocate_with_outcome:
+        query_filter["outcome"] = {"$ne": "?"}
+    if exclude_sports_not_in_trend:
+        query_filter["sport"] = {"$ne": "teacherbet"} # TODO make this modular 
+    try:
+        return list(db.mongo.giocate.find(query_filter).sort([("_id", -1)]).limit(num_of_giocate))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieve last n giocate - {num_of_giocate=}")
+        raise e
+
+
 def update_giocata_outcome_and_get_giocata(sport: str, giocata_num: str, outcome: str) -> Optional[Dict]:
     """Updates the giocata specified by the combination of sport and giocata_num
     with its outcome, returning it if it was found.
@@ -90,7 +119,7 @@ def update_giocata_outcome_and_get_giocata(sport: str, giocata_num: str, outcome
     Args:
         sport (str)
         giocata_num (str)
-        outcome (str): either "win", "loss" or "?"
+        outcome (str): either "win", "loss", "void", "abbinata" or "?"
 
     Raises:
         e: in case of db errors

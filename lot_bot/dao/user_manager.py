@@ -2,11 +2,14 @@ import datetime
 from json import dumps
 from typing import Dict, Optional, List, Union
 
-from telegram import user
-
 from lot_bot import database as db
 from lot_bot import logger as lgr
+from pymongo.collection import ReturnDocument
 from pymongo.results import DeleteResult, InsertOneResult, UpdateResult
+
+from lot_bot.models import subscriptions as subs
+from lot_bot.models import sports as sprt
+
 
 
 def create_user(user_data: Dict) -> bool:
@@ -52,9 +55,17 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
         return None
 
 
-def retrieve_all_user_ids() -> List[int]:
+def retrieve_all_active_user_ids() -> List[int]:
+    """Retrieves all the users' IDs.
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        List[int]: the list of the users' IDs
+    """
     try:
-        results = db.mongo.utenti.find({}, {"_id": 1})
+        results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]
@@ -145,24 +156,10 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
     """
     try:
         return list(db.mongo.utenti.aggregate([
-            {
-                "$match": {
-                    "_id": user_id
-                }
-            },
-            {
-                "$unwind": "$giocate"
-            },
-            {
-                "$match": {
-                    "giocate.acceptance_timestamp": { "$gt": timestamp }
-                }
-            },
-            {
-                "$replaceRoot": {
-                    "newRoot": "$giocate"
-                }
-            }
+            { "$match": { "_id": user_id } },
+            { "$unwind": "$giocate" },
+            { "$match": { "giocate.acceptance_timestamp": { "$gt": timestamp } } },
+            { "$replaceRoot": { "newRoot": "$giocate" } }
             ])
         )
     except Exception as e:
@@ -225,23 +222,27 @@ def update_user(user_id: int, user_data: Dict) -> bool:
         raise e
 
 
-def update_user_by_username(username: str, user_data: Dict) -> bool:
-    """Updates the user specified by the username.
+def update_user_by_username_and_retrieve_fields(username: str, user_data: Dict, user_fields: List = ["_id"]) -> Optional[Dict]:
+    """Updates the user specified by the username, returning the user's ID.
 
     Args:
         username (str)
         user_data (Dict)
+        user_fields (List): the updated user's fields to return. Defaults to ["_id"]
 
     Returns:
-        bool: True if the user was updated,
-            False otherwise
+        Dict: the specified user's fields
+        None: if the user is not found
     """
+    user_fields_projection = {field: True for field in user_fields}
     try:
-        result: UpdateResult = db.mongo.utenti.update_one(
+        result = db.mongo.utenti.find_one_and_update(
             {"username": username},
-            {"$set": user_data}
+            {"$set": user_data},
+            projection=user_fields_projection,
+            return_document=ReturnDocument.AFTER
         )
-        return bool(result.matched_count)
+        return result
     except Exception as e:
         lgr.logger.error(f"Error during user retrieval by username -  {username=}")
         raise e
@@ -275,6 +276,18 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
 
 
 def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
+    """Adds a personalized stake to the ones of the specified user.
+
+    Args:
+        user_id (int)
+        personal_stake (Dict)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the stake was added, False otherwise
+    """
     try:
         lgr.logger.debug(f"Registering {personal_stake=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
@@ -346,7 +359,7 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
 
 
 def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
-    """Add the referred payment to both the referred payments and to the
+    """Add the referred payment (in the form of a payment ID) to both the referred payments and to the
     successful referrals since last payment for the user specified by user_id.
 
     Args:
@@ -357,7 +370,7 @@ def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
         e: in case of db errors
 
     Returns:
-        bool: True if the operation was successful, False otherwise
+        bool: True if the payment is added, False otherwise
     """
     try:
         lgr.logger.debug(f"Adding {payment_id=} for {user_id=}")
@@ -369,7 +382,7 @@ def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
                 }
             }
         )
-        return bool(update_result.modified_count)
+        return bool(update_result.matched_count)
     except Exception as e:
         lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {payment_id=}")
         raise e
@@ -392,7 +405,20 @@ def delete_user(user_id: int) -> bool:
         raise e
 
 
-def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str):
+def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str) -> bool:
+    """Deletes a user's personal stake, indicated by its position on the personal stake's list.
+
+    Args:
+        user_identification_data (Union[int, str]): either the user's ID or username
+        personal_stake_id (str): the position of the stake in the personal stake's list
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the stake was deleted, False otherwise
+    """
+    # * checks whetever the user identification data is an ID or a username
     if type(user_identification_data) is int:
         user_query = {"_id": user_identification_data}
     else:
@@ -411,7 +437,15 @@ def delete_personal_stake_by_user_id_or_username(user_identification_data: Union
         raise e
 
 
-def delete_all_users():
+def delete_all_users() -> bool:
+    """Deletes all the users.
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True
+    """
     try:
         db.mongo.utenti.delete_many({})
         return True
@@ -420,19 +454,43 @@ def delete_all_users():
         raise e
 
 
-def check_user_validity(message_date: datetime.datetime, user_data: Dict) -> bool:
-    """Checks if the user subscription is still valid.
-    # TODO move to user model 
+def check_user_subscription_validity(message_date: datetime.datetime, user_subscriptions: Dict, sub_name: str = "") -> bool:
+    """Checks if the user subscription is still valid for a given message date, for any subscription or a specific one.
 
     Args:
         message_date (datetime): the date of the message being checked
-
+        user_subscriptions (List)
+        sub_name (str): name of the subscription to check; all of them are checked in case none is specified.
 
     Returns:
-        bool: True if the the user's subscription is still valid, 
-            False otherwise
+        bool: True if the the user's subscription is still valid, False otherwise
     """
-    return float(user_data["lot_subscription_expiration"]) > message_date.timestamp()
+    message_timestamp = message_date.timestamp()
+    # * check if any sub is active
+    if sub_name == "":
+        for sub in user_subscriptions:
+            if float(sub["expiration_date"]) > message_timestamp:
+                return True
+        return False
+    # * check if the specified sub is active
+    else:
+        user_subs_names = [sub["name"] for sub in user_subscriptions]
+        if not sub_name in user_subs_names:
+            return False
+        sub_expiration = [sub["expiration_date"] for sub in user_subscriptions if sub["name"] == sub_name][0]
+        return float(sub_expiration) > message_timestamp
+
+
+def check_user_sport_subscription(message_date: datetime.datetime, user_subscriptions: Dict, sport_name: str) -> bool:
+    for sub_entry in user_subscriptions:
+        sub = subs.sub_container.get_subscription(sub_entry["name"])
+        sport = sprt.sports_container.get_sport(sport_name)
+        if sub is None or sport is None:
+            raise Exception
+        if sub.available_sports == [] or sport in sub.available_sports:
+            if check_user_subscription_validity(message_date, user_subscriptions, sub_name=sub.name):
+                return True
+    return False
 
 
 def get_subscription_price_for_user(user_id: int) -> float:

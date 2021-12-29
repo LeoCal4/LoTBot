@@ -1,16 +1,17 @@
 import datetime
 import random
 import string
-from typing import Dict
+from typing import Dict, List, Union
 
 from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
 from lot_bot.models import giocate as giocata_model
+from lot_bot.models import subscriptions as subs
 
 # role: user, analyst, admin
-ROLES = ["user", "analyst", "admin"]
+ROLES = ["user", "analyst", "admin", "teacherbet"]
 
 def create_base_user_data():
     return {
@@ -18,7 +19,7 @@ def create_base_user_data():
         "name": "",
         "username": "",
         "email": "",
-        "lot_subscription_expiration": 0.0,
+        "subscriptions": [],
         "role": "user",
         "referral_code": create_valid_referral_code(),
         "linked_referral_user": {
@@ -26,12 +27,12 @@ def create_base_user_data():
             "linked_user_code": ""
         },
         "is_og_user": True, # TODO remember to switch this off
+        "blocked": False,
         "successful_referrals_since_last_payment": [],
         "referred_payments": [],
         "giocate": [],
         "payments": [],
         "sport_subscriptions": [],
-        "available_sports": [],
         "budget": None,
         "personal_stakes": [],
     }
@@ -158,3 +159,97 @@ def update_users_budget_with_giocata(updated_giocata: Dict):
             user_personal_stake=target_user_personal_stake
         )
 
+
+#TODO find a better way to add default sport subscriptions
+def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: str = None) -> Dict:
+    """Creates the user using the bot for the first time.
+    First, it creates the user itself, setting its expiration date to 2 days 
+    from now, then creates an sport_subscription to calcio - raddoppio and multipla and another
+    one to exchange - maxexchange. 
+
+    Args:
+        user (User)
+        ref_code (str): referral code for the new user. Defaults to None
+        teacherbet_code (str): Teacherbet code for the new user. If it is present, activates the TB subscription trial
+        instead of the LoT one. Defaults to None
+
+    Returns:
+        Dict: the created user data
+    """
+    # * create user
+    user_data = create_base_user_data()
+    user_data["_id"] = user.id
+    user_data["name"] = user.first_name
+    user_data["username"] = user.username
+    user_data["sport_subscriptions"] = [
+        {'sport':'calcio', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'basket', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'tennis', 'strategies': ['singolalow','raddoppio','live']},
+        {'sport':'exchange', 'strategies': ['maxexchange']},
+        {'sport':'hockey', 'strategies': ['base']},
+        {'sport':'baseball', 'strategies': ['base']},
+        {'sport':'footballamericano', 'strategies': ['base']},
+        {'sport':'pallavolo', 'strategies': ['base']},
+        {'sport':'pingpong', 'strategies': ['base']},
+        {'sport':'mma', 'strategies': ['base']},
+        {'sport':'tuttoilresto', 'strategies': ['base']},
+        {'sport':'freelot', 'strategies': ['communitybet']}
+        ]
+
+    if ref_code:
+        ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
+        if ref_user_data:
+            user_data["linked_referral_user"] = {
+                "linked_user_code": ref_code,
+                "linked_user_id": ref_user_data["_id"]
+            }
+        else:
+            lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
+    # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
+    if not teacherbet_code:
+        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
+        sub = {"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
+    else:
+        sub = subs.create_teacherbet_base_sub()
+    user_data["subscriptions"].append(sub)
+    user_manager.create_user(user_data)
+    return user_data
+
+
+def check_user_permission(user_id: int, permitted_roles: List[str] = None, forbidden_roles: List[str] = None) -> Union[str, bool]:
+    """Checks if the users specified by the user_id has the right permissions, based either on its presence in
+    permitted_roles or its absence in forbidden_roles. Only one of them can be specified at a time.
+
+    Args:
+        user_id (int): [description]
+        permitted_roles (List[str], optional): Defaults to None.
+        forbidden_roles (List[str], optional): Defaults to None.
+
+    Returns:
+        Union[str, bool]: the user role if has the permission, False otherwise
+    """
+    user_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    lgr.logger.debug(f"Retrieved user role: {user_role} - {permitted_roles=} - {forbidden_roles=}")
+    permitted = True
+    if not permitted_roles is None:
+        permitted = user_role if user_role in permitted_roles else False
+    if not forbidden_roles is None:
+        permitted = user_role if not user_role in forbidden_roles else False
+    return permitted
+
+
+def get_user_available_sports_names_from_subscriptions(user_subscriptions: List[Dict]) -> List[str]:
+    user_available_sports = []
+    now_timestamp = datetime.datetime.utcnow().timestamp()
+    for sub_entry in user_subscriptions:
+        sub = subs.sub_container.get_subscription(sub_entry["name"])
+        if sub is None:
+            raise Exception
+        if float(sub_entry["expiration_date"]) < now_timestamp:
+            continue
+        if sub.available_sports == []:
+            return []
+        sports_names = [sub_sport.name for sub_sport in sub.available_sports]
+        user_available_sports.extend(sports_names)
+    return user_available_sports
+ 

@@ -3,7 +3,9 @@
 - name: str
 - username: str
 - email: str
-- lot_subscription_expiration: timestamp
+- subscriptions: List[Dict]
+    - name: str
+    - expiration_date: float
 - role: str
 - referral_code: str
 - linked_referral_user:
@@ -17,6 +19,7 @@
     - personal_stake: int
     - personal_quota: int
     - acceptance_timestamp: float
+    - pre_giocata_budget: int (* 100) [optional]
 - payments: []
     - payment_id: str
     - datetime_timestamp: timestamp (float)
@@ -30,9 +33,6 @@
         - email: str
         - name: str
 - sport_subscriptions: []
-    - sport: str
-    - strategies: List[str]
-- available_sports: [] TODO
     - sport: str
     - strategies: List[str]
 - personal_stakes: []
@@ -51,3 +51,4 @@
 - base_quota: int
 - sent_date: float
 - outcome: str
+- cashout: int (* 100) [optional] 

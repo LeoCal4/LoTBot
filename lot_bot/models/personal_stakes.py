@@ -132,7 +132,7 @@ def create_personal_stakes_message(user_stakes: List[Dict]) -> str:
                 strategies = "Tutte le strategie"
                 break
             strategies += strat.strategies_container.get_strategy(strategy).display_name + ", "
-        strategies = strategies[:-2] if strategies != "Tutte" else strategies
+        strategies = strategies[:-2] if strategies != "Tutte le strategie" else strategies
         min_quota = f"{int(user_stake['min_quota']) / 100:.2f}"
         max_quota = f"{int(user_stake['max_quota']) / 100:.2f}"
         stake = f"{int(user_stake['stake']) / 100:.2f}"

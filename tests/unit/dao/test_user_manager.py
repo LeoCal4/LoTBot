@@ -87,14 +87,14 @@ def test_delete_user(new_user: Dict, monkeypatch):
 def test_check_user_active_validity():
     user_expiration_date = str((datetime.datetime.now() + datetime.timedelta(days=1)).timestamp())
     user_data = {"lot_subscription_expiration": user_expiration_date}
-    validity = user_manager.check_user_validity(datetime.datetime.now(), user_data)
+    validity = user_manager.check_user_sport_subscription(datetime.datetime.now(), user_data)
     assert validity == True
 
 
 def test_check_user_expired_validity():
     user_expiration_date = str((datetime.datetime.now() - datetime.timedelta(days=1)).timestamp())
     user_data = {"lot_subscription_expiration": user_expiration_date}
-    validity = user_manager.check_user_validity(datetime.datetime.now(), user_data)
+    validity = user_manager.check_user_sport_subscription(datetime.datetime.now(), user_data)
     assert validity == False
 
 
@@ -140,7 +140,7 @@ def test_update_user_succ_referrals(new_user: Dict):
         assert succ_refs in payment_ids
         assert normal_refs in payment_ids
 
-
+#TODO fix prices - maybe prices are wrong
 def test_get_subscription_price_for_user(new_user: Dict, monkeypatch):
     user_id = new_user["_id"]
     # * new user 50% discount

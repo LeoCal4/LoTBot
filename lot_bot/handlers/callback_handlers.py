@@ -13,6 +13,7 @@ from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.models import subscriptions as subs_model 
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -152,28 +153,34 @@ def to_homepage(update: Update, context: CallbackContext):
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text = cst.BOT_CONFIG_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_experience_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.EXPERIENCE_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
 def to_use_guide_menu(update: Update, context: CallbackContext):
-    context.bot.edit_message_reply_markup(
+    context.bot.edit_message_text(
+        text=cst.USE_GUIDE_MENU_MESSAGE,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
+        parse_mode="HTML"
     )
 
 
@@ -186,7 +193,7 @@ def to_sports_menu(update: Update, context: CallbackContext):
         context (CallbackContext)
     """
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "lot_subscription_expiration"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id"])
     if not user_data:
         lgr.logger.error(f"Could not find user {user_id} going back from strategies menu")
         context.bot.send_message(
@@ -194,9 +201,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
             f"Usa /start per attivare il bot prima di procedere alla scelta degli sport.",
         )
         return
-    # summing 2 hours for the UTC timezone
-    # expiration_date = datetime.datetime.utcfromtimestamp(float(user_data["lot_subscription_expiration"])) + datetime.timedelta(hours=2)
-    # expiration_date_string = expiration_date.strftime("%d/%m/%Y alle %H:%M")
     tip_text = cst.SPORT_MENU_MESSAGE
     context.bot.edit_message_text(
         tip_text,
@@ -209,9 +213,13 @@ def to_sports_menu(update: Update, context: CallbackContext):
 
 def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "lot_subscription_expiration"])
-    expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(user_data["lot_subscription_expiration"]) + datetime.timedelta(hours=2), "%d/%m/%Y alle %H:%M")
-    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"], expiration_date)
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
+    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
+    for sub in user_data["subscriptions"]: 
+        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        sub_name = subs_model.sub_container.get_subscription(sub["name"])
+        sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
+        service_status += f"\n- {sub_emoji} {sub_name.display_name}: valido fino a {expiration_date}"
     context.bot.edit_message_text(
         service_status,
         user_id, 
@@ -219,6 +227,58 @@ def to_service_status(update: Update, context: CallbackContext):
         reply_markup=kyb.SERVICE_STATUS_KEYBOARD
     )
 
+#related to text explanations (not video!)
+def to_strat_expl_menu(update: Update, context: CallbackContext): 
+    """Shows the inline keyboard containing all strategies,
+        user clicks a button to see the strategy's explanation 
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    """
+    user_id = update.effective_user.id
+    text = "📊 Questo è l'elenco delle strategie! Selezionane una per scoprire di cosa si tratta ! 📊"
+    #context.bot.edit_message_text(
+    #    text,
+    #    user_id,
+    #    message_id=update.callback_query.message.message_id,
+    #    reply_markup=kyb.create_strategies_expl_inline_keyboard(update),
+    #)
+    context.bot.edit_message_text(
+        text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.create_strategies_expl_inline_keyboard(update),
+        parse_mode="HTML"
+    )
+
+#related to text explanations (not video!)
+def strategy_text_explanation(update: Update, context: CallbackContext):
+    """Shows the choosen strategy's explanation
+    Triggered by callback <strategy name>_explanation
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+
+    Raises:
+        Exception: raised in case the strategy is not valid 
+    """
+    strategy_token = update.callback_query.data.replace("text_explanation_", "")
+    strategy = strat.strategies_container.get_strategy(strategy_token)
+    text = cst.DEFAULT_STRAT_EXPLANATION_TEXT
+    if not strategy:
+        lgr.logger.error(f"Could not find strategy {strategy_token} to show its explanation, showing default text instead")
+    else:
+        text = f"{strategy.display_name}:\n\n"+strategy.explanation
+    context.bot.edit_message_text(
+        text,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.BACK_TO_EXPL_STRAT_MENU_KEYBOARD,
+        parse_mode="HTML"
+    )
 
 def feature_to_be_added(_: Update, __: CallbackContext):
     return
@@ -282,6 +342,7 @@ def to_referral(update: Update, context: CallbackContext, send_new: bool = False
         )
 
 
+
 def strategy_explanation(update: Update, context: CallbackContext):
     """Sends a video explaining the strategy reported in the callback data.
 
@@ -343,17 +404,28 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
     # * modify message text to specify that the giocata has been registered
-    giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
+    giocata_text_rows = giocata_text.split("\n")
+    giocata_text_without_answer_row = "\n".join(giocata_text_rows[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟩 Operazione effettuata 🟩"
+    # * identify the giocata type and parse it accordingly
+    if "status:" not in giocata_text_rows[0].lower():
+        lgr.logger.debug("Parsing LoT giocata")
+        parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    else:
+        lgr.logger.debug("Parsing TB giocata")
+        parsed_giocata = giocata_model.parse_teacherbet_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)[0]
     # * retrieve and save the giocata for the user
-    parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
     retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
-    personal_user_giocata = giocata_model.create_personal_giocata_from_new_giocata(retrieved_giocata, parsed_giocata["base_stake"])
-    # * register giocata
-    update_result = user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
-    if not update_result:
-        context.bot.send_message(user_chat_id, "ERRORE: impossibile registrare la giocata")
-        return
+    if not retrieved_giocata:
+        lgr.logger.error(f"Cannot retrieve giocata upon giocata acceptation - {parsed_giocata['giocata_num']=} {parsed_giocata['sport']=}")
+        raise Exception("Cannot retrieve giocata upon giocata acceptation")
+    personal_user_giocata = giocata_model.create_user_giocata()
+    personal_user_giocata["original_id"] = retrieved_giocata["_id"]
+    personal_user_giocata["acceptance_timestamp"] = datetime.datetime.utcnow().timestamp()
+    # * check for differences in the saved stake and the current one (personalized stake)
+    if "base_stake" in parsed_giocata and parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
+        personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
+    user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     # * update user budget if giocata has an outcome
     giocata_outcome = retrieved_giocata["outcome"]
     if giocata_outcome == "win" or giocata_outcome == "loss":
@@ -442,34 +514,49 @@ def last_30_days_resoconto(update: Update, context: CallbackContext):
     send_resoconto_since_timestamp(update, context, giocate_since_timestamp, resoconto_message_header)
 
 
-def _create_and_send_resoconto(context: CallbackContext, chat_id: int, message_id: int, giocate_since_timestamp: float, resoconto_message_header: str):
+def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_since_timestamp: float, resoconto_message_header: str, edit_messages: bool = True, message_id: int = None, receiver_user_id: int = None):
     user_giocate_data = user_manager.retrieve_user_giocate_since_timestamp(chat_id, giocate_since_timestamp)
+    if receiver_user_id is None:
+        receiver_user_id = chat_id
     if user_giocate_data == []:
         no_giocata_found_text = resoconto_message_header + "\nNessuna giocata trovata."
-        context.bot.edit_message_text(
-            no_giocata_found_text,
-            chat_id=chat_id,
-            message_id=message_id,
-            reply_markup=kyb.RESOCONTI_KEYBOARD,
-        )
+        if edit_messages:
+            context.bot.edit_message_text(
+                no_giocata_found_text,
+                chat_id=receiver_user_id,
+                message_id=message_id,
+                reply_markup=kyb.RESOCONTI_KEYBOARD,
+            )
+        else:
+            context.bot.send_message(
+                receiver_user_id,
+                no_giocata_found_text,
+            )
         return
     user_giocate_data_dict = {giocata["original_id"]: giocata for giocata in user_giocate_data}
     user_giocate_ids = list(user_giocate_data_dict.keys())
     giocate_full_data = giocate_manager.retrieve_giocate_from_ids(user_giocate_ids)
     resoconto_message = resoconto_message_header + "\n" + utils.create_resoconto_message(giocate_full_data, user_giocate_data_dict)
-    # * edit last message with resoconto
-    context.bot.edit_message_text(
-        resoconto_message,
-        chat_id=chat_id,
-        message_id=message_id,
-        reply_markup=None,
-    )
-    # * send new message with menu
-    context.bot.send_message(
-        chat_id,
-        cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
-        reply_markup=kyb.RESOCONTI_KEYBOARD,
-    )
+    # * edit last message/send message with resoconto
+    if edit_messages:
+        context.bot.edit_message_text(
+            resoconto_message,
+            chat_id=receiver_user_id,
+            message_id=message_id,
+            reply_markup=None,
+        )
+        # * send new message with menu
+        context.bot.send_message(
+            receiver_user_id,
+            cst.RESOCONTI_MESSAGE.format(resoconto_message_header),
+            reply_markup=kyb.RESOCONTI_KEYBOARD,
+        )
+    else:
+        context.bot.send_message(
+            receiver_user_id,
+            resoconto_message,
+        )
+
 
 
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):
@@ -483,6 +570,8 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     chat_id = update.callback_query.from_user.id
     message_id = update.callback_query.message.message_id
     last_message_text = update.callback_query.message.text
+    # * avoid sending again the same type of resoconto
     if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
         return
-    context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, message_id, giocate_since_timestamp, resoconto_message_header)
+    # context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
+    _create_and_send_resoconto(context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)

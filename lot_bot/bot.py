@@ -7,8 +7,8 @@ from telegram.ext.dispatcher import Dispatcher
 from lot_bot import config as cfg
 from lot_bot import filters
 from lot_bot.handlers import (callback_handlers, message_handlers,
-                              payment_handler, ref_code_handlers, budget_handlers)
-
+                              payment_handler, ref_code_handlers, 
+                              command_handlers, budget_handlers)
 
 bot = None
 updater = None
@@ -94,19 +94,25 @@ def add_handlers(dispatcher: Dispatcher):
         dispatcher (Dispatcher)
     """
     # ================ COMMAND HANDLERS ================
-    dispatcher.add_handler(CommandHandler("start", message_handlers.start_command))
-    dispatcher.add_handler(CommandHandler("cambia_ruolo", message_handlers.set_user_role))
-    dispatcher.add_handler(CommandHandler("aggiungi_giorni", message_handlers.aggiungi_giorni))
-    dispatcher.add_handler(CommandHandler("broadcast", message_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("start", command_handlers.start_command))
+    dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    # ------------ Users managing commands --------------
+    dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
+    dispatcher.add_handler(CommandHandler("resoconto_utente", command_handlers.get_user_resoconto))
     dispatcher.add_handler(CommandHandler("modifica_referral", ref_code_handlers.update_user_ref_code_handler))
+    dispatcher.add_handler(CommandHandler("cambia_ruolo", command_handlers.set_user_role))
+    dispatcher.add_handler(CommandHandler("blocca_utente", command_handlers.block_messages_to_user))
+    dispatcher.add_handler(CommandHandler("sblocca_utente", command_handlers.unlock_messages_to_user))
+    # ------------ Trend commands --------------
+    dispatcher.add_handler(CommandHandler("trend_giorni", command_handlers.get_trend_by_days))
+    dispatcher.add_handler(CommandHandler("trend_eventi", command_handlers.get_trend_by_events))
     # ------------ Personal stake commands --------------
-    dispatcher.add_handler(CommandHandler("crea_stake", message_handlers.create_personal_stake))
-    dispatcher.add_handler(CommandHandler("visualizza_stake", message_handlers.visualize_personal_stakes))
-    dispatcher.add_handler(CommandHandler("elimina_stake", message_handlers.delete_personal_stakes))
+    dispatcher.add_handler(CommandHandler("crea_stake", command_handlers.create_personal_stake))
+    dispatcher.add_handler(CommandHandler("visualizza_stake", command_handlers.visualize_personal_stakes))
+    dispatcher.add_handler(CommandHandler("elimina_stake", command_handlers.delete_personal_stakes))
     # ---------------- Budget commands -----------------
     dispatcher.add_handler(CommandHandler("visualizza_budget", message_handlers.get_user_budget))
     dispatcher.add_handler(CommandHandler("imposta_budget", message_handlers.set_user_budget))
-
 
 
     # ======= CALLBACK QUERIES HANDLERS =======
@@ -121,7 +127,9 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_gestione_budget_menu, pattern=r"^to_gestione_budget_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern()))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern())) 
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) #related to text explanations (not video!)
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_resoconti, pattern=r"^to_resoconti$"))
@@ -143,14 +151,18 @@ def add_handlers(dispatcher: Dispatcher):
 
 
     # ============ MESSAGE HANDLERS ===========
+    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), command_handlers.normal_message_to_abbonati_handler))
     dispatcher.add_handler(MessageHandler(filters.get_cashout_filter(), message_handlers.exchange_cashout_handler))
     dispatcher.add_handler(MessageHandler(filters.get_giocata_filter(), message_handlers.giocata_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_teacherbet_giocata_filter(), message_handlers.teacherbet_giocata_handler))
     dispatcher.add_handler(MessageHandler(filters.get_outcome_giocata_filter(), message_handlers.outcome_giocata_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), message_handlers.normal_message_to_abbonati_handler))
-    dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), message_handlers.send_file_id))
+    dispatcher.add_handler(MessageHandler(filters.get_teacherbet_giocata_outcome_filter(), message_handlers.teacherbet_giocata_outcome_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_send_file_id_filter(), command_handlers.send_file_id))
+    dispatcher.add_handler(MessageHandler(filters.get_broadcast_media_filter(), command_handlers.broadcast_media))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_use_guide_filter(), message_handlers.use_guide_handler))
 
     # ============ ERROR HANDLERS =============
     dispatcher.add_error_handler(message_handlers.error_handler)

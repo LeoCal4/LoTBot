@@ -3,8 +3,11 @@ from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
 
 from lot_bot import constants as cst
 from lot_bot.models import sports as spr
+from lot_bot.models import strategies as strat
+from lot_bot.models import users
 from lot_bot.dao import sport_subscriptions_manager
 from lot_bot import logger as lgr
+
 
 _startup_buttons = [
     [KeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT)],
@@ -27,7 +30,7 @@ HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_button
 
 _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
-    [InlineKeyboardButton(text="📖  Spiegazione Strategie (IN ARRIVO) 🧭", callback_data="new")], # to_explanation_menu
+    [InlineKeyboardButton(text="📖  Spiegazione Strategie  🧭", callback_data="to_strat_expl_menu")], # related to text explanations (not video!)
     [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_gestione_budget_menu")], 
     [InlineKeyboardButton(text="🌟  Status Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
@@ -36,6 +39,33 @@ BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_co
 
 
 # ===================================== CONFIGURAZIONE BOT SUBMENU =====================================
+#todo cancellare
+_strategies_with_explanation = ["singolalow","singolahigh","multipla","raddoppio","speciali","live","multiplalight","pdr","maxexchange","mb","base","test","instagramfree","communitybet","multipla","sofar"]
+#_strategies_explanation_buttons = [
+#    [InlineKeyboardButton(text="📖  Singola Low  📈", callback_data="explanation_singola_low")], 
+#    [InlineKeyboardButton(text="📖  Singola High  📈", callback_data="explanation_singola_high")], 
+#    [InlineKeyboardButton(text="📖  Multipla Light 📈", callback_data="explanation_multipla_light")], 
+#    [InlineKeyboardButton(text="📖  Raddoppio   📈", callback_data="explanation_raddoppio")],
+#    [InlineKeyboardButton(text="📖  Speciali  📈", callback_data="explanation_speciali")],
+#    [InlineKeyboardButton(text="📖  LIVE  📈", callback_data="explanation_live")],
+#    [InlineKeyboardButton(text="📖  Multipla Light  📈", callback_data="explanation_multipla_light")],
+#    [InlineKeyboardButton(text="📖  PDR  📈", callback_data="explanation_pdr")],
+#    [InlineKeyboardButton(text="📖  MaxExchange  📈", callback_data="explanation_maxexchange")],
+#    [InlineKeyboardButton(text="📖  MB  📈", callback_data="explanation_mb")],
+#    [InlineKeyboardButton(text="📖  Base  📈", callback_data="explanation_base")],
+#    [InlineKeyboardButton(text="📖  TEST  📈", callback_data="explanation_test")],
+#    [InlineKeyboardButton(text="📖  Instagram Free  📈", callback_data="explanation_instagram_free")],
+#    [InlineKeyboardButton(text="📖  Community Bet  📈", callback_data="explanation_community_bet")],
+#    [InlineKeyboardButton(text="📖  Multipla  📈", callback_data="explanation_multipla")],
+#    [InlineKeyboardButton(text="📖  To The Moon  📈", callback_data="explanation_so_far")],
+#    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
+#]
+#EXPLANATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_strategies_explanation_buttons)
+
+_back_to_strategies_explanation_buttons = [
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_strat_expl_menu")],
+]
+BACK_TO_EXPL_STRAT_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_back_to_strategies_explanation_buttons)
 
 _explanation_test_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Singola  📖", callback_data="explanation_singola")], 
@@ -80,7 +110,7 @@ REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_gioca
 
 
 service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento (IN ARRIVO) 🌟", callback_data="new")], 
+    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento 🌟", callback_data="to_add_referral")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
@@ -160,16 +190,19 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """
 
     chat_id = update.effective_chat.id
-    sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(chat_id)
+    # sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(chat_id)
+    user_data = sport_subscriptions_manager.retrieve_subs_from_user_id(chat_id)
+    sport_subscriptions = user_data["sport_subscriptions"]
+    available_sports = users.get_user_available_sports_names_from_subscriptions(user_data["subscriptions"])
     subscribed_sports = [entry["sport"].lower() for entry in sport_subscriptions]
     sports_in_menu = [sport for sport in spr.sports_container if sport.show_in_menu]
-    emoji_sport = {sport.name: "🔴" for sport in sports_in_menu}
+    if available_sports == []:
+        emoji_sport = {sport.name: "🔴" for sport in sports_in_menu}
+    else:
+        emoji_sport = {sport.name: "🔴" if sport.name in available_sports else "🔒" for sport in sports_in_menu}
     for sport in subscribed_sports:
         emoji_sport[sport] = "🟢"
-    SPORT_STRING_MENU_LEN = 19
-    # ljust appends " " at the end of the string, until the specified length is reached
     sport_menu_entries = [
-        # sport.display_name.ljust(SPORT_STRING_MENU_LEN) + emoji_sport[sport.name] 
         emoji_sport[sport.name] + " " + sport.display_name 
         for sport in sports_in_menu
     ]
@@ -179,12 +212,13 @@ def create_sports_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     }
     keyboard_sport = []
     for i, sport in enumerate(sports_in_menu):
-        sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport.name], callback_data=f"sport_{sport.name}")
+        sport_callback_data = f"sport_{sport.name}" if emoji_sport[sport.name] != "🔒" else "new"
+        sport_keyboard_button = InlineKeyboardButton(text=inline_buttons[sport.name], callback_data=sport_callback_data)
         if i % 2 == 0:
             keyboard_sport.append([sport_keyboard_button])
         else:
             keyboard_sport[(i-1)//2].append(sport_keyboard_button)
-    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_homepage")])
+    keyboard_sport.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_sport)
 
 
@@ -228,3 +262,37 @@ def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> Inlin
         ])
     strategies_buttons.append([InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_sports_menu")])
     return InlineKeyboardMarkup(inline_keyboard=strategies_buttons)
+
+#related to text explanations (not video!)
+def create_strategies_expl_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
+    """Creates the inline keyboard for the strategies of sports,
+        user can click on a button to see the explanation of that strategy
+    
+    The callbacks for this keyboard are in the form:
+        <strategy>_text_explanation  
+
+    Args:
+        update (Update)
+
+    Returns:
+        InlineKeyboardMarkup
+    """
+    chat_id = update.effective_chat.id
+    strategies_to_expl_buttons = []
+
+#    for strategy in strat.strategies_container:
+#        callback_data = f"text_explanation_{strategy.name}"
+#        text = "📖  "+ strategy.display_name +"  📈"
+#        strategies_to_expl_buttons.append([
+#            InlineKeyboardButton(text=text, callback_data=callback_data)
+#        ])
+
+    for i, strategy in enumerate(strat.strategies_container):
+        strategy_callback_data = f"text_explanation_{strategy.name}"
+        strategy_keyboard_button = InlineKeyboardButton(text="📖  "+ strategy.display_name +"  📈", callback_data=strategy_callback_data)
+        if i % 2 == 0:
+            strategies_to_expl_buttons.append([strategy_keyboard_button])
+        else:
+            strategies_to_expl_buttons[(i-1)//2].append(strategy_keyboard_button)
+    strategies_to_expl_buttons.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=strategies_to_expl_buttons)
