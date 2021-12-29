@@ -55,12 +55,13 @@ def test_retrieve_giocate_from_ids():
 #         assert giocate_manager.create_giocata(empty_giocata)
 
 
-def test_update_giocata_outcome():
+def test_update_giocata_outcome_and_get_giocata():
     empty_giocata = giocata_model.create_base_giocata()
     empty_giocata["sport"] = "test_update_outcome"
     empty_giocata["giocata_num"] = 12345
     assert giocate_manager.create_giocata(empty_giocata)
     random_outcome = random.choice(["win", "loss", "?"])
-    assert giocate_manager.update_giocata_outcome(empty_giocata["sport"], empty_giocata["giocata_num"], random_outcome)
-    updated_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(empty_giocata["giocata_num"], empty_giocata["sport"])
-    assert updated_giocata["outcome"] == random_outcome
+    updated_giocata = giocate_manager.update_giocata_outcome_and_get_giocata(empty_giocata["sport"], empty_giocata["giocata_num"], random_outcome)
+    assert updated_giocata and updated_giocata["outcome"] == random_outcome
+    # * giocata not present
+    assert giocate_manager.update_giocata_outcome_and_get_giocata(empty_giocata["sport"], "impossible test", random_outcome) is None

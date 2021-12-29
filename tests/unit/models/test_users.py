@@ -1,12 +1,13 @@
 import datetime
+import random
 import re
-from typing import Dict
+from typing import Dict, Tuple
 
 import pytest
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
 from lot_bot.dao import user_manager
-from lot_bot.models import users
+from lot_bot.models import users, giocate
 
 
 
@@ -79,3 +80,63 @@ def test_extend_expiration_date_with_old_date(exp_date_timestamp: float):
     extended_now_timestamp = users.extend_expiration_date(datetime.datetime.utcnow().timestamp())
     extended_now_string = datetime.datetime.utcfromtimestamp(extended_now_timestamp).strftime("%d/%m/%Y")
     assert extended_date_string == extended_now_string
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    ["win", "loss", "void", "neutral"]
+)
+def test_calculate_new_budget_after_giocata_base_cases(outcome: str):
+    base_giocata = giocate.create_base_giocata()
+    base_budget = random.randint(10, 1000)
+    random_stake = random.randint(100, 10000) # 1 - 100
+    random_quota = random.randint(200, 5000) # 2 - 50
+    base_giocata["base_stake"] = random_stake
+    base_giocata["base_quota"] = random_quota
+    base_giocata["outcome"] = outcome
+    new_budget = users.calculate_new_budget_after_giocata(base_budget, base_giocata)
+    correct_budget = base_budget + base_budget * round(giocate.get_outcome_percentage(base_giocata["outcome"], random_stake, random_quota) / 100, 2)
+    assert new_budget == correct_budget
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    ["win", "loss", "void", "neutral"]
+)
+def test_calculate_new_budget_after_giocata_personalized_stake(outcome: str):
+    base_giocata = giocate.create_base_giocata()
+    base_budget = random.randint(10, 1000)
+    random_stake = random.randint(100, 10000) # 1 - 100
+    random_quota = random.randint(200, 5000) # 2 - 50
+    base_giocata["base_stake"] = random_stake
+    base_giocata["base_quota"] = random_quota
+    base_giocata["outcome"] = outcome
+    random_personalized_stake = random.randint(100, 10000) # 1 - 100
+    new_budget = users.calculate_new_budget_after_giocata(base_budget, base_giocata, personalized_stake=random_personalized_stake)
+    correct_budget = base_budget + base_budget * round(giocate.get_outcome_percentage(base_giocata["outcome"], random_personalized_stake, random_quota)  / 100, 2)
+    assert new_budget == correct_budget
+
+
+@pytest.mark.parametrize(
+    "outcome",
+    ["win", "loss", "abbinata"]
+)
+def test_calculate_new_budget_after_giocata_cashout(outcome: str):
+    base_giocata = giocate.create_base_giocata()
+    base_budget = random.randint(10, 1000)
+    random_stake = random.randint(100, 10000) # 1 - 100
+    random_quota = random.randint(200, 5000) # 2 - 50
+    base_giocata["base_stake"] = random_stake
+    base_giocata["base_quota"] = random_quota
+    base_giocata["outcome"] = outcome
+    base_giocata["cashout"] = random.randint(100, 10000) # 1 - 100
+    if outcome == "abbinata":
+        base_giocata["cashout"] = 0
+    new_budget = users.calculate_new_budget_after_giocata(base_budget, base_giocata)
+    correct_budget = base_budget + base_budget * round((base_giocata["cashout"] / 100) / 100, 2)
+    assert new_budget == correct_budget
+
+
+def test_update_single_user_budget_with_giocata():
+    pass
+

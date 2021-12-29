@@ -6,19 +6,19 @@ from lot_bot.models import giocate as giocata_model
 
 
 def test_get_outcome_percentage():
-    # win
+    # * win
     outcome, stake, quota = "win", random.randint(100, 10000), random.randint(100, 10000)
     outcome_perc = giocata_model.get_outcome_percentage(outcome, stake, quota)
     assert outcome_perc == ((quota - 100) * stake) / 10000
-    # loss
+    # * loss
     outcome, stake, quota = "loss", random.randint(100, 10000), random.randint(100, 10000)
     outcome_perc = giocata_model.get_outcome_percentage(outcome, stake, quota)
     assert outcome_perc == -stake / 100
-    # ?
+    # * ?
     outcome, stake, quota = "?", random.randint(100, 10000), random.randint(100, 10000)
     outcome_perc = giocata_model.get_outcome_percentage(outcome, stake, quota)
     assert outcome_perc == 0.0
-    # other cases
+    # * other cases
     outcome, stake, quota = "test", random.randint(100, 10000), random.randint(100, 10000)
     outcome_perc = giocata_model.get_outcome_percentage(outcome, stake, quota)
     assert outcome_perc == 0.0

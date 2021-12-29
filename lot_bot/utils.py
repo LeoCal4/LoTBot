@@ -69,6 +69,14 @@ def create_cashout_message(message_text: str) -> str:
         return f"{emoji} CASHOUT Exchange #{giocata_num} {emoji}"
 
 
+def parse_float_string(float_string: str) -> float:
+    try:
+        return float(float_string.strip().replace(",", "."))
+    except Exception as e:
+        lgr.logger.error(f"Error during parsing of {float_string} to float - {str(e)}")
+        raise e
+
+
 def parse_float_string_to_int(float_string: str) -> int:
     """Converts a string containing a float to int, multiplying it by 100, in order
     to keep the first 2 floating point digits.
@@ -80,7 +88,7 @@ def parse_float_string_to_int(float_string: str) -> int:
         int: the float represented as an int (float to int * 100)
     """
     try:
-        return int(float(float_string.strip().replace(",", ".")) * 100)
+        return int(parse_float_string(float_string) * 100)
     except Exception as e:
         lgr.logger.error(f"Error during parsing of {float_string} to int * 100 - {str(e)}")
         raise e
@@ -118,9 +126,16 @@ def create_resoconto_message(giocate: List[Dict], user_giocate_data_dict: Dict) 
         if sport.outcome_percentage_in_resoconto:
             outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
             outcome_percentage_string = f"= {outcome_percentage:.2f}% "
+            if "pre_giocata_budget" in user_giocata:
+                user_old_budget = int(user_giocata["pre_giocata_budget"]) / 100
+                stake_money = user_old_budget * parsed_stake / 100
+                parsed_stake_string += f" ({stake_money:.2f}€)"
+                outcome_money = user_old_budget * outcome_percentage / 100
+                outcome_sign = "" if outcome_money < 0 else "+"
+                outcome_percentage_string += f" ({outcome_sign}{outcome_money:.2f}€)"
         else:
             outcome_percentage_string = ""
-        outcome_emoji = giocata_model.get_outcome_emoji(giocata["outcome"])
+        outcome_emoji = giocata_model.OUTCOME_EMOJIS[giocata["outcome"]]
         # * get quota
         quota_section = ""
         if "base_quota" in giocata:

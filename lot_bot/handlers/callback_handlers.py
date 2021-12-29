@@ -9,6 +9,7 @@ from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
                          user_manager)
+from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
@@ -425,6 +426,15 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     if "base_stake" in parsed_giocata and parsed_giocata["base_stake"] != retrieved_giocata["base_stake"]:
         personal_user_giocata["personal_stake"] = parsed_giocata["base_stake"]
     user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
+    # * update user budget if giocata has an outcome
+    giocata_outcome = retrieved_giocata["outcome"]
+    if giocata_outcome == "win" or giocata_outcome == "loss":
+        user_budget = user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"]
+        if not user_budget is None:
+            user_budget = int(user_budget)
+            update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
+            if not update_result:
+                context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     context.bot.edit_message_text(
         updated_giocata_text,
         chat_id=user_chat_id,

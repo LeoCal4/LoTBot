@@ -167,6 +167,32 @@ def retrieve_user_giocate_since_timestamp(user_id: int, timestamp: float) -> Opt
         raise e
 
 
+def retrieve_users_who_played_giocata(giocata_id: str) -> List:
+    """Retrieves all the users who played the giocata specified by the id.
+    The included fields are only the user's ID, its budget and the personal giocata 
+    related to the specified giocata_id
+
+    Args:
+        giocata_id (str)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        List: a list containing the retrieved users
+    """
+    try:
+        return list(db.mongo.utenti.aggregate([
+            {"$match": { "giocate.original_id": giocata_id } },
+            {"$unwind": "$giocate"},
+            {"$match": { "giocate.original_id": giocata_id } },
+            {"$project": {"_id": 1, "giocate": 1, "budget": 1} }
+        ]))
+    except Exception as e:
+        lgr.logger.error(f"Error during retrieval of users who played giocata - {giocata_id=}")
+        raise e
+
+
 def update_user(user_id: int, user_data: Dict) -> bool:
     """Updates the user specified by the user_id,
         using the data found in user_data
@@ -188,7 +214,7 @@ def update_user(user_id: int, user_data: Dict) -> bool:
             {"$set": user_data}
         )
         # this will be true if there was at least a match
-        return bool(update_result.matched_count)
+        return bool(update_result.modified_count)
     except Exception as e:
         if "_id" in user_data:
             del user_data["_id"]
@@ -241,7 +267,6 @@ def register_giocata_for_user_id(giocata: Dict, user_id: int) -> bool:
             { "_id": user_id, },
             { "$addToSet": { "giocate": giocata } }
         )
-        # this will be true if there was at least a match
         return bool(update_result.matched_count)
     except Exception as e:
         if "_id" in giocata:
@@ -273,6 +298,31 @@ def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
         return bool(update_result.matched_count)
     except Exception as e:
         lgr.logger.error(f"Error during personal stake registration: {user_id=} - {personal_stake=}")
+        raise e
+
+
+def update_user_giocata_with_previous_budget(user_id: int, giocata_id, previous_budget: int) -> bool:
+    """Adds the pre-giocata budget to a personal user giocata.
+
+    Args:
+        user_id (int)
+        giocata_id
+        previous_budget (int)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the user personal giocata is updated with the pre-giocata budget
+    """
+    try:
+        update_result : UpdateResult = db.mongo.utenti.update_one(
+            {"_id": user_id, "giocate.original_id": giocata_id },
+            {"$set": {"giocate.$.pre_giocata_budget": previous_budget } }
+        )
+        return bool(update_result.modified_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during giocata update with new budget: {giocata_id=} - {previous_budget=}")
         raise e
 
 
@@ -309,7 +359,8 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
 
 
 def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
-    """Adds a successful referral (in the form of a payment ID) to the specified user's ones.
+    """Add the referred payment (in the form of a payment ID) to both the referred payments and to the
+    successful referrals since last payment for the user specified by user_id.
 
     Args:
         user_id (int)
@@ -350,10 +401,8 @@ def delete_user(user_id: int) -> bool:
         result: DeleteResult = db.mongo.utenti.delete_one({"_id": user_id})
         return bool(result.deleted_count)
     except Exception as e:
-        lgr.logger.error("Error during user deletion")
-        lgr.logger.error(f"Exception: {str(e)}")
-        lgr.logger.error(f"User id: {user_id}")
-        return False
+        lgr.logger.error("Error during user deletion - {user_id}")
+        raise e
 
 
 def delete_personal_stake_by_user_id_or_username(user_identification_data: Union[int, str], personal_stake_id: str) -> bool:
