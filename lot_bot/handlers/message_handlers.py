@@ -54,8 +54,10 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
     text = original_text
     # * check if the strategy is all, hence the message has to be sent to all sub to the specified sport
     if strategy != "all":
+        lgr.logger.info(f"Sending message to all users subscribed to {sport} - {strategy}")
         sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport_and_strategy(sport, strategy)
-    else: 
+    else:
+        lgr.logger.info(f"Sending message to all users subscribed to any strategy of {sport}")
         sub_user_ids = sport_subscriptions_manager.retrieve_all_user_ids_sub_to_sport(sport)
     # * check if there are any subscribers to the specified strategy
     if sub_user_ids == []:

@@ -20,7 +20,7 @@ class Strategy:
 class StrategyContainer:
     SINGOLALOW : Strategy = Strategy("singolalow", display_name="Singola Low", explanation=cst.SINGOLALOW_EXPL_TEXT)
     SINGOLAHIGH : Strategy = Strategy("singolahigh", display_name="Singola High", explanation=cst.SINGOLAHIGH_EXPL_TEXT)
-    RADDOPPIO : Strategy = Strategy("raddoppio", explanation = cst.RADDOPPIO_EXPL_TEXT) #
+    RADDOPPIO : Strategy = Strategy("raddoppio", explanation = cst.RADDOPPIO_EXPL_TEXT)
     SPECIALI : Strategy = Strategy("speciali", explanation = cst.SPECIALI_EXPL_TEXT)
     LIVE : Strategy = Strategy("live", explanation = cst.LIVE_EXPL_TEXT)
     MULTIPLALIGHT : Strategy = Strategy("multiplalight", display_name="Multipla Light", explanation = cst.MULTIPLALIGHT_EXPL_TEXT)

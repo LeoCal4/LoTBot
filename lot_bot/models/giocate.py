@@ -190,6 +190,7 @@ def get_strategy_name_from_giocata(text: str, sport: spr.Sport) -> str:
     strategy = strat.strategies_container.get_strategy(played_strategy)
     sport = spr.sports_container.get_sport(sport)
     if strategy and strategy in sport.strategies:
+        lgr.logger.debug(f"Parsed strategy {strategy.display_name}")
         return strategy.name
     else:
         error_message = f"giocata_model.get_strategy_name_from_giocata: Strategy {played_strategy} not found from {text} for sport {sport.name}"
@@ -376,7 +377,6 @@ def update_text_with_stake_money_value(text: str, user_budget: int, stake: int) 
         print("VALUE ERROR ON UPDATE TEXT WIT STAKE MONEY VALUE")
         return text
     stake_money_value = (user_budget / 100) * (stake / 10000)
-    print(f"{stake_money_value=}")
     return f"{text[:percentage_index+1]} ({stake_money_value:.2f}€){text[percentage_index+1:]}"
 
 
@@ -394,7 +394,6 @@ def update_outcome_text_with_money_value(text: str, user_budget: int, stake: int
         return text
     outcome_percentage = get_outcome_percentage(outcome, stake, quota)
     outcome_money_value = (user_budget / 100) *  (outcome_percentage/ 100)
-    print(f"{outcome_money_value=} - {user_budget=} - {outcome_percentage=} - {outcome=} - {stake=} - {quota=}")
     return f"{text[:percentage_index+1]} ({outcome_money_value:.2f}€){text[percentage_index+1:]}"
 
   

@@ -51,7 +51,8 @@ def create_sport_subscription(sport_sub_data : Dict) -> bool:
 def retrieve_all_user_ids_sub_to_sport_and_strategy(sport: str, strategy: str) -> List:
     try:
         raw_user_ids = list(db.mongo.utenti.find(
-            { "sport_subscriptions.sport" : sport, "sport_subscriptions": { "$elemMatch": { "strategies": strategy } } },
+            { "sport_subscriptions" : { "$elemMatch": { "sport": sport, "strategies": strategy } } },
+            # { "sport_subscriptions.sport" : sport, "sport_subscriptions": { "$elemMatch": { "strategies": strategy } } },
             { "_id": 1 }
         ))
         return [raw_user_id["_id"] for raw_user_id in raw_user_ids]
