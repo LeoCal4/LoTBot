@@ -193,11 +193,11 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
         {'sport':'tennis', 'strategies': ['singolalow','raddoppio','live']},
         {'sport':'exchange', 'strategies': ['maxexchange']},
         {'sport':'hockey', 'strategies': ['base']},
-        {'sport':'baseball', 'strategies': ['base']},
-        {'sport':'footballamericano', 'strategies': ['base']},
+        #{'sport':'baseball', 'strategies': ['base']},
+        #{'sport':'footballamericano', 'strategies': ['base']},
+        #{'sport':'mma', 'strategies': ['base']},
         {'sport':'pallavolo', 'strategies': ['base']},
         {'sport':'pingpong', 'strategies': ['base']},
-        {'sport':'mma', 'strategies': ['base']},
         {'sport':'tuttoilresto', 'strategies': ['base']},
         {'sport':'freelot', 'strategies': ['communitybet']}
         ]

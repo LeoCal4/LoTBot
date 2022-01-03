@@ -103,8 +103,8 @@ RESOCONTI_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_resoconti_buttons)
 
 
 _register_giocata_buttons = [
-    [InlineKeyboardButton(text="Sì", callback_data= "register_giocata_yes")],
-    [InlineKeyboardButton(text="No", callback_data= "register_giocata_no")],
+    [InlineKeyboardButton(text="SI ✅", callback_data= "register_giocata_yes"),
+    InlineKeyboardButton(text="NO ❌", callback_data= "register_giocata_no")],
 ]
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
