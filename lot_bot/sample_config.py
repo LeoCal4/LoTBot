@@ -23,6 +23,7 @@ class Config(object):
     TESTING = False
     SPORTS_CHANNELS_ID = {}
     NEW_USERS_CHANNEL_ID = None
+    NEW_PAYMENTS_CHANNEL_ID = None
     TEACHERBET_CHANNEL_ID = None
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
@@ -55,6 +56,7 @@ class Development(Config):
     VIDEO_FILE_IDS = {} # TBA
     VIDEO_FILE_EXTENSIONS = (".mp4") # TBA
     NEW_USERS_CHANNEL_ID = None # TBA
+    NEW_PAYMENTS_CHANNEL_ID = None # TBA
     TEACHERBET_CHANNEL_ID = None # TBA
     
 
@@ -98,6 +100,10 @@ def load_env_variables():
     config.NEW_USERS_CHANNEL_ID = os.getenv("NEW_USERS_CHANNEL_ID", None)
     if not config.NEW_USERS_CHANNEL_ID is None:
         config.NEW_USERS_CHANNEL_ID = int(config.NEW_USERS_CHANNEL_ID)
+
+    config.NEW_PAYMENTS_CHANNEL_ID = os.getenv("NEW_PAYMENTS_CHANNEL_ID", None)
+    if not config.NEW_PAYMENTS_CHANNEL_ID is None:
+        config.NEW_PAYMENTS_CHANNEL_ID = int(config.NEW_PAYMENTS_CHANNEL_ID)
 
     channels_id = os.getenv("SPORTS_CHANNELS_ID", {})
     if channels_id != {}:

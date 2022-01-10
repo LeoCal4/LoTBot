@@ -8,9 +8,9 @@ from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import user_manager
+from lot_bot.dao import user_manager, sport_subscriptions_manager
 from lot_bot.handlers import message_handlers, callback_handlers
-from lot_bot.models import personal_stakes, users, giocate, subscriptions
+from lot_bot.models import personal_stakes, users, giocate, subscriptions, strategies, sports
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -653,7 +653,6 @@ def visualize_personal_stakes(update: Update, context: CallbackContext):
     stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
     update.effective_message.reply_text(stakes_message)
 
-
 def delete_personal_stakes(update: Update, context: CallbackContext):
     """Deletes target users's personalized stake identified by its index in the list of personalized stakes.
 
@@ -694,7 +693,118 @@ def delete_personal_stakes(update: Update, context: CallbackContext):
         return
     update.effective_message.reply_text("Stake rimosso con successo")
 
+def visualize_user_info(update: Update, context: CallbackContext):
+    """Sends a message containing target user's general data.
+    
+        /visualizza_utente <username o ID>
 
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    try:    
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin"])
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "username (o ID)")
+        return
+    # * retrieve personal info
+    if type(target_user_identification_data) is int:
+        target_user_data = user_manager.retrieve_user_fields_by_user_id(target_user_identification_data, ["all"])
+    else:
+        lgr.logger.debug("target id = "+ str(target_user_identification_data))
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["all"])
+    # * check if the user exists
+    if target_user_data is None:#
+        update.effective_message.reply_text("ERRORE: utente non trovato")
+        return
+    # * create and send user info message
+    lgr.logger.debug(f"{target_user_data=}")
+
+    name = target_user_data["name"]
+    username = target_user_data["username"]
+    if not username:
+        username = ""
+    telegramID = target_user_data["_id"]
+    email = target_user_data["email"]
+    role = target_user_data["role"]
+    blocked = target_user_data["blocked"]
+
+    user_subscriptions = target_user_data["subscriptions"]
+    #sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(telegramID)
+    sport_subscriptions = target_user_data["sport_subscriptions"]
+
+    referral_code = target_user_data["referral_code"]
+    linked_referral_user = target_user_data["linked_referral_user"]
+    successful_referrals_since_last_payment = target_user_data["successful_referrals_since_last_payment"]
+
+    user_payments = target_user_data["payments"]
+    
+    # = target_user_data[""]
+    # = target_user_data[""]
+    # = target_user_data[""]
+    # = target_user_data[""]
+    # = target_user_data[""]
+
+    user_info_text = f"""<b>Informazioni Utente</b>
+Nome: {name}
+Username: @{username}
+Id: {telegramID}
+Email: {email}
+Ruolo: {role}
+Codice Referral: {referral_code}
+L'utente risulta """
+    if blocked:
+        user_info_text += "bloccato\n"
+    else:
+        user_info_text += "non bloccato\n"
+
+    subs_text = "<b>Abbonamenti</b>\n"
+    try:
+        for sub in user_subscriptions: 
+            expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+            sub_name = subscriptions.sub_container.get_subscription(sub["name"])
+            sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
+            subs_text += f"{sub_emoji} {sub_name.display_name}: valido fino a {expiration_date}\n"
+    except:
+        subs_text += "ERRORE nel recupero degli abbonamenti\n"
+
+    sports_text = "<b>Sport Attivi</b>\n"
+    try:
+        for sport_data in sport_subscriptions:
+            sports_text += sports.sports_container.get_sport(sport_data["sport"]).display_name + ": "
+            for strategy_token in sport_data["strategies"]:
+                sports_text += strategies.strategies_container.get_strategy(strategy_token).display_name + ", "
+            sports_text += "\n"
+    except:
+        sports_text += "ERRORE nel recupero degli sport e strategie\n"
+
+    payments_text = "<b>Pagamenti</b>\n"
+    try:
+        if len(user_payments) != 0:
+            for payment_data in user_payments:
+                date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(payment_data["datetime_timestamp"]) + datetime.timedelta(hours=2), "%d/%m/%Y alle %H:%M")
+                invoice_payload = payment_data["invoice_payload"]
+                price = str(payment_data["total_amount"])
+                price = price[:-2]+","+price[-2:] + " " + payment_data["currency"] #e.g. 2490 -> 24,90 EUR
+                payments_text += f"{date} per: {invoice_payload} - {price}\n"
+        else:
+            payments_text += "L'utente non ha effettuato pagamenti\n"
+    except:
+        payments_text += "ERRORE nel recupero dei pagamenti\n"
+
+    other_info_text = "<b>Altro:</b>\n"
+    other_info_text+= "Budget: Utilizza /visualizza_budget <ID o username>\n".replace("<", "&lt;").replace(">", "&gt;")
+    other_info_text+= "Stakes personalizzati: Utilizza /visualizza_stake <ID o username>".replace("<", "&lt;").replace(">", "&gt;")
+
+    user_info_text += subs_text + sports_text + payments_text + other_info_text
+
+    #stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
+    #stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
+    update.effective_message.reply_text(user_info_text, parse_mode="HTML")
 
 ############################################ OTHER COMMANDS ############################################
 

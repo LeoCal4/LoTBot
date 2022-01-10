@@ -183,7 +183,6 @@ def create_personal_referral_updated_text(updated_referral: str) -> str:
     referral_link = f"https://t.me/{cfg.config.BOT_NAME}?start={updated_referral}"
     return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)
 
-
 def get_month_and_year_string(previous_month:bool=False):
     target_time = datetime.datetime.utcnow()
     if previous_month:

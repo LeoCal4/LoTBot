@@ -12,6 +12,11 @@ add_giocate_batch*
 resocontibot*
 lot_bot/sample_*
 
+#
+scripts/
+include/
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

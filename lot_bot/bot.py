@@ -103,6 +103,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("cambia_ruolo", command_handlers.set_user_role))
     dispatcher.add_handler(CommandHandler("blocca_utente", command_handlers.block_messages_to_user))
     dispatcher.add_handler(CommandHandler("sblocca_utente", command_handlers.unlock_messages_to_user))
+    dispatcher.add_handler(CommandHandler("visualizza_utente", command_handlers.visualize_user_info))
     # ------------ Trend commands --------------
     dispatcher.add_handler(CommandHandler("trend_giorni", command_handlers.get_trend_by_days))
     dispatcher.add_handler(CommandHandler("trend_eventi", command_handlers.get_trend_by_events))
