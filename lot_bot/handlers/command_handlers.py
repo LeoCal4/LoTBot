@@ -704,7 +704,7 @@ def visualize_user_info(update: Update, context: CallbackContext):
     """
     user_id = update.effective_user.id
     try:    
-        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin"])
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin","analyst"])
     except custom_exceptions.UserPermissionError as e:
         update.effective_message.reply_text(str(e))
         return
@@ -754,7 +754,6 @@ Nome: {name}
 Username: @{username}
 Id: {telegramID}
 Email: {email}
-Ruolo: {role}
 Codice Referral: {referral_code}
 L'utente risulta """
     if blocked:
@@ -799,8 +798,13 @@ L'utente risulta """
     other_info_text = "<b>Altro:</b>\n"
     other_info_text+= "Budget: Utilizza /visualizza_budget <ID o username>\n".replace("<", "&lt;").replace(">", "&gt;")
     other_info_text+= "Stakes personalizzati: Utilizza /visualizza_stake <ID o username>".replace("<", "&lt;").replace(">", "&gt;")
+    user_info_text += subs_text + sports_text
 
-    user_info_text += subs_text + sports_text + payments_text + other_info_text
+    command_sender_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    if command_sender_role == "admin":
+        user_info_text += payments_text + other_info_text
+    else:
+        user_info_text += other_info_text
 
     #stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
     #stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
