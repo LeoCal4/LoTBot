@@ -14,6 +14,7 @@ from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import subscriptions as subs_model 
+from lot_bot.handlers import message_handlers
 from telegram import Update
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -400,6 +401,9 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     Args:
         update (Update): [description]
         context (CallbackContext): [description]
+
+    Raises:
+        e (Exception): in case of error editing message
     """
     user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
@@ -435,11 +439,16 @@ def accept_register_giocata(update: Update, context: CallbackContext):
             update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
             if not update_result:
                 context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
-    context.bot.edit_message_text(
-        updated_giocata_text,
-        chat_id=user_chat_id,
-        message_id=update.callback_query.message.message_id,
-    )
+    try:                      
+        context.bot.edit_message_text(
+            updated_giocata_text,
+            chat_id=user_chat_id,
+            message_id=update.callback_query.message.message_id,
+        )
+    except Exception as e:
+        lgr.logger.error(f"In accept_register_giocata - {str(e)}")
+        dev_message = f"ERRORE per l'utente {update.callback_query.message.chat_id}.\nMessaggio non modificato in accept_register_giocata"
+        message_handlers.send_messages_to_developers(context, [dev_message])
 
 
 def refuse_register_giocata(update: Update, context: CallbackContext):
@@ -453,11 +462,16 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟥 Operazione non effettuata 🟥"
-    context.bot.edit_message_text(
-        updated_giocata_text,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-    )
+    try:
+        context.bot.edit_message_text(
+            updated_giocata_text,
+            chat_id=update.callback_query.message.chat_id,
+            message_id=update.callback_query.message.message_id,
+        )
+    except Exception as e:
+        lgr.logger.error(f"In refuse_register_giocata - {str(e)}")
+        dev_message = f"ERRORE per l'utente {update.callback_query.message.chat_id}.\nMessaggio non modificato in refuse_register_giocata"
+        message_handlers.send_messages_to_developers(context, [dev_message])
 
 
 def to_resoconti(update: Update, context: CallbackContext):
