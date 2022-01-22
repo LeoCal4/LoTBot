@@ -164,7 +164,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     Raises:
         custom_exceptions.UserNotFound: in case the update's user is not found
     """
-    payment_final_message = f"Grazie per aver acquistato il nostro servizio!"
+    payment_final_message = cst.SUCCESSFUL_PAYMENT_TEXT
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "linked_referral_user"])
     retrieved_user_subs = retrieved_user["subscriptions"]
