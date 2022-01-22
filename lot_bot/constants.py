@@ -164,6 +164,23 @@ Telegram ID: {0}
 Nome: {1}
 Username: {2}"""
 
+# {0}: user id
+# {1}: user first name
+# {2}: user username
+# {3}: subscription
+# {4}: new expiration date
+# {5}: price
+# The actual message sent to the channel has an additional string with information about success of the payment
+NEW_PAYMENT_CHANNEL_MESSAGE = """Un utente ha effettuato un pagamento!
+
+Telegram ID: {0}
+Nome: {1}
+Username: {2}
+Servizio: {3}
+Valido fino al: {4}
+Costo: {5}\n"""
+
+
 # ================================== STRATEGIES EXPLANATION ========================================= 
 
 SINGOLALOW_EXPL_TEXT = """Singole analisi di eventi con quota inferiore o uguale a 2.10"""

@@ -165,11 +165,12 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         custom_exceptions.UserNotFound: in case the update's user is not found
     """
     payment_final_message = cst.SUCCESSFUL_PAYMENT_TEXT
+    payment_outcome_text = "Pagamento effettuato con successo" # This string is part of the text that will be sent to new payments channel
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "linked_referral_user"])
     retrieved_user_subs = retrieved_user["subscriptions"]
     user_subs_name = [entry["name"] for entry in retrieved_user_subs]
-    # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
+    # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # TODO REVERT
     sub_name = "_".join(context.user_data["payment_payload"].split("_")[1:])
     # * extend the user's subscription up to the same day of the next month
     if sub_name not in user_subs_name:
@@ -221,6 +222,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         dev_message += f"Update dati utente: {user_update_result=} - registrazione pagamento: {register_result=}\n"
         dev_message += f"Dati pagamento:\n {str(payment_data)}"
         message_handlers.send_messages_to_developers(context, [dev_message])
+        payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente."
     # * update the referred user's successful referrals, if there is a referral code
     if linked_referral_id is not None:
         try:
@@ -236,10 +238,31 @@ def successful_payment_callback(update: Update, context: CallbackContext):
             dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_referral_id}. Dati pagamento:\n"
             dev_message += f"{str(payment_data)}"
             message_handlers.send_messages_to_developers(context, [dev_message])
+            payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente per l'affiliazione."
     # * send final payment message and homepage
     del context.user_data["payment_payload"]
     update.message.reply_text(payment_final_message)
     message_handlers.homepage_handler(update, context)
+
+    price = str(payment_data["total_amount"])
+    price = price[:-2]+","+price[-2:] + " " + payment_data["currency"]
+
+    new_expiration_date_text = datetime.datetime.strftime( datetime.datetime.utcfromtimestamp(new_expiration_date) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+    new_payment_channel_message = cst.NEW_PAYMENT_CHANNEL_MESSAGE.format(
+        update.effective_user.id, 
+        update.effective_user.first_name, 
+        update.effective_user.username,
+        sub_name,
+        new_expiration_date_text,
+        price
+    )
+    new_payment_channel_message += payment_outcome_text
+    try:
+        context.bot.send_message(cfg.config.NEW_PAYMENTS_CHANNEL_ID, new_payment_channel_message)
+    except Exception as e:
+        lgr.logger.error(f"Could not send new payment message to relative channel {cfg.config.NEW_PAYMENTS_CHANNEL_ID=} - {e=}")
+        error_message = f"Non è stato possibile inviare il messaggio di nuovo PAGAMENTO per {update.effective_user.id}\n{new_payment_channel_message}\n{cfg.config.NEW_PAYMENTS_CHANNEL_ID=}"
+        message_handlers.send_messages_to_developers(context, [error_message])
 
 
 def to_homepage_from_referral_callback(update: Update, context: CallbackContext) -> int:

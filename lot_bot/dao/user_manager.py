@@ -112,7 +112,10 @@ def retrieve_user_fields_by_username(username: str, user_fields: List[str]) -> O
     """
     try:
         user_fields = {field: 1 for field in user_fields}
-        return db.mongo.utenti.find_one({"username": username}, user_fields)
+        if user_fields == {"all":1}:
+            return db.mongo.utenti.find_one({"username": username})
+        else:
+            return db.mongo.utenti.find_one({"username": username}, user_fields)
     except Exception as e:
         lgr.logger.error(f"Error during user fields retrieval {username=} - {user_fields=}")
         raise e
@@ -132,9 +135,13 @@ def retrieve_user_fields_by_user_id(user_id: int, user_fields: List[str]) -> Opt
         Dict: the user data 
 
     """
+
     try:
         user_fields = {field: 1 for field in user_fields}
-        return db.mongo.utenti.find_one({"_id": user_id}, user_fields)
+        if user_fields == {"all":1}:
+            return db.mongo.utenti.find_one({"_id": user_id})
+        else:
+            return db.mongo.utenti.find_one({"_id": user_id}, user_fields)
     except Exception as e:
         lgr.logger.error(f"Error during user fields retrieval {user_id=} - {user_fields=}")
         raise e
@@ -514,7 +521,7 @@ def get_subscription_price_for_user(user_id: int) -> float:
     # * calculate discount
     discount_per_ref = 0.33
     successful_refs = len(retrieved_user_data["successful_referrals_since_last_payment"])
-    if successful_refs == 3:
+    if successful_refs == 3: #TODO FIX maybe it should be >= 3
         return 0
     elif successful_refs > 0:
         discount = discount_per_ref * len(retrieved_user_data["successful_referrals_since_last_payment"])
