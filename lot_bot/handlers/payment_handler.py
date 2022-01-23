@@ -241,7 +241,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
             payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente per l'affiliazione."
     # * send final payment message and homepage
     del context.user_data["payment_payload"]
-    update.message.reply_text(payment_final_message)
+    update.message.reply_text(payment_final_message, parse_mode="HTML")
     message_handlers.homepage_handler(update, context)
 
     price = str(payment_data["total_amount"])
