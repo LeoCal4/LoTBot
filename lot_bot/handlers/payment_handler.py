@@ -164,13 +164,13 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     Raises:
         custom_exceptions.UserNotFound: in case the update's user is not found
     """
-    payment_final_message = f"Grazie per aver acquistato il nostro servizio!"
+    payment_final_message = cst.SUCCESSFUL_PAYMENT_TEXT
     payment_outcome_text = "Pagamento effettuato con successo" # This string is part of the text that will be sent to new payments channel
     user_id = update.effective_user.id
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "linked_referral_user"])
     retrieved_user_subs = retrieved_user["subscriptions"]
     user_subs_name = [entry["name"] for entry in retrieved_user_subs]
-    # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # ! TODO REVERT
+    # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # TODO REVERT
     sub_name = "_".join(context.user_data["payment_payload"].split("_")[1:])
     # * extend the user's subscription up to the same day of the next month
     if sub_name not in user_subs_name:

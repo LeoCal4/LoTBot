@@ -32,7 +32,7 @@ _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
     [InlineKeyboardButton(text="📖  Spiegazione Strategie  🧭", callback_data="to_strat_expl_menu")], # related to text explanations (not video!)
     [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_gestione_budget_menu")], 
-    [InlineKeyboardButton(text="🌟  Status Servizio 📶", callback_data="to_service_status")],
+    [InlineKeyboardButton(text="🌟  Rinnova Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
 BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_configuration_buttons)
@@ -75,7 +75,7 @@ _explanation_test_buttons = [
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 _gestione_budget_buttons = [
-    [InlineKeyboardButton(text="📈  Il mio budget  🧮", callback_data="to_budget_menu")],
+    [InlineKeyboardButton(text="📤 Il mio budget 💰", callback_data="to_budget_menu")],
     [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
     [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
@@ -166,7 +166,8 @@ USE_GUIDE_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_use_guide_button
 
 _social_buttons = [
     [InlineKeyboardButton(text="🙋🏼‍♀️ Community Telegram 🙋🏾", url="https://t.me/LoTVerse")], 
-    [InlineKeyboardButton(text="💻 Pagina Instagram 📱", url="https://www.instagram.com/lot.official")], 
+    [InlineKeyboardButton(text="📱 Pagina Instagram IT 🇮🇹 ", url="https://www.instagram.com/lot.verse")], 
+    [InlineKeyboardButton(text="📱 Pagina Instagram EU 🇪🇺", url="https://www.instagram.com/lot.official")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_use_guide_menu")]
 ]
 SOCIAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_social_buttons)

@@ -25,6 +25,14 @@ Invia un messaggio con un codice di referral valido oppure premi il bottone sott
 ATTENZIONE: per essere valido, il nuovo codice deve contenere <i>solo lettere o numeri</i>. Inoltre, alla fine del codice, verrà aggiunto in automatico '-lot'.""" 
 
 
+SUCCESSFUL_PAYMENT_TEXT = """Grazie per il tuo acquisto!
+Stai dando un grande contributo al nostro progetto che punta a contrastare la ludopatia formando i giocatori di oggi e del domani!
+
+Accedi premendo <a href="https://t.me/+jW-C8fxuYXU5ZDJk">qui al gruppo LoT Meister</a> dove trovi tutto il team, le dirette e registrazioni e tanto altro ancora!
+
+<b>PS: Condividi questo screenshot taggandoci su Instagram per ricevere un omaggio!</b>"""
+
+
 # ================================== MAIN MENU =========================================
 
 BENTORNATO_MESSAGE = "Bentornato, puoi continuare ad utilizzare il bot"
@@ -34,9 +42,7 @@ LISTA_CANALI_MESSAGE = "Questa è la lista dei canali di cui è possibile riceve
 # {0}: the expiration date for the user
 SPORT_MENU_MESSAGE = """<b>Seleziona</b> gli sport che vuoi seguire 🚀 
 
-PS: nel gruppo <a href="http://t.me/LoTVerse">Community</a> trovi suggerimenti e consigli giornalieri!
-
-(<i>Puoi selezionare la tipologia di evento di ogni sport!</i>)
+<i>Puoi selezionare la tipologia di evento di ogni sport!</i>
 
 🟢 Attivato 🔴 Disattivato"""
 
@@ -62,7 +68,7 @@ Scegli il tipo di resoconto"""
 
 
 # {0}: user first name
-SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 lo status dei tuoi abbonamenti è il seguente:\n"""
+SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 lo status della tua iscrizione al servizio è il seguente:\n"""
 
 # {1}: linked referral code
 # {2}: user successful_referrals_since_last_payment
@@ -124,6 +130,15 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>
 
 Versione 1.00"""
+# WELCOME_MESSAGE = """Benvenuto/a nel LoTVerse {0}! :)
+
+# Qui approcciamo il betting in maniera diversa dal resto del mercato: eventi tracciati che non spariscono, bilanci autentici, gestione del budget e dello stake, formazione e tanto altro ancora!
+
+# <u>Per favore prima di iniziare leggi tutti i pdf allegati, sono le istruzioni della tecnologia che stai usando!</u>
+
+# Quando sei pronto <b>digita il tuo budget di partenza</b> <i>(potrai sempre modificarlo in futuro!)</i>
+
+# <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>"""
 
 
 # {0}: valid ref code

@@ -52,7 +52,7 @@ class SportsContainer:
     PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
-    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False)
+    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False, show_in_menu=False)
     ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
 
     def __iter__(self):
