@@ -16,6 +16,7 @@ from lot_bot.models import strategies as strat
 from lot_bot.models import subscriptions as subs_model 
 from lot_bot.handlers import message_handlers
 from telegram import Update
+from telegram.error import BadRequest
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
 
@@ -445,9 +446,9 @@ def accept_register_giocata(update: Update, context: CallbackContext):
             chat_id=user_chat_id,
             message_id=update.callback_query.message.message_id,
         )
-    except Exception as e:
-        lgr.logger.error(f"In accept_register_giocata - {str(e)}")
-        dev_message = f"ERRORE per l'utente {update.callback_query.message.chat_id}.\nMessaggio non modificato in accept_register_giocata"
+    except BadRequest:
+        lgr.logger.error(f"BadRequest error in accept_register_giocata")
+        dev_message = f"ERRORE BadRequest in accept_register_giocata per l'utente {update.callback_query.message.chat_id}."
         message_handlers.send_messages_to_developers(context, [dev_message])
 
 
@@ -468,9 +469,9 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
             chat_id=update.callback_query.message.chat_id,
             message_id=update.callback_query.message.message_id,
         )
-    except Exception as e:
-        lgr.logger.error(f"In refuse_register_giocata - {str(e)}")
-        dev_message = f"ERRORE per l'utente {update.callback_query.message.chat_id}.\nMessaggio non modificato in refuse_register_giocata"
+    except BadRequest:
+        lgr.logger.error(f"BadRequest error in refuse_register_giocata")
+        dev_message = f"ERRORE BadRequest in refuse_register_giocata per l'utente {update.callback_query.message.chat_id}."
         message_handlers.send_messages_to_developers(context, [dev_message])
 
 
