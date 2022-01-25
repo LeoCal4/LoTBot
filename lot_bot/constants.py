@@ -206,4 +206,4 @@ DEFAULT_STRAT_EXPLANATION_TEXT = """Contatta l'<a href="https://t.me/LegacyOfTip
 
 ERROR_MESSAGE = """☠️ Abbiamo riscontrato un problema tecnico con il bot ☠️
 
-Invia <i>uno screen</i> di questa chat all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per mostrarci l'errore, <i>scrivendo brevemente</i> cosa stavi cercando di fare e riceverai <b>un giorno di servizio in più</b>! 🔥"""
+Invia <i>uno screen</i> di questa chat all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per mostrarci l'errore, <i>scrivendo brevemente</i> cosa stavi cercando di fare, grazie 🔥"""

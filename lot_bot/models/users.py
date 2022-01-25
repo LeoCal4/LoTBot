@@ -209,7 +209,7 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
             lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
     # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
     if not teacherbet_code:
-        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=2)).timestamp()
+        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
         sub = {"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
     else:
         sub = subs.create_teacherbet_base_sub()
