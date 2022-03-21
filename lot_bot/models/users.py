@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
-from lot_bot.dao import user_manager
+from lot_bot.dao import user_manager, budget_manager
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import subscriptions as subs
 from telegram import User 
@@ -34,7 +34,7 @@ def create_base_user_data():
         "giocate": [],
         "payments": [],
         "sport_subscriptions": [],
-        "budget": None,
+        "budgets": [],
         "personal_stakes": [],
     }
 
@@ -114,6 +114,34 @@ def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personal
     lgr.logger.debug(f"New budget calculated: {user_budget=}  - {outcome_percentage=} - {budget_difference=}")
     return new_budget
 
+def calculate_new_budget_after_giocata2(user_budget_balance: int, giocata: Dict, personalized_stake: int = None) -> int:
+    """[summary]
+
+    Args:
+        user_budget_balance (int): actual budget * 100
+        giocata (Dict): [description]
+        personalized_stake (int, optional): [description]. Defaults to None.
+
+    Returns:
+        int: the new budget after the giocata
+    """
+    stake = giocata["base_stake"]
+    # * check if there is a personalized stake
+    if not personalized_stake is None and personalized_stake != 0:
+        stake = personalized_stake
+    # * get outcome percentage
+    if "cashout" in giocata:
+        lgr.logger.debug(f"{giocata['cashout']=}")
+        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "abbinata") # just to be sure to avoid abbinate
+    else:
+        outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
+    # * update budget with outcome percentange
+    budget_difference = (user_budget_balance * round(outcome_percentage / 100, 2))
+    new_budget = user_budget_balance + budget_difference
+    lgr.logger.debug(f"New budget calculated: {user_budget_balance=}  - {outcome_percentage=} - {budget_difference=}")
+    return new_budget
+
+
 
 def update_single_user_budget_with_giocata(target_user_id: int, target_user_budget: int, giocata_id, 
                                             giocata_data: Dict, user_personal_stake: int = None) -> bool:
@@ -142,6 +170,34 @@ def update_single_user_budget_with_giocata(target_user_id: int, target_user_budg
         target_user_budget) and update_result
     return update_result
 
+#TODO2 change every function with this message 
+def update_single_user_budget_with_giocata2(target_user_id: int, target_user_budget_balance: int, giocata_id, 
+                                            giocata_data: Dict, user_personal_stake: int = None) -> bool:
+    """Calculates the new user's budget given the giocata, updates it and saves the pre-giocata budget in the personal user's giocata.
+
+    Args:
+        target_user_id (int)
+        target_user_budget_balance (int)
+        giocata_id:
+        giocata_data (Dict)
+        user_personal_stake (int, optional): Can be specified separately to calculate the new budget. Defaults to None.
+
+    Returns:
+        bool: True if the user's budget is updated and if the pre-giocata budget is saved, False otherwise
+    """
+    if target_user_budget_balance is None:
+        return True
+    # * calculate updated budget
+    new_budget_balance = calculate_new_budget_after_giocata2(target_user_budget_balance, giocata_data, user_personal_stake)
+    # * update user's budget
+    default_budget_name = budget_manager.retrieve_default_budget_from_user_id(target_user_id)["budget_name"]
+    update_result = budget_manager.update_budget_balance(target_user_id,default_budget_name,new_budget_balance)
+    # * update personal giocata with pre-giocata budget info
+    update_result = user_manager.update_user_giocata_with_previous_budget(
+        target_user_id, 
+        giocata_id,
+        target_user_budget_balance) and update_result
+    return update_result
 
 def update_users_budget_with_giocata(updated_giocata: Dict):
     """Updates the budgets of the users who played the new giocata.
@@ -153,11 +209,14 @@ def update_users_budget_with_giocata(updated_giocata: Dict):
     if not users_who_played_giocata:
         return
     for target_user in users_who_played_giocata:
-        if target_user["budget"] is None:
+        #if target_user["budget"] is None: #temporary
+        default_budget = budget_manager.retrieve_default_budget_from_user_id(target_user["_id"]) 
+        if not default_budget:
             continue
-        target_user_budget = int(target_user["budget"])
+        #target_user_budget = int(target_user["budget"]) temporary
+        target_user_budget = int(default_budget["balance"]) 
         target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
-        update_single_user_budget_with_giocata(
+        update_single_user_budget_with_giocata2(
             target_user["_id"], 
             target_user_budget, 
             updated_giocata["_id"],
@@ -165,6 +224,29 @@ def update_users_budget_with_giocata(updated_giocata: Dict):
             user_personal_stake=target_user_personal_stake
         )
 
+#TODO2 change blabla
+def update_users_budget_with_giocata2(updated_giocata: Dict):
+    """Updates the budgets of the users who played the new giocata.
+
+    Args:
+        updated_giocata (Dict)
+    """
+    users_who_played_giocata = user_manager.retrieve_users_who_played_giocata(updated_giocata["_id"])
+    if not users_who_played_giocata:
+        return
+    for target_user in users_who_played_giocata:
+        default_budget = budget_manager.retrieve_default_budget_from_user_id(target_user["_id"])
+        if default_budget is None:
+            continue
+        target_user_budget_balance = int(default_budget["balance"])
+        target_user_personal_stake = int(target_user["giocate"]["personal_stake"])
+        update_single_user_budget_with_giocata(
+            target_user["_id"], 
+            target_user_budget_balance, 
+            updated_giocata["_id"],
+            updated_giocata, 
+            user_personal_stake=target_user_personal_stake
+        )
 
 #TODO find a better way to add default sport subscriptions
 def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: str = None) -> Dict:
@@ -188,14 +270,12 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
     user_data["name"] = user.first_name
     user_data["username"] = user.username
     user_data["sport_subscriptions"] = [
-        {'sport':'calcio', 'strategies': ['singolalow','raddoppio','live']},
-        {'sport':'basket', 'strategies': ['singolalow','raddoppio','live']},
-        {'sport':'tennis', 'strategies': ['singolalow','raddoppio','live']},
-        {'sport':'exchange', 'strategies': ['maxexchange']},
-        {'sport':'hockey', 'strategies': ['base']},
-        {'sport':'pallavolo', 'strategies': ['base']},
-        {'sport':'pingpong', 'strategies': ['base']},
-        {'sport':'tuttoilresto', 'strategies': ['base']}
+        {'sport':'calcio', 'strategies': ['produzione']},
+        {'sport':'basket', 'strategies': ['produzione']},
+        {'sport':'tennis', 'strategies': ['produzione']},
+        {'sport':'exchange', 'strategies': ['produzione']},
+        {'sport':'tuttoilresto', 'strategies': ['produzione']},
+        {'sport':'analisimiste', 'strategies': ['communnitybet','freebet']},
         ]
 
     if ref_code:

@@ -100,7 +100,8 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         lgr.logger.error(f"Could not send new user message to relative channel {cfg.config.NEW_USERS_CHANNEL_ID=} - {e=}")
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
-    update.message.reply_text(welcome_message, reply_markup=kyb.STARTUP_REPLY_KEYBOARD, parse_mode="HTML")
+    #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
+    context.bot.send_document(chat_id = update.effective_user.id, document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", caption=cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
 
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
@@ -180,6 +181,7 @@ def start_command(update: Update, context: CallbackContext):
     if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
+        return
     # * existing user wants to link a referral code
     elif ref_code and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
@@ -884,7 +886,7 @@ def broadcast_media(update: Update, context: CallbackContext):
     caption = " ".join(update.effective_message.caption.split()[1:]).strip()
     _send_broadcast_media(send_media_function, file_id, caption)
 
-
+#TODO modify to handle multiple budgets
 def get_user_budget(update: Update, context: CallbackContext):
     """/visualizza_budget <ID o username>
     Args:
@@ -925,7 +927,7 @@ def get_user_budget(update: Update, context: CallbackContext):
     user_budget = int(user_data["budget"]) / 100
     update.effective_message.reply_text(f"Il budget dell'utente {target_user_identification_data} è {user_budget:.2f}€")
 
-
+#TODO modify to handle multiple budgets
 def set_user_budget(update: Update, context: CallbackContext):
     """/imposta_budget <username o ID> <new budget>
     Args:

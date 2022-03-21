@@ -8,7 +8,7 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
-                         user_manager)
+                         user_manager, budget_manager)
 from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
@@ -66,7 +66,6 @@ def select_sport_strategies(update: Update, context: CallbackContext):
         reply_markup=kyb.create_strategies_inline_keyboard(update, sport),
     )
 
-
 def set_sport_strategy_state(update: Update, context: CallbackContext):
     """Sets the states of the sport's strategy to the one specified in the callback. 
     The operation is aborted in case the user is trying to set 
@@ -114,7 +113,6 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     else:
         if not sport_subscriptions_manager.delete_sport_subscription(sport_sub_data):
             lgr.logger.error(f"Could not disable sport_subscription with data {sport_sub_data}")
-    
     context.bot.edit_message_reply_markup(
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
@@ -151,7 +149,6 @@ def to_homepage(update: Update, context: CallbackContext):
             parse_mode="HTML"
         )
     
-
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
@@ -162,7 +159,6 @@ def to_bot_config_menu(update: Update, context: CallbackContext):
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
-
 
 def to_experience_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
@@ -175,7 +171,6 @@ def to_experience_menu(update: Update, context: CallbackContext):
         parse_mode="HTML"
     )
 
-
 def to_use_guide_menu(update: Update, context: CallbackContext):
     context.bot.edit_message_text(
         text=cst.USE_GUIDE_MENU_MESSAGE,
@@ -184,7 +179,6 @@ def to_use_guide_menu(update: Update, context: CallbackContext):
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
     )
-
 
 def to_sports_menu(update: Update, context: CallbackContext):
     """Loads the sports menù.
@@ -211,7 +205,6 @@ def to_sports_menu(update: Update, context: CallbackContext):
         reply_markup=kyb.create_sports_inline_keyboard(update),
         parse_mode="HTML"
     )
-
 
 def to_service_status(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
@@ -284,7 +277,9 @@ def strategy_text_explanation(update: Update, context: CallbackContext):
 
 def feature_to_be_added(_: Update, __: CallbackContext):
     return
-
+    
+def do_nothing(_: Update, __: CallbackContext):
+    return
 
 def to_social_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
@@ -313,11 +308,13 @@ def to_explanations_menu(update: Update, context: CallbackContext):
     )
 
 
-def to_gestione_budget_menu(update: Update, context: CallbackContext):
-    context.bot.edit_message_reply_markup(
+def to_budget_menu(update: Update, context: CallbackContext):
+    context.bot.edit_message_text(
+        cst.GESTIONE_BUDGET_MENU_MESSAGE,
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.GESTIONE_BUDGET_MENU_KEYBOARD,
+        parse_mode="HTML"        
     )
 
 
@@ -434,10 +431,18 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     # * update user budget if giocata has an outcome
     giocata_outcome = retrieved_giocata["outcome"]
     if (giocata_outcome == "win" or giocata_outcome == "loss") and parsed_giocata["sport"] != spr.sports_container.EXCHANGE:
-        user_budget = user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"]
-        if not user_budget is None:
-            user_budget = int(user_budget)
-            update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
+        #temporary
+        #user_budget = budget_manager.retrieve_budgets_from_user_id(chat_id)
+        #user_budget = user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"]
+        #if not user_budget is None:
+        #    user_budget = int(user_budget)
+        #    update_result = users.update_single_user_budget_with_giocata(user_chat_id, user_budget, personal_user_giocata["original_id"], retrieved_giocata)
+        #    if not update_result:
+        #        context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
+        default_budget = budget_manager.retrieve_default_budget_from_user_id(user_chat_id)
+        if not default_budget is None:
+            default_budget_balance = int(default_budget["balance"])
+            update_result = users.update_single_user_budget_with_giocata2(user_chat_id, default_budget_balance, personal_user_giocata["original_id"], retrieved_giocata)
             if not update_result:
                 context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     try:                      
@@ -572,6 +577,61 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
             resoconto_message,
         )
 
+#actually 4h
+def sends_last_giocate_24h(update: Update, context: CallbackContext):
+    lgr.logger.debug("Sending last 5 giocate in last 24h")
+    chat_id = update.callback_query.message.chat_id
+    last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-5)).timestamp())
+    lgr.logger.debug(f"{last_giocate=}")
+
+    sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
+    for i, giocata in enumerate(last_giocate):
+        if i > 5:
+            return
+        if giocata["sport"] in sport_validi:
+            original_text = giocata["raw_text"]
+            text = giocata["raw_text"]
+ 
+            custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
+            user_budget = budget_manager.retrieve_default_budget_from_user_id(chat_id)
+            if user_budget:
+                #user_budget_balance = int(user_budget["simply_interest_base"]) temporary
+                user_budget_balance = int(user_budget["balance"])
+                text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget_balance)                
+                #if user_budget["interest_type"] == "semplice":
+                #    user_budget_balance = int(user_budget["simply_interest_base"])
+                #    text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget_balance)
+                #elif user_budget["interest_type"] == "composto":
+                #    user_budget_balance = int(user_budget["balance"])
+                #    text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget_balance)
+            try:
+                text += "\n\nSeguirai questo evento?"
+                context.bot.send_message(
+                    chat_id, 
+                    text, 
+                    reply_markup=custom_reply_markup)
+            # * check if the user has blocked the bot
+            except Unauthorized:
+                lgr.logger.warning(f"Could not send message: user {chat_id} blocked the bot")
+                messages_to_be_sent -= 1
+            except Exception as e:
+                lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
+
+def send_socials_list(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    message_id = update.callback_query.message.message_id
+    socials_text = """Perfetto! Ti ricordo di seguirci su tutti i nostri social per non perdere preziosi contenuti, dirette, eventi ed attività! 
+LISTA SOCIALS
+E’ l’ora di iniziare ! Sto controllando se ci sono eventi analizzati !
+ps: ti ricordo che hai sempre a disposizione un consulente tramite l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> o gruppo meister per aiutarti nel tuo percorso e raggiungere i tuoi obiettivi !
+"""
+    context.bot.send_message(
+        text = socials_text,
+        chat_id=chat_id,
+        disable_web_page_preview=True,
+        parse_mode="HTML"
+    )
+    sends_last_giocate_24h(update,context)
 
 
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):

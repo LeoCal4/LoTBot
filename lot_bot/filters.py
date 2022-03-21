@@ -37,7 +37,6 @@ def get_normal_messages_filter() -> Filters:
     """
     return (Filters.text & (~ Filters.command))
 
-
 def get_cashout_filter() -> Filters:
     """Creates the filter for the cashout messages of the Exchange channel.
     Cashout messages must come from the Exchange channel and have the form:
@@ -125,6 +124,9 @@ def get_all_filter() -> Filters:
 def get_text_messages_filter() -> Filters:
     return Filters.text
 
+def get_command_messages_filter() -> Filters:
+    return Filters.command
+
 def get_broadcast_media_filter() -> Filters:
     return Filters.caption(["/broadcast"])
 
@@ -205,6 +207,18 @@ def get_strat_text_explanation_pattern() -> str: #related to text explanations (
         pattern += strategy.name + "|"
     return pattern[:-1] + ")"
 
+#TODO forse inutile
+def get_modify_budget_pattern() -> str:
+    """
+    modify_budget_(<str1>|<str2>|...|<strN>)
+
+    Returns:
+        str: [description]
+    """
+    pattern = "text_explanation_("
+    for strategy in strat.strategies_container:
+        pattern += strategy.name + "|"
+    return pattern[:-1] + ")"
 
 
 # ==============================================================================================================
@@ -221,3 +235,6 @@ def get_successful_payment_filter() -> Filters:
 
 def get_float_filter() -> Filters:
     return Filters.regex(r"\d+(?:[.,]\d+)?")
+
+def get_nothing() -> Filters:
+    return Filters.regex(r"^NothingThatUsersWillActuallySend$")

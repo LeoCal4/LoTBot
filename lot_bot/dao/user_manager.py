@@ -193,7 +193,7 @@ def retrieve_users_who_played_giocata(giocata_id: str) -> List:
             {"$match": { "giocate.original_id": giocata_id } },
             {"$unwind": "$giocate"},
             {"$match": { "giocate.original_id": giocata_id } },
-            {"$project": {"_id": 1, "giocate": 1, "budget": 1} }
+            {"$project": {"_id": 1, "giocate": 1, "budgets": 1} }
         ]))
     except Exception as e:
         lgr.logger.error(f"Error during retrieval of users who played giocata - {giocata_id=}")
@@ -521,7 +521,7 @@ def get_subscription_price_for_user(user_id: int) -> float:
     # * calculate discount
     discount_per_ref = 0.33
     successful_refs = len(retrieved_user_data["successful_referrals_since_last_payment"])
-    if successful_refs == 3: #TODO FIX maybe it should be >= 3
+    if successful_refs >= 3:
         return 0
     elif successful_refs > 0:
         discount = discount_per_ref * len(retrieved_user_data["successful_referrals_since_last_payment"])

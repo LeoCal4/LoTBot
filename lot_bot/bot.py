@@ -65,27 +65,89 @@ def update_referral_conversation_handler() -> ConversationHandler:
     )
     return update_ref_code_conv_handler
 
-
-def get_set_budget_conversation_handler() -> ConversationHandler:
+def get_new_budget_conversation_handler() -> ConversationHandler:
     """Creates the conversation handler to contain the budget update.
-
     Returns:
         ConversationHandler
     """
-    set_budget_conversation_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(budget_handlers.to_set_budget_menu, pattern=r"^to_set_budget_menu$")],
+    new_budget_conversation_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(budget_handlers.create_new_budget, pattern=r"^create_new_budget$")
+            ],
         states={
-            budget_handlers.SET_BUDGET: [
-                MessageHandler(filters.get_float_filter(), budget_handlers.received_new_budget),
-                CallbackQueryHandler(budget_handlers.to_set_budget_menu, pattern=r"^to_set_budget_menu$")
+            budget_handlers.CREATE_BUDGET_NAME: [
+                MessageHandler(filters.get_text_messages_filter(), budget_handlers.received_name_for_new_budget),
+                CallbackQueryHandler(budget_handlers.to_budgets_menu, pattern=r"^to_budgets_menu$")
+                ],
+            #budget_handlers.SET_BUDGET_INTEREST: [
+            #    CallbackQueryHandler(budget_handlers.received_interest_type_for_new_budget, pattern=r"^interest_type_(semplice|composto)_[a-zA-Z0-9_ ]+$"),
+            #    CallbackQueryHandler(budget_handlers.to_budgets_menu, pattern=r"^to_budgets_menu$")
+            #    ],
+            budget_handlers.SET_BUDGET_BALANCE: [
+                MessageHandler(filters.get_float_filter(), budget_handlers.received_balance_for_budget),
+                CallbackQueryHandler(budget_handlers.to_budgets_menu, pattern=r"^to_budgets_menu$")
                 ],
         },
-        fallbacks=[
-            MessageHandler(filters.get_normal_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
+        fallbacks=[ #TODO da modificare filter
+            MessageHandler(filters.get_command_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
             ],
     )
-    return set_budget_conversation_handler
+    return new_budget_conversation_handler
 
+def get_edit_budget_conversation_handler() -> ConversationHandler:
+    """Creates the conversation handler to contain the budget update.
+    Returns:
+        ConversationHandler
+    """
+    edit_budget_conversation_handler = ConversationHandler( 
+        entry_points=[
+            CallbackQueryHandler(budget_handlers.edit_budget_name, pattern=r"^edit_budget_name_[a-zA-Z0-9_ ]+$"),
+            CallbackQueryHandler(budget_handlers.edit_budget_balance, pattern=r"^edit_budget_balance_[a-zA-Z0-9_ ]+$"),
+            CallbackQueryHandler(budget_handlers.set_budget_interest_semplice, pattern=r"^set_budget_interest_semplice_[a-zA-Z0-9_ ]+$")
+            ],
+        states={
+            budget_handlers.EDIT_BUDGET_NAME: [
+                MessageHandler(filters.get_text_messages_filter(), budget_handlers.received_name_for_existing_budget),
+                ],
+            budget_handlers.EDIT_BUDGET_BALANCE: [
+                MessageHandler(filters.get_float_filter(), budget_handlers.received_balance_for_budget), #add handler for text messages - the bot will ask the user to insert a number, not text
+                ],
+            budget_handlers.EDIT_BASE_SIMPLY_INTEREST: [
+                MessageHandler(filters.get_float_filter(), budget_handlers.received_base_interest_semplice),
+                ],
+            #budget_handlers.CONFIRM_DELETE_BUDGET: [
+            #    MessageHandler(filters.get_text_messages_filter(), budget_handlers.received_name_for_new_budget),
+            #    CallbackQueryHandler(callback_handlers.to_budget_menu, pattern=r"^to_budget_menu$")
+            #    ],
+        },
+        fallbacks=[
+            CallbackQueryHandler(budget_handlers.to_budgets_menu_end_conversation, pattern=r"^to_budgets_menu_end_conversation$"),
+            MessageHandler(filters.get_command_messages_filter(), ref_code_handlers.to_homepage_from_referral_message),
+            ],
+    )
+    return edit_budget_conversation_handler
+
+def get_first_budget_creation() -> ConversationHandler:
+    """
+    Creates the conversation handler to create the first budget,
+    when the user start the bot, for now budget name is 'DEMO'
+    Returns:
+        ConversationHandler
+    """
+    first_budget_conversation_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(budget_handlers.create_first_budget, pattern=r"^create_first_budget$")
+            ],
+        states={
+            budget_handlers.SET_FIRST_BUDGET_BALANCE: [
+                MessageHandler(filters.get_float_filter(), budget_handlers.received_balance_for_first_budget)
+                ],
+        },
+        fallbacks=[ #users must create a budget
+            MessageHandler(filters.get_nothing(), ref_code_handlers.to_homepage_from_referral_message),
+           ],
+    )
+    return first_budget_conversation_handler
 
 def add_handlers(dispatcher: Dispatcher):
     """Adds all the bot's handlers to the dispatcher.
@@ -125,12 +187,12 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_explanations_menu, pattern=r"^to_explanation_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_gestione_budget_menu, pattern=r"^to_gestione_budget_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_budget_menu, pattern=r"^to_budget_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern())) 
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) #related to text explanations (not video!)
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) 
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_resoconti, pattern=r"^to_resoconti$"))
@@ -138,10 +200,27 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_24_hours_resoconto, pattern=r"^resoconto_24_hours$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_7_days_resoconto, pattern=r"^resoconto_7_days$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_30_days_resoconto, pattern=r"^resoconto_30_days$"))
-    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.to_budget_menu, pattern=r"^to_budget_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
+    # BUDGET CALLBACK HANDLERS
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.to_budgets_menu, pattern=r"^to_budgets_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.edit_budget, pattern=r"^edit_budget_(?!name|balance|interest)[a-zA-Z0-9_ ]+$")) #to get edit_budget_<budget_name> but not edit_budget_name_<budget_name> or edit_budget_balance_<budget_name>
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.set_default_budget, pattern=r"^set_default_budget_[a-zA-Z0-9_ ]+$"))
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.pre_delete_budget, pattern=r"^pre_delete_budget_[a-zA-Z0-9_ ]+$"))
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.delete_budget, pattern=r"^delete_budget[a-zA-Z0-9_ ]+$")) 
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.edit_budget_interest_menu, pattern=r"^edit_budget_interest_[a-zA-Z0-9_ ]+$")) #TODO da modificare forse in to_edit_budget.. ecc.
+    dispatcher.add_handler(CallbackQueryHandler(budget_handlers.set_budget_interest_composto, pattern=r"^set_budget_interest_composto_[a-zA-Z0-9_ ]+$"))
 
-    dispatcher.add_handler(get_set_budget_conversation_handler())
+   # dispatcher.add_handler(CallbackQueryHandler(budget_handlers.create_new_budget, pattern=r"^create_new_budget$"))
+    
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.feature_to_be_added, pattern=r"^new$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.do_nothing, pattern=r"^do_nothing$"))
+
+    # =========== FIRST START HANDLERS ===========
+    dispatcher.add_handler(get_first_budget_creation()) 
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.send_socials_list, pattern=r"^send_socials_list$"))
+
+    # =========== BUDGET HANDLERS ===========
+    dispatcher.add_handler(get_new_budget_conversation_handler())
+    dispatcher.add_handler(get_edit_budget_conversation_handler())
 
     # =========== PAYMENTS HANDLERS ===========
     dispatcher.add_handler(get_referral_conversation_handler())
@@ -149,7 +228,6 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_successful_payment_filter(), payment_handler.successful_payment_callback))
 
     dispatcher.add_handler(update_referral_conversation_handler())
-
 
     # ============ MESSAGE HANDLERS ===========
     dispatcher.add_handler(MessageHandler(filters.get_sport_channel_normal_message_filter(), command_handlers.normal_message_to_abbonati_handler))

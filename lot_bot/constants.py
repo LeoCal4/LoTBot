@@ -113,6 +113,13 @@ USE_GUIDE_MENU_MESSAGE = """<b>Guida all' uso</b> 📱
 
 <b>Fatto in  🇮🇹  con</b> ♥️"""
 
+#Configurazione Bot messaggi interni #valutare se modificare gestione budget con gestione andamento o gestione portafoglio oppure altro
+GESTIONE_BUDGET_MENU_MESSAGE = """<b>Gestione Budget</b> 📱
+
+👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+
+<b>Fatto in  🇮🇹  con</b> ♥️"""
+
 
 # ================================== FIRST USAGE =========================================
 
@@ -130,15 +137,17 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>
 
 Versione 1.00"""
-# WELCOME_MESSAGE = """Benvenuto/a nel LoTVerse {0}! :)
+WELCOME_MESSAGE_v2 = """Ciao! Io sono SportSignalsBoT il tuo strumento di supporto nel betting !
+Grazie alle mie funzioni potrai: 
 
-# Qui approcciamo il betting in maniera diversa dal resto del mercato: eventi tracciati che non spariscono, bilanci autentici, gestione del budget e dello stake, formazione e tanto altro ancora!
+- Ricevere eventi analizzati da un team di analisi su vari sport!
+- Tracciare i tuoi investimenti e avere la tua reportistica personale!
+- Accedere al gruppo privato LoT – Meister dove trovi tutto il team di LoT per avere analisi personalizzate, consulenza per i tuoi obiettivi e migliorare i tuoi rendimenti !
 
-# <u>Per favore prima di iniziare leggi tutti i pdf allegati, sono le istruzioni della tecnologia che stai usando!</u>
+Queste sono solo alcune delle principali funzioni a tua disposizione!
 
-# Quando sei pronto <b>digita il tuo budget di partenza</b> <i>(potrai sempre modificarlo in futuro!)</i>
-
-# <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>"""
+Prima di procedere per favore leggi il Disclaimer e la nostra breve Guida!
+Premi avanti quando sei pronto, sarò qui ad aspettarti !!"""
 
 
 # {0}: valid ref code
@@ -180,25 +189,32 @@ Servizio: {3}
 Valido fino al: {4}
 Costo: {5}\n"""
 
-
+FIRST_BUDGET_NAME = "Demo"
 # ================================== STRATEGIES EXPLANATION ========================================= 
 
 SINGOLALOW_EXPL_TEXT = """Singole analisi di eventi con quota inferiore o uguale a 2.10"""
 SINGOLAHIGH_EXPL_TEXT = """Singole analisi di eventi con quota superiore o uguale a 2.11"""
 RADDOPPIO_EXPL_TEXT = """Singola o Doppia con quota compresa tra 1.90 e 2.40"""
 SPECIALI_EXPL_TEXT = """Analisi su parametri non standard come Marcatori, Corner, Cartellini etc."""
-LIVE_EXPL_TEXT = """Solo eventi Live, in generale di tipo Singola"""
 MULTIPLALIGHT_EXPL_TEXT = """Pochi selezionati eventi per un moltiplicatore massimo di 9.90"""
 PDR_EXPL_TEXT = """Analisi del Prof_Dei_Raddoppi, nostro partner e collega"""
 MAXEXCHANGE_EXPL_TEXT = """L'Exchange di LoT perfetto sia per i neofiti che per gli esperti"""
 MB_EXPL_TEXT = """Matched Betting significa accoppiare quote su diversi bookmakers per avere una percentuale di presa pari al 100%.\nSuggeriamo di Contattarci per usare al meglio questa strategia"""
 SCALPING_EXPL_TEXT = """Scalping significa lavorare sulla variazione di quota e spesso trarre profitto prima che il match inizi grazie a notizie e informazioni che alterano il valore di quota.\nSuggeriamo di contattarci per usare al meglio questa strategia"""
 BASE_EXPL_TEXT = """Analisi generali di eventi per sport che non hanno ancora sufficiente storico per diversificare le analisi"""
-TEST_EXPL_TEXT = """Dedicata al team serve per testare nuove strategie, analisi, parametri etc."""
 INSTAGRAMFREE_EXPL_TEXT = """Raccolta di eventi gratuiti pubblicati su Instagram"""
-COMMUNITYBET_EXPL_TEXT = """Eventi generati dalle scelte della nostra community rispetto a diverse micro analisi di diversi match"""
 MULTIPLA_EXPL_TEXT = """Multipla di qualsiasi capienza e quota con moltiplicatori alti"""
 SOFAR_EXPL_TEXT = """Eventi di lunga durata (settimane/mesi) come vincitori di tornei e competizioni"""
+
+PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate, è possibile richiedere la personalizzazione stake scrivendo all' <a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> ! """ #TODO inserire link assistenza
+LIVE_EXPL_TEXT = """Solo eventi Live, in generale di tipo Singola"""
+EXTRA_EXPL_TEXT = """Tutte quelle analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale (10%/mese al massimo!)"""
+TEST_EXPL_TEXT = """Dedicata al team serve per testare nuove strategie, analisi, parametri etc."""
+FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti ! Spesso reperibili sui nostri vari social e canali ufficiali !"""
+COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme ! Together is Better !"""
+INFORMAZIONE_EXPL_TEXT = """Tutte le notizie del mondo del gioco d’azzardo direttamente dalla redazione di LoT !"""
+FANTACONSIGLI_EXPL_TEXT = """In collaborazione con @CalciatoriPerSbaglio [inserire link ig] i migliori suggerimenti per la tua rosa !""" #TODO inserire link instragram
+FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio !"""
 
 DEFAULT_STRAT_EXPLANATION_TEXT = """Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per avere maggiori informazioni su questa strategia!"""
 

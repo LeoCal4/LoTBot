@@ -31,7 +31,7 @@ class SubContainer:
     )
     TEACHERBET : Subscription = Subscription(
         "teacherbet", 
-        available_sports=[sports.sports_container.TEACHERBET], 
+        #available_sports=[sports.sports_container.TEACHERBET], 
         price=1500,
         description="Accesso alla produzione Teacherbet",
         aliases=["teacher", "teacher bet", "tb"]

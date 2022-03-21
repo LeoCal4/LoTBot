@@ -5,7 +5,7 @@ from pymongo.results import UpdateResult
 
 
 def create_sport_subscription(sport_sub_data : Dict) -> bool:
-    """Creates an sport_subscription using sport_sub_data
+    """Creates a sport_subscription using sport_sub_data
 
     Args:
         sport_sub_data (Dict)

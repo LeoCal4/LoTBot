@@ -19,10 +19,13 @@ class Sport:
 
 strats = strategies.StrategyContainer()
 _base_strategies = [
-    strats.BASE,
-    strats.TEST,
+    strats.PRODUZIONE,
+    strats.LIVE,
+    strats.EXTRA,
+    strats.TEST
 ]
-_adv_strategies = [
+#now unused
+'''_adv_strategies = [
     strats.SINGOLALOW,
     strats.SINGOLAHIGH,
     strats.MULTIPLALIGHT, 
@@ -30,30 +33,34 @@ _adv_strategies = [
     strats.SPECIALI,
     strats.LIVE,
     strats.TEST
-]
+]'''
 _analisi_miste_strategies = [
-    strats.INSTAGRAMFREE, 
+    strats.FREEBET, 
     strats.COMMUNITYBET, 
-    strats.MULTIPLA, 
-    strats.SOFAR
+]
+_news_strategies = [
+    strats.INFORMAZIONE,
+    strats.FANTACONSIGLI,
+    strats.FATTENARISATA
 ]
 
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", [strats.PDR] + _adv_strategies, emoji="⚽️")
-    BASKET : Sport = Sport("basket", _adv_strategies, emoji="🏀")
-    TENNIS : Sport = Sport("tennis", _adv_strategies, emoji="🎾")
-    EXCHANGE : Sport = Sport("exchange", [strats.MAXEXCHANGE, strats.MB, strats.SCALPING, strats.TEST], emoji="📊", outcome_percentage_in_resoconto=False)
-    HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
+    CALCIO : Sport = Sport("calcio", _base_strategies, emoji="⚽️")
+    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
+    TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
+    EXCHANGE : Sport = Sport("exchange", _base_strategies, emoji="📊", outcome_percentage_in_resoconto=False)
+    #HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     #BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     #FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
-    PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
-    PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
+    #PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
+    #PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
-    TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False, show_in_menu=False)
+    #TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False, show_in_menu=False)
     ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
+    NEWS : Sport = Sport("news", _news_strategies, display_name="News") 
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

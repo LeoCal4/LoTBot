@@ -12,7 +12,7 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
-                         user_manager)
+                         user_manager,budget_manager)
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
@@ -70,7 +70,7 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
     if is_giocata:
         original_text += "\n\nSeguirai questo evento?"
     for user_id in sub_user_ids:
-        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked", "budget"])
+        user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "personal_stakes", "blocked"])
         # * check if the user actually exists
         if not user_data:
             lgr.logger.warning(f"No user found with id {user_id} while handling giocata")
@@ -78,24 +78,30 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
             continue
         # * check if the user is blocked
         if user_data["blocked"]:
-            lgr.logger.warning(f"User {user_id} is blocked")
+            #lgr.logger.warning(f"User {user_id} is blocked") TODO fix with a more efficient way to print this
             messages_to_be_sent -= 1
             continue
         # * check if the user has an active subscription for the given sport
         if not user_manager.check_user_sport_subscription(update.effective_message.date, user_data["subscriptions"], sport):
-            lgr.logger.warning(f"User {user_id} is not active or does not have access to said sport")
+            #lgr.logger.warning(f"User {user_id} is not active or does not have access to said sport") TODO fix with a more efficient way to print this
             messages_to_be_sent -= 1
             continue
-        lgr.logger.debug(f"Sending message to {user_id}")
+        #lgr.logger.debug(f"Sending message to {user_id}") TODO fix with a more efficient way to print this
         # * in case of giocata message, add the register giocata keyboard and personalize the stake
         if is_giocata:
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
             if "personal_stakes" in user_data:
                 text = giocata_model.personalize_giocata_text(original_text, user_data["personal_stakes"], sport, strategy)
-            user_budget = user_data["budget"]
-            if not user_budget is None:
-                user_budget = int(user_budget)
-                text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget)
+            user_budget = budget_manager.retrieve_default_budget_from_user_id(user_id)
+            if user_budget:
+                if user_budget["interest_type"] == "semplice":
+                    #user_budget_balance = int(user_budget["simply_interest_base"]) temporary
+                    user_budget_balance = int(user_budget["balance"])
+                    text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget_balance)
+                elif user_budget["interest_type"] == "composto":
+                    user_budget_balance = int(user_budget["balance"])
+                    text = giocata_model.update_giocata_text_with_stake_money_value(text, user_budget_balance)
+                #text += "\nCalcolato in base al budget: <b>" + user_budget["budget_name"] + "</b>" temporary
         # * otherwise, keep the original text and resend the base keyboard
         else:
             custom_reply_markup = kyb.STARTUP_REPLY_KEYBOARD
@@ -108,7 +114,7 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
             messages_sent += 1
         # * check if the user has blocked the bot
         except Unauthorized:
-            lgr.logger.warning(f"Could not send message: user {user_id} blocked the bot")
+            #lgr.logger.warning(f"Could not send message: user {user_id} blocked the bot") TODO fix with a more efficient way to print this
             messages_to_be_sent -= 1
         except Exception as e:
             lgr.logger.error(f"Could not send message {text} to user {user_id} - {str(e)}")
@@ -153,6 +159,7 @@ def experience_settings_handler(update: Update, _: CallbackContext):
     )
 
 def use_guide_handler(update: Update, _: CallbackContext):
+    lgr.logger.debug("in use guide handler")
     update.message.reply_text(
         cst.USE_GUIDE_MENU_MESSAGE,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
@@ -236,7 +243,8 @@ def send_giocata_outcome(context: CallbackContext, giocata_id: str, outcome_text
     for user_data in target_users_data:
         outcome_text_to_send = outcome_text
         user_id = user_data["_id"]
-        user_budget = user_data["budget"]
+        #user_budget = user_data["budget"] temporary 
+        user_budget = budget_manager.retrieve_default_budget_from_user_id(user_id)['balance']
         if not user_budget is None:
             user_personal_stake = int(user_data["giocate"]["personal_stake"])
             if user_personal_stake:
@@ -305,7 +313,8 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
         context, 
         cashout_text, 
         spr.sports_container.EXCHANGE.name, 
-        strat.strategies_container.MAXEXCHANGE.name
+        #strat.strategies_container.MAXEXCHANGE.name
+        strat.strategies_container.PRODUZIONE.name
     )
     # * update the budget of all the user's who accepted the giocata
     # users.update_users_budget_with_giocata(updated_giocata)
@@ -363,6 +372,7 @@ def error_handler(update: Update, context: CallbackContext):
             context.bot.send_message(
                 user_chat_id,
                 cst.ERROR_MESSAGE,
+                disable_web_page_preview=True,
                 parse_mode="HTML"
             )
     except Exception as e:

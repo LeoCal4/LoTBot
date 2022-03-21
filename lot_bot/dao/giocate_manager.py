@@ -182,3 +182,5 @@ def delete_giocata(giocata_id):
     except Exception as e:
         lgr.logger.error(f"Error during giocata deletion {giocata_id=}")
         raise e
+
+ 

@@ -5,7 +5,7 @@ from lot_bot import constants as cst
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users
-from lot_bot.dao import sport_subscriptions_manager
+from lot_bot.dao import sport_subscriptions_manager, user_manager, budget_manager
 from lot_bot import logger as lgr
 
 
@@ -16,7 +16,6 @@ _startup_buttons = [
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
-
 _homepage_buttons = [
     [InlineKeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT, callback_data="to_bot_config_menu")],
     [InlineKeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT, callback_data="to_experience_menu")],
@@ -25,13 +24,25 @@ _homepage_buttons = [
 ]
 HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
 
+# ===================================== FIRST START KEYBOARDS =====================================
+
+_to_first_budget_button = [
+    [InlineKeyboardButton(text="Avanti", callback_data= "create_first_budget")]
+]
+TO_FIRST_BUDGET_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_first_budget_button)
+
+_to_socials_list_button = [
+    [InlineKeyboardButton(text="Avanti", callback_data= "send_socials_list")]
+]
+TO_SOCIALS_LIST_FIRST_START = InlineKeyboardMarkup(inline_keyboard=_to_socials_list_button)
+
 # ===================================== CONFIGURAZIONE BOT MENU =====================================
 
 
 _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
     [InlineKeyboardButton(text="📖  Spiegazione Strategie  🧭", callback_data="to_strat_expl_menu")], # related to text explanations (not video!)
-    [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_gestione_budget_menu")], 
+    [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_budget_menu")], 
     [InlineKeyboardButton(text="🌟  Rinnova Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
@@ -75,7 +86,7 @@ _explanation_test_buttons = [
 EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
 
 _gestione_budget_buttons = [
-    [InlineKeyboardButton(text="📤 Il mio budget 💰", callback_data="to_budget_menu")],
+    [InlineKeyboardButton(text="📤 Il mio budget 💰", callback_data="to_budgets_menu")],
     [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
     [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
@@ -84,14 +95,21 @@ GESTIONE_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_gestione_b
 
 _budget_menu_buttons = [
     [InlineKeyboardButton(text="🔍 Imposta Budget 📊", callback_data="to_set_budget_menu")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_gestione_budget_menu")]
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budget_menu")]
 ]
 BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_budget_menu_buttons)
 
-_set_budget_menu_buttons = [
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budget_menu")]
+_to_budgets_menu_buttons = [
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")]
 ]
-SET_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_set_budget_menu_buttons)
+TO_BUDGETS_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_budgets_menu_buttons)
+
+_to_budgets_menu_buttons_v2 = [
+    [InlineKeyboardButton(text="Torna all' elenco dei budgets ↩️", callback_data= "to_budgets_menu")]
+]
+TO_BUDGETS_MENU_KEYBOARD_v2 = InlineKeyboardMarkup(inline_keyboard=_to_budgets_menu_buttons_v2)
+
+TO_BUDGETS_MENU_END_CONVERSATION_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=f"Torna all'elenco dei budgets ↩️", callback_data= "to_budgets_menu_end_conversation")],])    
 
 _to_resoconti_buttons = [
     [InlineKeyboardButton(text="⛹🏿‍♂️  Ultime 24 Ore 📖", callback_data="resoconto_24_hours")], 
@@ -264,13 +282,13 @@ def create_strategies_inline_keyboard(update: Update, sport: spr.Sport) -> Inlin
     strategies_buttons.append([InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_sports_menu")])
     return InlineKeyboardMarkup(inline_keyboard=strategies_buttons)
 
-#related to text explanations (not video!)
+#related to text explanations 
 def create_strategies_expl_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     """Creates the inline keyboard for the strategies of sports,
         user can click on a button to see the explanation of that strategy
     
     The callbacks for this keyboard are in the form:
-        <strategy>_text_explanation  
+        text_explanation_<strategy>
 
     Args:
         update (Update)
@@ -297,3 +315,95 @@ def create_strategies_expl_inline_keyboard(update: Update) -> InlineKeyboardMark
             strategies_to_expl_buttons[(i-1)//2].append(strategy_keyboard_button)
     strategies_to_expl_buttons.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
     return InlineKeyboardMarkup(inline_keyboard=strategies_to_expl_buttons)
+
+
+def create_budgets_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
+    """Creates the inline keyboard listing the user's budgets.
+    
+    The callbacks of this keyboard are in the form of:
+        edit_budget_<nome_budget>
+        create_new_budget
+        to_budget_menu
+
+    Args:
+        update (Update): the Update containing the message sent from the user
+
+    Returns:
+        InlineKeyboardMarkup: the aformentioned keyboard
+    """
+
+    chat_id = update.effective_chat.id
+    # sport_subscriptions = sport_subscriptions_manager.retrieve_sport_subscriptions_from_user_id(chat_id)
+    user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["budgets"])
+    budgets = user_data["budgets"]
+    budget_names = [entry["budget_name"] for entry in budgets]
+
+    keyboard_budget = []
+    for name in budget_names:
+        budget_callback_data = f"edit_budget_{name}"
+        budget_keyboard_button = InlineKeyboardButton(text=name, callback_data=budget_callback_data)
+        keyboard_budget.append([budget_keyboard_button])
+    #keyboard_budget.append([InlineKeyboardButton(text=f"Aggiungi budget", callback_data= "create_new_budget"),InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
+    keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard_budget)
+
+def create_edit_budget_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
+    """Creates the inline keyboard to edit the selected budget
+    
+    The callbacks of this keyboard are in the form of:
+        edit_budget_name_<nome_budget>
+        edit_budget_balance_<nome_budget>
+        delete_budget_<nome_budget>
+        to_budget_menu
+
+    Args:
+        update (Update): edit_budget_<budget_name>
+
+    Returns:
+        InlineKeyboardMarkup: the aformentioned keyboard
+    """
+    callback_data = update.callback_query.data
+    budget_name = callback_data.split("_", 2)[2:][0] # edit_budget_<budget_name> -> <budget_name>
+    #TODO2 change every function with this message - also this keyboard
+    _edit_budget_buttons = [
+    [InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}"),InlineKeyboardButton(text="Modifica tipo d'interesse", callback_data=f"edit_budget_interest_{budget_name}")],
+    [InlineKeyboardButton(text="Imposta come principale", callback_data= f"set_default_budget_{budget_name}"), InlineKeyboardButton(text="Elimina budget", callback_data= f"pre_delete_budget_{budget_name}")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")]
+    ]
+    _edit_budget_buttons2 = [
+    [InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}")],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")],
+    ]
+    EDIT_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_edit_budget_buttons2)
+
+    return EDIT_BUDGET_MENU_KEYBOARD
+
+def create_select_budget_interest(user_id, budget_name) -> InlineKeyboardMarkup:
+    """Creates the inline keyboard to set interest type of the selected budget
+    
+    The callbacks of this keyboard are in the form of:
+        #TODO add
+    Args:
+        update (Update): edit_budget_<budget_name>
+
+    Returns:
+        InlineKeyboardMarkup: the aformentioned keyboard
+    """
+    current_interest_type = budget_manager.retrieve_budget_from_name(user_id,budget_name)["interest_type"]
+    if current_interest_type == "semplice":
+        interesse_semplice_button = InlineKeyboardButton(text="Interesse semplice (attuale)", callback_data=f"do_nothing")
+        interesse_composto_button = InlineKeyboardButton(text="Interesse composto", callback_data=f"set_budget_interest_composto_{budget_name}")
+    elif current_interest_type == "composto":
+        interesse_semplice_button = InlineKeyboardButton(text="Interesse semplice", callback_data=f"set_budget_interest_semplice_{budget_name}")
+        interesse_composto_button = InlineKeyboardButton(text="Interesse composto (attuale)", callback_data=f"do_nothing")
+    else:
+        interesse_semplice_button = InlineKeyboardButton(text="Interesse semplice", callback_data=f"set_budget_interest_semplice_{budget_name}")
+        interesse_composto_button = InlineKeyboardButton(text="Interesse composto", callback_data=f"set_budget_interest_composto_{budget_name}")
+
+    _edit_interest_type_buttons = [
+    [interesse_semplice_button,interesse_composto_button],
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")]
+    ]
+    EDIT_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_edit_interest_type_buttons)
+
+    return EDIT_BUDGET_MENU_KEYBOARD
