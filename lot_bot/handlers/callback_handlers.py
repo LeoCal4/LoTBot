@@ -583,6 +583,13 @@ def sends_last_giocate_24h(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-5)).timestamp())
     lgr.logger.debug(f"{last_giocate=}")
+    if not last_giocate:
+        context.bot.send_message(
+            chat_id, 
+            "Attualmente non ci sono eventi da visualizzare, li riceverai nelle prossime ore qui nel bot!", 
+            reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+        return
+
 
     sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
     for i, giocata in enumerate(last_giocate):
@@ -629,6 +636,7 @@ ps: ti ricordo che hai sempre a disposizione un consulente tramite l'<a href="ht
         text = socials_text,
         chat_id=chat_id,
         disable_web_page_preview=True,
+        reply_markup=kyb.STARTUP_REPLY_KEYBOARD,
         parse_mode="HTML"
     )
     sends_last_giocate_24h(update,context)
