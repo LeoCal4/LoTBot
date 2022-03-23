@@ -72,6 +72,23 @@ def retrieve_all_active_user_ids() -> List[int]:
     except Exception as e:
         raise e
 
+def retrieve_all_expired_user_ids() -> List[int]:
+    """Retrieves all the expired users' IDs.
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        List[int]: the list of the users' IDs
+    """
+    now_timestamp = datetime.datetime.utcnow().timestamp()
+    try:
+        results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}} }}, {"_id": 1})
+        if not results:
+            return []
+        return [entry["_id"] for entry in results]
+    except Exception as e:
+        raise e
 
 def retrieve_user_id_by_referral(referral_code: str) -> Optional[Dict]:
     """Retrives the id of the user specified by referral_code.

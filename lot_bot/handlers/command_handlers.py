@@ -317,16 +317,23 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     update.effective_message.reply_text(reply_message)
 
 
-def _send_broadcast_messages(context: CallbackContext, parsed_text: str):
+def _send_broadcast_messages(context: CallbackContext, parsed_text: str, b_type: str, days: int = None ):
     """Function to be called in async in order to send a broadcast message.
 
     Args:
         context (CallbackContext)
         parsed_text (str)
+        b_type (str) - broadcast type. can be "all","expired","activated_from","expires_in"
+        days (int) - optional
     """
-    all_user_ids = user_manager.retrieve_all_active_user_ids()
-    lgr.logger.info(f"Starting to send broadcast message in async to approx. {len(all_user_ids)} users")
-    for user_id in all_user_ids:
+    if b_type == "all":
+        user_ids = user_manager.retrieve_all_active_user_ids()
+    elif b_type == "expired":
+        user_ids = user_manager.retrieve_all_expired_user_ids()
+    else: 
+        return #TODO for now return, later fix for activated from and expires in
+    lgr.logger.info(f"Starting to send -{b_type}- broadcast message in async to approx. {len(user_ids)} users")
+    for user_id in user_ids:
         try:
             context.bot.send_message(                
                 user_id,
@@ -355,7 +362,25 @@ def broadcast_handler(update: Update, context: CallbackContext):
         return
     parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
     # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
-    _send_broadcast_messages(context, parsed_text)
+    _send_broadcast_messages(context, parsed_text, "all")
+
+def broadcast_scaduti_handler(update: Update, context: CallbackContext):
+    """ Sends a message to all the users with expired subscription in the db.
+    /broadcast_scaduti LINE BREAK <message>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    lgr.logger.info("Received /broadcast_scaduti")
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
+    # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
+    _send_broadcast_messages(context, parsed_text, "expired")
 
 
 

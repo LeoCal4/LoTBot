@@ -577,11 +577,11 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
             resoconto_message,
         )
 
-#actually 4h
+#actually 10h
 def sends_last_giocate_24h(update: Update, context: CallbackContext):
     lgr.logger.debug("Sending last 5 giocate in last 24h")
     chat_id = update.callback_query.message.chat_id
-    last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-5)).timestamp())
+    last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp())
     lgr.logger.debug(f"{last_giocate=}")
     if not last_giocate:
         context.bot.send_message(

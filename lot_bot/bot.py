@@ -158,6 +158,7 @@ def add_handlers(dispatcher: Dispatcher):
     # ================ COMMAND HANDLERS ================
     dispatcher.add_handler(CommandHandler("start", command_handlers.start_command))
     dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("broadcast_scaduti", command_handlers.broadcast_scaduti_handler))
     # ------------ Users managing commands --------------
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("resoconto_utente", command_handlers.get_user_resoconto))
