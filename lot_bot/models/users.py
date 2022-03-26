@@ -269,6 +269,7 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
     user_data["_id"] = user.id
     user_data["name"] = user.first_name
     user_data["username"] = user.username
+    user_data["first_access_timestamp"] = datetime.datetime.now().timestamp()
     user_data["sport_subscriptions"] = [
         {'sport':'calcio', 'strategies': ['produzione']},
         {'sport':'basket', 'strategies': ['produzione']},

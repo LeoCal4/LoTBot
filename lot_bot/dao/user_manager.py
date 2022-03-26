@@ -54,9 +54,11 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
         lgr.logger.error(f"User id: {user_id}")
         return None
 
+def retrieve_user_ids(_type: str) -> List[int]:
+    """Retrieves users' IDs.
 
-def retrieve_all_active_user_ids() -> List[int]:
-    """Retrieves all the users' IDs.
+    Args:
+        _type: can be "not_blocked","expired","active",activated_from","expires_in"
 
     Raises:
         e: in case of db errors
@@ -65,25 +67,13 @@ def retrieve_all_active_user_ids() -> List[int]:
         List[int]: the list of the users' IDs
     """
     try:
-        results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
-        if not results:
-            return []
-        return [entry["_id"] for entry in results]
-    except Exception as e:
-        raise e
-
-def retrieve_all_expired_user_ids() -> List[int]:
-    """Retrieves all the expired users' IDs.
-
-    Raises:
-        e: in case of db errors
-
-    Returns:
-        List[int]: the list of the users' IDs
-    """
-    now_timestamp = datetime.datetime.utcnow().timestamp()
-    try:
-        results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}} }}, {"_id": 1})
+        if _type == "not_blocked":
+            results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
+        now_timestamp = datetime.datetime.utcnow().timestamp()
+        if _type == "active":
+            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$gt": now_timestamp}} }}, {"_id": 1})
+        if _type == "expired":
+            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}} }}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]

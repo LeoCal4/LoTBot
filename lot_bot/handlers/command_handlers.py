@@ -317,22 +317,17 @@ def aggiungi_giorni(update: Update, context: CallbackContext):
     update.effective_message.reply_text(reply_message)
 
 
-def _send_broadcast_messages(context: CallbackContext, parsed_text: str, b_type: str, days: int = None ):
+def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: str, days: int = None ):
     """Function to be called in async in order to send a broadcast message.
 
     Args:
         context (CallbackContext)
         parsed_text (str)
-        b_type (str) - broadcast type. can be "all","expired","activated_from","expires_in"
-        days (int) - optional
+        _type (str) - broadcast type. can be "not_blocked","expired","active",activated_from","expires_in"
+        days (int) - optional, should be present only for activated_from and expires_in type
     """
-    if b_type == "all":
-        user_ids = user_manager.retrieve_all_active_user_ids()
-    elif b_type == "expired":
-        user_ids = user_manager.retrieve_all_expired_user_ids()
-    else: 
-        return #TODO for now return, later fix for activated from and expires in
-    lgr.logger.info(f"Starting to send -{b_type}- broadcast message in async to approx. {len(user_ids)} users")
+    user_ids = user_manager.retrieve_user_ids(_type)
+    lgr.logger.info(f"Starting to send -{_type}- broadcast message in async to approx. {len(user_ids)} users")
     for user_id in user_ids:
         try:
             context.bot.send_message(                
@@ -362,7 +357,7 @@ def broadcast_handler(update: Update, context: CallbackContext):
         return
     parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
     # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
-    _send_broadcast_messages(context, parsed_text, "all")
+    _send_broadcast_messages(context, parsed_text, "not_blocked")
 
 def broadcast_scaduti_handler(update: Update, context: CallbackContext):
     """ Sends a message to all the users with expired subscription in the db.
@@ -382,7 +377,23 @@ def broadcast_scaduti_handler(update: Update, context: CallbackContext):
     # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
     _send_broadcast_messages(context, parsed_text, "expired")
 
+def broadcast_attivi_handler(update: Update, context: CallbackContext):
+    """ Sends a message to all the users with active subscription in the db.
+    /broadcast_attivi LINE BREAK <message>
 
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    lgr.logger.info("Received /broadcast_attivi")
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
+    # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
+    _send_broadcast_messages(context, parsed_text, "active")
 
 def unlock_messages_to_user(update: Update, context: CallbackContext):
     """/sblocca_utente <username or ID>
@@ -873,7 +884,7 @@ def _send_broadcast_media(send_media_function: Callable, file_id: str, caption: 
         file_id (str)
         caption (str)
     """
-    all_user_ids = user_manager.retrieve_all_active_user_ids()
+    all_user_ids = user_manager.retrieve_user_ids("not_blocked")
     lgr.logger.info(f"Starting to send broadcast media in async to approx. {len(all_user_ids)} users")
     for user_id in all_user_ids:
         try:
