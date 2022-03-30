@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 from dateutil.relativedelta import relativedelta
 from lot_bot import constants as cst
 from lot_bot import logger as lgr
+from lot_bot import languages as lang
 from lot_bot.dao import user_manager, budget_manager
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import subscriptions as subs
@@ -21,6 +22,7 @@ def create_base_user_data():
         "username": "",
         "email": "",
         "subscriptions": [],
+        "language": "it",
         "role": "user",
         "referral_code": create_valid_referral_code(),
         "linked_referral_user": {
@@ -336,3 +338,13 @@ def get_user_available_sports_names_from_subscriptions(user_subscriptions: List[
         user_available_sports.extend(sports_names)
     return user_available_sports
  
+
+def check_language(user_id: int, context_user_data: Dict, language_code: str) -> str:
+    if "language" not in context_user_data:
+        retrieved_language = user_manager.retrieve_user_fields_by_user_id(user_id, ["language"])
+        if not retrieved_language:
+            user_manager.update_user(user_id, {"language": language_code})
+            retrieved_language = language_code
+        context_user_data["language"] = retrieved_language
+    language = context_user_data["language"]
+    lang.update_language(language)

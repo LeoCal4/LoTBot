@@ -1,19 +1,26 @@
 """ This module is used to define constants"""
 # https://core.telegram.org/bots/api#markdownv2-style
 
+# from lot_bot import languages as lang
+# _ = lang.get_translator()
+import gettext
+new_lang = gettext.translation("base", localedir="locales", languages=["en"])
+_ = new_lang.gettext
+
+
 
 # ================================== PAYMENTS =========================================
 
 REFERRAL_CODE_LEN = 8
 
-PAYMENT_BASE_TEXT = """Se hai un <i>codice sconto o referral</i> <b>inseriscilo</b> adesso 🚀
+PAYMENT_BASE_TEXT = _("""Se hai un <i>codice sconto o referral</i> <b>inseriscilo</b> adesso 🚀
 
-<i>(Durante il pagamento ti chiederemo email e nome al solo fine di contattarti in caso di necessità)</i>"""
+<i>(Durante il pagamento ti chiederemo email e nome al solo fine di contattarti in caso di necessità)</i>""")
 
 
-EXISTING_LINKED_REFERRAL_CODE_TEXT = """Il codice di referral a cui sei collegato è <b>{0}</b>.
+EXISTING_LINKED_REFERRAL_CODE_TEXT = _("""Il codice di referral a cui sei collegato è <b>{0}</b>.
 
-Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido oppure premi il bottone sottostante per procedere"""
+Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido oppure premi il bottone sottostante per procedere""")
 
 ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
 
@@ -47,11 +54,11 @@ SPORT_MENU_MESSAGE = """<b>Seleziona</b> gli sport che vuoi seguire 🚀
 🟢 Attivato 🔴 Disattivato"""
 
 
-HOMEPAGE_MESSAGE = """<b>Homepage</b> 📱
+HOMEPAGE_MESSAGE = _("""<b>Homepage</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
 
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+<b>Fatto in  🇮🇹  con</b> ♥️""")
 
 
 STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scoprire 🚀

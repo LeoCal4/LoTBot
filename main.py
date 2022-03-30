@@ -4,6 +4,7 @@ from lot_bot import bot
 from lot_bot import config as cfg
 from lot_bot import database as db
 from lot_bot import logger as lgr
+from lot_bot import languages as lang
 
 
 def run_bot_locally():
@@ -15,6 +16,7 @@ def run_bot_locally():
         raise Exception("No config TOKEN")
     db.create_db()
     bot.create_bot()
+    lang.update_language("en")
     lgr.logger.info("Start polling")
     bot.updater.start_polling(timeout=15.0)
     bot.updater.idle()

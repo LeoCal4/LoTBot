@@ -3,6 +3,7 @@
 - name: str
 - username: str
 - email: str
+- language: str
 - subscriptions: List[Dict]
     - name: str
     - expiration_date: float
