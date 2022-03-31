@@ -11,14 +11,14 @@ from lot_bot import logger as lgr
 
 _startup_buttons = [
     [KeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT)],
-    [KeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT)],
+    [KeyboardButton(text=cst.PAYMENTS_AND_REFERRALS_BUTTON_TEXT)],
     [KeyboardButton(text=cst.USE_GUIDE_BUTTON_TEXT)],
 ]
 STARTUP_REPLY_KEYBOARD = ReplyKeyboardMarkup(keyboard=_startup_buttons, resize_keyboard=True)
 
 _homepage_buttons = [
     [InlineKeyboardButton(text=cst.BOT_CONFIG_BUTTON_TEXT, callback_data="to_bot_config_menu")],
-    [InlineKeyboardButton(text=cst.EXPERIENCE_BUTTON_TEXT, callback_data="to_experience_menu")],
+    [InlineKeyboardButton(text=cst.PAYMENTS_AND_REFERRALS_BUTTON_TEXT, callback_data="to_payments_and_referrals_menu")],
     [InlineKeyboardButton(text=cst.USE_GUIDE_BUTTON_TEXT, callback_data="to_use_guide_menu")],
     
 ]
@@ -41,61 +41,19 @@ TO_SOCIALS_LIST_FIRST_START = InlineKeyboardMarkup(inline_keyboard=_to_socials_l
 
 _bot_configuration_buttons = [
     [InlineKeyboardButton(text="🤾🏽‍♂️  Seleziona Sport 🏟", callback_data="to_sports_menu")],
-    [InlineKeyboardButton(text="📖  Spiegazione Strategie  🧭", callback_data="to_strat_expl_menu")], # related to text explanations (not video!)
-    [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_budget_menu")], 
-    [InlineKeyboardButton(text="🌟  Rinnova Servizio 📶", callback_data="to_service_status")],
+    [InlineKeyboardButton(text="🏗  Gestione Budget 📈", callback_data="to_budgets_menu")], 
+    [InlineKeyboardButton(text="📈  Visualizza report  🧮", callback_data="to_resoconti")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
 ]
 BOT_CONFIGURATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_bot_configuration_buttons)
 
 
 # ===================================== CONFIGURAZIONE BOT SUBMENU =====================================
-#todo cancellare
-_strategies_with_explanation = ["singolalow","singolahigh","multipla","raddoppio","speciali","live","multiplalight","pdr","maxexchange","mb","base","test","instagramfree","communitybet","multipla","sofar"]
-#_strategies_explanation_buttons = [
-#    [InlineKeyboardButton(text="📖  Singola Low  📈", callback_data="explanation_singola_low")], 
-#    [InlineKeyboardButton(text="📖  Singola High  📈", callback_data="explanation_singola_high")], 
-#    [InlineKeyboardButton(text="📖  Multipla Light 📈", callback_data="explanation_multipla_light")], 
-#    [InlineKeyboardButton(text="📖  Raddoppio   📈", callback_data="explanation_raddoppio")],
-#    [InlineKeyboardButton(text="📖  Speciali  📈", callback_data="explanation_speciali")],
-#    [InlineKeyboardButton(text="📖  LIVE  📈", callback_data="explanation_live")],
-#    [InlineKeyboardButton(text="📖  Multipla Light  📈", callback_data="explanation_multipla_light")],
-#    [InlineKeyboardButton(text="📖  PDR  📈", callback_data="explanation_pdr")],
-#    [InlineKeyboardButton(text="📖  MaxExchange  📈", callback_data="explanation_maxexchange")],
-#    [InlineKeyboardButton(text="📖  MB  📈", callback_data="explanation_mb")],
-#    [InlineKeyboardButton(text="📖  Base  📈", callback_data="explanation_base")],
-#    [InlineKeyboardButton(text="📖  TEST  📈", callback_data="explanation_test")],
-#    [InlineKeyboardButton(text="📖  Instagram Free  📈", callback_data="explanation_instagram_free")],
-#    [InlineKeyboardButton(text="📖  Community Bet  📈", callback_data="explanation_community_bet")],
-#    [InlineKeyboardButton(text="📖  Multipla  📈", callback_data="explanation_multipla")],
-#    [InlineKeyboardButton(text="📖  To The Moon  📈", callback_data="explanation_so_far")],
-#    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
-#]
-#EXPLANATION_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_strategies_explanation_buttons)
 
-_back_to_strategies_explanation_buttons = [
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_strat_expl_menu")],
-]
-BACK_TO_EXPL_STRAT_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_back_to_strategies_explanation_buttons)
-
-_explanation_test_buttons = [
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Singola  📖", callback_data="explanation_singola")], 
-    [InlineKeyboardButton(text="⛹🏿‍♂️  Multiple 📖", callback_data="explanation_multiple")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
-]
-EXPLANATION_TEST_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_explanation_test_buttons)
-
-_gestione_budget_buttons = [
-    [InlineKeyboardButton(text="📤 Il mio budget 💰", callback_data="to_budgets_menu")],
-    [InlineKeyboardButton(text="📈  I miei report  🧮", callback_data="to_resoconti")],
-    [InlineKeyboardButton(text="🔍  Le mie statistiche  📊 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
-]
-GESTIONE_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_gestione_budget_buttons)
 
 _budget_menu_buttons = [
     [InlineKeyboardButton(text="🔍 Imposta Budget 📊", callback_data="to_set_budget_menu")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budget_menu")]
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
 ]
 BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_budget_menu_buttons)
 
@@ -127,34 +85,31 @@ _register_giocata_buttons = [
 REGISTER_GIOCATA_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_register_giocata_buttons)
 
 
-service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento 🌟", callback_data="to_add_referral")], 
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_bot_config_menu")]
-]
-SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
+# ===================================== PAGAMENTO E REFERRAL MENU =====================================
 
-# ===================================== GESTIONE ESPERIENZA MENU =====================================
-
-_experience_buttons = [
-    [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
-    # [InlineKeyboardButton(text="👨🏼‍🏫  Formazione e Lezioni  📋 (IN ARRIVO)", callback_data="new")],
+_payment_and_referral_buttons = [
+    [InlineKeyboardButton(text="🌟  Rinnova Servizio 📶", callback_data="to_service_status")],
     [InlineKeyboardButton(text="🏷  Codice Referral 🔗", callback_data="to_referral")],
-    # [InlineKeyboardButton(text="🪂  Supporto Gioco Compulsivo  🎰 (IN ARRIVO)", callback_data="new")],
-    [InlineKeyboardButton(text="🗓  Tracciabilità LoT  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
 ]
-EXPERIENCE_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_experience_buttons)
+PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_payment_and_referral_buttons)
 
 
-# ===================================== GESTIONE ESPERIENZA SUBMENU =====================================
+# ===================================== PAGAMENTO E REFERRAL SUBMENU =====================================
 
+service_status_buttons = [
+    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento 🌟", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data="to_payments_and_referrals_menu")]
+]
+SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
 
 _referral_menu_buttons = [
     [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰", callback_data="to_update_personal_ref_code_conversation")],
     [InlineKeyboardButton(text="🪂  Collega un codice di referral  🎰", callback_data="to_update_linked_ref_code_conversation")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_experience_menu")]
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_payments_and_referrals_menu")]
 ]
 REFERRAL_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_referral_menu_buttons)
+
 
 _back_to_ref_code_menu_buttons = [
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_ref_code_menu_from_referral")],
@@ -173,8 +128,8 @@ PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_
 
 _use_guide_buttons = [
     [InlineKeyboardButton(text="🧮 Come funziona? (IN ARRIVO) 📖", callback_data= "new")],
-    [InlineKeyboardButton(text="❔ F.A.Q. (IN ARRIVO) ❔", callback_data= "new")],
-    [InlineKeyboardButton(text="📱  Social  🌐", callback_data="to_social_menu")],
+    [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
+    [InlineKeyboardButton(text="🗓  Storico Segnali  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
 ]
 USE_GUIDE_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_use_guide_buttons)

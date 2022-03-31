@@ -90,8 +90,8 @@ Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>ricev
 <i>PS: raggiunti i 3 amici LoT ti permette di guadagnare su ogni referenza. <a href="http://t.me/LegacyOfTipstersBot/">Contattaci qui</a> scrivendo "Info Referral" 👍</i>"""
 
 
-BOT_CONFIG_BUTTON_TEXT = "⚙️ Configurazione Bot 🤖"
-EXPERIENCE_BUTTON_TEXT = "🚥 Gestione Esperienza 🚥"
+BOT_CONFIG_BUTTON_TEXT = "⚙️ Il tuo Bot 🤖"
+PAYMENTS_AND_REFERRALS_BUTTON_TEXT = "🌟 Pagamenti e referral 💸"
 USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 
 #TODO change these messages

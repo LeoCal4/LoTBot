@@ -115,10 +115,6 @@ def get_edit_budget_conversation_handler() -> ConversationHandler:
             budget_handlers.EDIT_BASE_SIMPLY_INTEREST: [
                 MessageHandler(filters.get_float_filter(), budget_handlers.received_base_interest_semplice),
                 ],
-            #budget_handlers.CONFIRM_DELETE_BUDGET: [
-            #    MessageHandler(filters.get_text_messages_filter(), budget_handlers.received_name_for_new_budget),
-            #    CallbackQueryHandler(callback_handlers.to_budget_menu, pattern=r"^to_budget_menu$")
-            #    ],
         },
         fallbacks=[
             CallbackQueryHandler(budget_handlers.to_budgets_menu_end_conversation, pattern=r"^to_budgets_menu_end_conversation$"),
@@ -183,18 +179,16 @@ def add_handlers(dispatcher: Dispatcher):
     # ======= CALLBACK QUERIES HANDLERS =======
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_homepage, pattern=r"^to_homepage$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_bot_config_menu, pattern=r"^to_bot_config_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_experience_menu, pattern=r"^to_experience_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_payments_and_referrals_menu, pattern=r"^to_payments_and_referrals_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_use_guide_menu, pattern=r"^to_use_guide_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_explanations_menu, pattern=r"^to_explanation_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_budget_menu, pattern=r"^to_budget_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
+    # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern())) 
-    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) 
+    # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
+    # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_explanation, pattern=filters.get_explanation_pattern())) 
+    # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.strategy_text_explanation, pattern=filters.get_strat_text_explanation_pattern())) 
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.accept_register_giocata, pattern=r"^register_giocata_yes$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.refuse_register_giocata, pattern=r"^register_giocata_no$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_resoconti, pattern=r"^to_resoconti$"))

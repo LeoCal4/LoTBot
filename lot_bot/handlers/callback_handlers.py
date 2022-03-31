@@ -160,14 +160,14 @@ def to_bot_config_menu(update: Update, context: CallbackContext):
         parse_mode="HTML"
     )
 
-def to_experience_menu(update: Update, context: CallbackContext):
+def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     context.bot.edit_message_text(
         text=cst.EXPERIENCE_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
-        reply_markup=kyb.EXPERIENCE_MENU_INLINE_KEYBOARD,
+        reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
 
@@ -288,33 +288,6 @@ def to_social_menu(update: Update, context: CallbackContext):
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.SOCIAL_MENU_INLINE_KEYBOARD,
-    )
-
-
-def to_explanations_menu(update: Update, context: CallbackContext):
-    """Loads the strategies explanation menù.
-
-    The callback data for this is: to_explanation_menu
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    context.bot.edit_message_text(
-        f"Ecco le strategie disponibili",
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.EXPLANATION_TEST_INLINE_KEYBOARD,
-    )
-
-
-def to_budget_menu(update: Update, context: CallbackContext):
-    context.bot.edit_message_text(
-        cst.GESTIONE_BUDGET_MENU_MESSAGE,
-        chat_id=update.callback_query.message.chat_id,
-        message_id=update.callback_query.message.message_id,
-        reply_markup=kyb.GESTIONE_BUDGET_MENU_KEYBOARD,
-        parse_mode="HTML"        
     )
 
 
