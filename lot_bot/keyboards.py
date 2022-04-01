@@ -103,12 +103,20 @@ service_status_buttons = [
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
 
-_referral_menu_buttons = [
-    [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰", callback_data="to_update_personal_ref_code_conversation")],
-    [InlineKeyboardButton(text="🪂  Collega un codice di referral  🎰", callback_data="to_update_linked_ref_code_conversation")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_payments_and_referrals_menu")]
-]
-REFERRAL_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_referral_menu_buttons)
+
+def get_referral_menu_keyboard(number_of_referrals: int = 0) -> InlineKeyboardMarkup:
+    _referral_menu_buttons = []
+    if number_of_referrals >= 10:
+        free_month_button = [InlineKeyboardButton(text="🌟 RISCATTA MESE GRATUITO 🌟", callback_data="to_get_free_month_subscription")]
+        _referral_menu_buttons.append(free_month_button)
+    _referral_menu_buttons.append(
+        [InlineKeyboardButton(text="🪂  Modifica il tuo codice di referral  🎰", callback_data="to_update_personal_ref_code_conversation")]
+    )
+    _referral_menu_buttons.append(
+        [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_payments_and_referrals_menu")]
+    )
+    REFERRAL_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_referral_menu_buttons)
+    return REFERRAL_MENU_KEYBOARD
 
 
 _back_to_ref_code_menu_buttons = [

@@ -179,9 +179,16 @@ def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[
     return sport, strategy
 
 
-def create_personal_referral_updated_text(updated_referral: str) -> str:
+def create_personal_referral_updated_text(updated_referral: str, num_of_referred_users: int) -> str:
     referral_link = f"https://t.me/{cfg.config.BOT_NAME}?start={updated_referral}"
-    return cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link)
+    final_text = cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link) + "\n"
+    num_of_referred_users = int(max(10, num_of_referred_users))
+    for _ in range(num_of_referred_users):
+        final_text += "🟢"
+    for _ in range(10 - num_of_referred_users):
+        final_text += "🔴"
+    final_text += f"\n{num_of_referred_users} utenti!"
+    return final_text
 
 def get_month_and_year_string(previous_month:bool=False):
     target_time = datetime.datetime.utcnow()

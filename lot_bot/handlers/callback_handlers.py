@@ -13,7 +13,7 @@ from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
-from lot_bot.models import subscriptions as subs_model 
+from lot_bot.models import subscriptions as subs_model
 from lot_bot.handlers import message_handlers
 from telegram import Update
 from telegram.error import BadRequest
@@ -212,9 +212,10 @@ def to_service_status(update: Update, context: CallbackContext):
     service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
     for sub in user_data["subscriptions"]: 
         expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        expiration_date_text = "" if sub["expiration_date"] == 9999999999 else f": valido fino a {expiration_date}"
         sub_name = subs_model.sub_container.get_subscription(sub["name"])
         sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
-        service_status += f"\n- {sub_emoji} {sub_name.display_name}: valido fino a {expiration_date}"
+        service_status += f"\n- {sub_emoji} {sub_name.display_name}{expiration_date_text}"
     context.bot.edit_message_text(
         service_status,
         user_id, 
@@ -295,21 +296,21 @@ def to_referral(update: Update, context: CallbackContext, send_new: bool = False
     user_id = update.effective_user.id
     user_fields = ["linked_referral_user", "referral_code", "successful_referrals_since_last_payment"]
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, user_fields)
-    # succ_referrals = len(user_data["successful_referrals_since_last_payment"])
-    referral_message = utils.create_personal_referral_updated_text(user_data["referral_code"])
+    succ_referrals = len(user_data["successful_referrals_since_last_payment"])
+    referral_message = utils.create_personal_referral_updated_text(user_data["referral_code"], succ_referrals)
     if not send_new:
         context.bot.edit_message_text(
             referral_message,
             chat_id=user_id,
             message_id=update.callback_query.message.message_id,
-            reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
+            reply_markup=kyb.get_referral_menu_keyboard(number_of_referrals=succ_referrals),
             parse_mode="HTML",
         )
     else:
         context.bot.send_message(
             user_id,
             referral_message,
-            reply_markup=kyb.REFERRAL_MENU_KEYBOARD,
+            reply_markup=kyb.get_referral_menu_keyboard(number_of_referrals=succ_referrals),
             parse_mode="HTML",
         )
 
@@ -631,3 +632,44 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
         return
     # context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
     _create_and_send_resoconto(context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
+
+
+def get_free_month_subscription(update: Update, context: CallbackContext):
+    # extend subscription of 1 month
+    user_id = update.effective_user.id
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "successful_referrals_since_last_payment", "referral_code"])
+    # check if the user actually has 10 refs
+    retrieved_user_subs = retrieved_user["subscriptions"]
+    user_subs_name = [entry["name"] for entry in retrieved_user_subs]
+    lot_sub_name = subs_model.sub_container.LOTCOMPLETE.name
+    if lot_sub_name not in user_subs_name:
+        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).timestamp()
+        retrieved_user_subs.append({"name": lot_sub_name, "expiration_date": new_expiration_date})
+    else:
+        base_exp_date = [entry["expiration_date"] for entry in retrieved_user_subs if entry["name"] == lot_sub_name][0]
+        new_expiration_date: float = users.extend_expiration_date(base_exp_date, 30)
+        for sub_entry in retrieved_user_subs:
+            if sub_entry["name"] == lot_sub_name:
+                sub_entry["expiration_date"] = new_expiration_date
+                break
+    # * reset user successful referrals
+    user_data = {
+        "subscriptions": retrieved_user_subs,
+        "successful_referrals_since_last_payment": [],
+    }
+    try:
+        user_update_result = user_manager.update_user(user_id, user_data)
+    except:
+        user_update_result = False
+    free_sub_message = "Mese gratuito riscattato con successo!"
+    if not user_update_result:
+        lgr.logger.error(f"Could not update data after payment for user {user_id} - {user_data=}")
+        free_sub_message = "ERROREEEEEEEEEEEEEEEEe"
+    free_sub_message += "\n\n" + utils.create_personal_referral_updated_text(retrieved_user["referral_code"], 0)
+    context.bot.edit_message_text(
+        free_sub_message,
+        chat_id=user_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.get_referral_menu_keyboard(number_of_referrals=0),
+        parse_mode="HTML",
+    )

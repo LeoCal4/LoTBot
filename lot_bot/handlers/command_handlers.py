@@ -101,7 +101,19 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
     #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
-    context.bot.send_document(chat_id = update.effective_user.id, document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", caption=cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
+    # context.bot.send_document(
+    #     chat_id = update.effective_user.id, 
+    #     document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", 
+    #     caption=cst.WELCOME_MESSAGE_v2, 
+    #     reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+    #     parse_mode="HTML"
+    # )
+    context.bot.send_message(
+        cst.WELCOME_MESSAGE_v2, 
+        update.effective_user.id, 
+        reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+        parse_mode="HTML"
+    )
 
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
@@ -113,6 +125,7 @@ def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_cod
             if ref_user_data:
                 referral_user_data = {"linked_user_code": ref_code, "linked_user_id": ref_user_data["_id"]}
                 update_result = user_manager.update_user(user_id, {"linked_referral_user": referral_user_data})
+                update_result = update_result and user_manager.update_user_succ_referrals(ref_user_data["_id"], user_id)
         except Exception as e:
             lgr.logger.error(f"Error in adding ref code to already existing user from deep linking - {str(e)}")
             update_result = False
@@ -183,7 +196,7 @@ def start_command(update: Update, context: CallbackContext):
         first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
         return
     # * existing user wants to link a referral code
-    elif ref_code and ref_code != user_data["referral_code"]:
+    elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
     # * existing user wants to activate teacherbet trial
     elif teacherbet_code and ("teacherbet_code" not in user_data or user_data["teacherbet_code"] is None):

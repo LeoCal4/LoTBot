@@ -36,6 +36,14 @@ class SubContainer:
         description="Accesso alla produzione Teacherbet",
         aliases=["teacher", "teacher bet", "tb"]
     )
+    LOTFREE : Subscription = Subscription(
+        "lotfree",
+        display_name="LoT Abbonamento Gratuito",
+        available_sports=[sports.sports_container.ANALISIMISTE, sports.sports_container.NEWS],
+        price=0,
+        description="Accesso alla produzione gratuita LoT e alle news",
+        aliases=["free", "freelot", "free lot", "lot free"]
+    )
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

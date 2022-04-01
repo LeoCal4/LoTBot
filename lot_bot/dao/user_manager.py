@@ -372,33 +372,32 @@ def register_payment_for_user_id(payment: Dict, user_id: str) -> bool:
         raise e
 
 
-def update_user_succ_referrals(user_id: int, payment_id: str) -> bool:
-    """Add the referred payment (in the form of a payment ID) to both the referred payments and to the
-    successful referrals since last payment for the user specified by user_id.
+def update_user_succ_referrals(user_id: int, referred_user_id: str) -> bool:
+    """Add the referred user to the successful referrals  for the user specified by user_id.
 
     Args:
         user_id (int)
-        payment_id (str)
+        referred_user_id (str)
 
     Raises:
         e: in case of db errors
 
     Returns:
-        bool: True if the payment is added, False otherwise
+        bool: True if the referral is added, False otherwise
     """
     try:
-        lgr.logger.debug(f"Adding {payment_id=} for {user_id=}")
+        lgr.logger.debug(f"Adding {referred_user_id=} for {user_id=}")
         update_result: UpdateResult = db.mongo.utenti.update_one(
             { "_id": user_id },
             {"$addToSet": 
-                { "successful_referrals_since_last_payment": payment_id, 
-                    "referred_payments": payment_id
+                { "successful_referrals_since_last_payment": referred_user_id, 
+                    # "referred_payments": referred_user_id
                 }
             }
         )
         return bool(update_result.matched_count)
     except Exception as e:
-        lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {payment_id=}")
+        lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {referred_user_id=}")
         raise e
 
 

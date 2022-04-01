@@ -196,6 +196,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_24_hours_resoconto, pattern=r"^resoconto_24_hours$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_7_days_resoconto, pattern=r"^resoconto_7_days$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.last_30_days_resoconto, pattern=r"^resoconto_30_days$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.get_free_month_subscription, pattern=r"^to_get_free_month_subscription$"))
     # BUDGET CALLBACK HANDLERS
     dispatcher.add_handler(CallbackQueryHandler(budget_handlers.to_budgets_menu, pattern=r"^to_budgets_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(budget_handlers.edit_budget, pattern=r"^edit_budget_(?!name|balance|interest)[a-zA-Z0-9_ ]+$")) #to get edit_budget_<budget_name> but not edit_budget_name_<budget_name> or edit_budget_balance_<budget_name>

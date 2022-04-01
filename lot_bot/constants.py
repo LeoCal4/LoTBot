@@ -83,11 +83,11 @@ Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizz
 REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral: <b>{0}</b> 
 E questo è il link che puoi condividere per farlo collegare ai tuoi amici: {1} 🚀
 
-Per ogni amico che <i>tramite il tuo codice</i> acquista un mese di LoT <b>riceverai il 33% di sconto</b> sul prossimo acquisto!
+Ogni 10 amici che <i>tramite il tuo codice</i> attivano il bot, <b>riceverai un mese gratuito!</b>!
 
-🌟 <b>3 amici = LoT Gratis</b> ✅
+🌟 <b>10 amici = LoT Gratis</b> ✅
 
-<i>PS: raggiunti i 3 amici LoT ti permette di guadagnare su ogni referenza. <a href="http://t.me/LegacyOfTipstersBot/">Contattaci qui</a> scrivendo "Info Referral" 👍</i>"""
+Conteggio attuale degli utenti che hanno utilizzato il tuo codice:"""
 
 
 BOT_CONFIG_BUTTON_TEXT = "⚙️ Il tuo Bot 🤖"

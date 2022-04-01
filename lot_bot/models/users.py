@@ -278,23 +278,26 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
         {'sport':'tuttoilresto', 'strategies': ['produzione']},
         {'sport':'analisimiste', 'strategies': ['communnitybet','freebet']},
         ]
-
+    # * if a referral code is being used, update the user's field and the referrer's referred user count/list
     if ref_code:
         ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
         if ref_user_data:
+            ref_user_id = ref_user_data["_id"]
             user_data["linked_referral_user"] = {
                 "linked_user_code": ref_code,
-                "linked_user_id": ref_user_data["_id"]
+                "linked_user_id": ref_user_id
             }
-        else:
+            update_result = user_manager.update_user_succ_referrals(ref_user_id, user.id)
+        if not ref_user_data or not update_result:
             lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
-    # trial_expiration_timestamp = datetime.datetime(2021, 11, 7, hour=23, minute=59).timestamp()
+    free_sub = {"name": subs.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     if not teacherbet_code:
         trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
         sub = {"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
     else:
         sub = subs.create_teacherbet_base_sub()
     user_data["subscriptions"].append(sub)
+    user_data["subscriptions"].append(free_sub)
     user_manager.create_user(user_data)
     return user_data
 

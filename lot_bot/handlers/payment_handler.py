@@ -223,22 +223,22 @@ def successful_payment_callback(update: Update, context: CallbackContext):
         dev_message += f"Dati pagamento:\n {str(payment_data)}"
         message_handlers.send_messages_to_developers(context, [dev_message])
         payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente."
-    # * update the referred user's successful referrals, if there is a referral code
-    if linked_referral_id is not None:
-        try:
-            update_result = user_manager.update_user_succ_referrals(linked_referral_id, payment_data["payment_id"])
-        except:
-            # this gets both db errors and other issues related to missing users
-            update_result = False
-        # * handle referral errors
-        if not update_result:
-            lgr.logger.error(f"Could not update referred user {linked_referral_id} referral count after {user_id} payment")
-            payment_final_message = f"ERRORE: il pagamento è stato effettuato correttamente, ma non siamo riusciti a registrarlo per l'affiliazione.\n"
-            payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
-            dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_referral_id}. Dati pagamento:\n"
-            dev_message += f"{str(payment_data)}"
-            message_handlers.send_messages_to_developers(context, [dev_message])
-            payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente per l'affiliazione."
+    # # * update the referred user's successful referrals, if there is a referral code
+    # if linked_referral_id is not None:
+    #     try:
+    #         update_result = user_manager.update_user_succ_referrals(linked_referral_id, payment_data["payment_id"])
+    #     except:
+    #         # this gets both db errors and other issues related to missing users
+    #         update_result = False
+    #     # * handle referral errors
+    #     if not update_result:
+    #         lgr.logger.error(f"Could not update referred user {linked_referral_id} referral count after {user_id} payment")
+    #         payment_final_message = f"ERRORE: il pagamento è stato effettuato correttamente, ma non siamo riusciti a registrarlo per l'affiliazione.\n"
+    #         payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
+    #         dev_message = f"ERRORE: referral non registrato per l'utente {user_id} verso l'utente {linked_referral_id}. Dati pagamento:\n"
+    #         dev_message += f"{str(payment_data)}"
+    #         message_handlers.send_messages_to_developers(context, [dev_message])
+    #         payment_outcome_text = "Pagamento effettuato con successo, ma non è stato possibile registrarlo correttamente per l'affiliazione."
     # * send final payment message and homepage
     del context.user_data["payment_payload"]
     update.message.reply_text(payment_final_message, parse_mode="HTML")
