@@ -33,7 +33,7 @@ class StrategyContainer:
     #SCALPING : Strategy = Strategy("scalping", display_name="Scalping", explanation = cst.SCALPING_EXPL_TEXT) 
     # * Base strategies
     #BASE : Strategy = Strategy("base", explanation = cst.BASE_EXPL_TEXT)
-    TEST : Strategy = Strategy("test", display_name="TEST", explanation = cst.TEST_EXPL_TEXT)
+    TEST : Strategy = Strategy("test", display_name="TEST", explanation=cst.TEST_EXPL_TEXT)
     FREEBET : Strategy = Strategy("freebet", display_name = "Free Bet", explanation = cst.FREEBET_EXPL_TEXT)
     COMMUNITYBET : Strategy = Strategy("communitybet", display_name="Community Bet", explanation = cst.COMMUNITYBET_EXPL_TEXT)
     INFORMAZIONE : Strategy = Strategy("informazione", explanation = cst.INFORMAZIONE_EXPL_TEXT)

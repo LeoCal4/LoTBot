@@ -60,10 +60,11 @@ def select_sport_strategies(update: Update, context: CallbackContext):
         lgr.logger.error(f"Could not open strategies for sport {sport_token}")
         raise custom_exceptions.SportNotFoundError(sport_token)
     context.bot.edit_message_text(
-        f"Ecco le strategie disponibili per {sport.display_name}",
+        utils.create_strategies_explanation_message(sport),
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.create_strategies_inline_keyboard(update, sport),
+        parse_mode="HTML",
     )
 
 def set_sport_strategy_state(update: Update, context: CallbackContext):
@@ -664,7 +665,7 @@ def get_free_month_subscription(update: Update, context: CallbackContext):
     free_sub_message = "Mese gratuito riscattato con successo!"
     if not user_update_result:
         lgr.logger.error(f"Could not update data after payment for user {user_id} - {user_data=}")
-        free_sub_message = "ERROREEEEEEEEEEEEEEEEe"
+        free_sub_message = "ERRORE: impossibile riscattare il mese gratuito, contattare l'<a href='https://t.me/LegacyOfTipstersBot'>Assistenza</a>"
     free_sub_message += "\n\n" + utils.create_personal_referral_updated_text(retrieved_user["referral_code"], 0)
     context.bot.edit_message_text(
         free_sub_message,

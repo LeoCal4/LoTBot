@@ -182,7 +182,7 @@ def get_sport_and_strategy_from_normal_message(message_first_row: str) -> Tuple[
 def create_personal_referral_updated_text(updated_referral: str, num_of_referred_users: int) -> str:
     referral_link = f"https://t.me/{cfg.config.BOT_NAME}?start={updated_referral}"
     final_text = cst.REFERRAL_MENU_MESSAGE.format(updated_referral, referral_link) + "\n"
-    num_of_referred_users = int(max(10, num_of_referred_users))
+    num_of_referred_users = int(min(10, num_of_referred_users))
     for _ in range(num_of_referred_users):
         final_text += "🟢"
     for _ in range(10 - num_of_referred_users):
@@ -190,8 +190,17 @@ def create_personal_referral_updated_text(updated_referral: str, num_of_referred
     final_text += f"\n{num_of_referred_users} utenti!"
     return final_text
 
+
 def get_month_and_year_string(previous_month:bool=False):
     target_time = datetime.datetime.utcnow()
     if previous_month:
         target_time = target_time.replace(day=1) - datetime.timedelta(days=2)
     return datetime.datetime.strftime(target_time, "%m/%Y").replace("/20", "/") # will need to change this in 2100
+
+
+def create_strategies_explanation_message(sport: spr.Sport) -> str:
+    message = f"Ecco le strategie disponibili per <b>{sport.display_name}</b>:\n"
+    for strategy in sport.strategies:
+        message += f"- <b>{strategy.display_name}</b>: {strategy.explanation}\n"
+    return message
+    

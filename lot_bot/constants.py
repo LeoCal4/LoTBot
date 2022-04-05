@@ -51,7 +51,9 @@ HOMEPAGE_MESSAGE = """<b>Homepage</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
 
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+- <a href="https://t.me/LoTVerse">🙋🏼‍♀️ Community Telegram 🙋🏾</a>
+- <a href="https://www.instagram.com/lot.verse">📱 LoT Instagram 📱</a>
+- <a href="https://www.instagram.com/sportsignalsbot/">📱 SportSignalsBot Instagram 📱</a>"""
 
 
 STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scoprire 🚀
@@ -206,15 +208,15 @@ INSTAGRAMFREE_EXPL_TEXT = """Raccolta di eventi gratuiti pubblicati su Instagram
 MULTIPLA_EXPL_TEXT = """Multipla di qualsiasi capienza e quota con moltiplicatori alti"""
 SOFAR_EXPL_TEXT = """Eventi di lunga durata (settimane/mesi) come vincitori di tornei e competizioni"""
 
-PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate, è possibile richiedere la personalizzazione stake scrivendo all' <a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> ! """ #TODO inserire link assistenza
+PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate (puoi la personalizzazione degli stake scrivendo all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a>)"""
 LIVE_EXPL_TEXT = """Solo eventi Live, in generale di tipo Singola"""
-EXTRA_EXPL_TEXT = """Tutte quelle analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale (10%/mese al massimo!)"""
-TEST_EXPL_TEXT = """Dedicata al team serve per testare nuove strategie, analisi, parametri etc."""
-FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti ! Spesso reperibili sui nostri vari social e canali ufficiali !"""
-COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme ! Together is Better !"""
-INFORMAZIONE_EXPL_TEXT = """Tutte le notizie del mondo del gioco d’azzardo direttamente dalla redazione di LoT !"""
-FANTACONSIGLI_EXPL_TEXT = """In collaborazione con @CalciatoriPerSbaglio [inserire link ig] i migliori suggerimenti per la tua rosa !""" #TODO inserire link instragram
-FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio !"""
+EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale (<i>10%\mese al massimo!</i>)"""
+TEST_EXPL_TEXT = """Utilizzata dal team per testare nuove strategie, analisi, parametri etc."""
+FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti! Spesso reperibili sui nostri vari social e canali ufficiali!"""
+COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme! <i>Together is Better!</i>"""
+INFORMAZIONE_EXPL_TEXT = """Tutte le notizie del mondo del gioco d’azzardo direttamente dalla redazione di LoT!"""
+FANTACONSIGLI_EXPL_TEXT = """In collaborazione con <a href="https://www.instagram.com/calciatori_per_sbaglio_">@CalciatoriPerSbaglio</a> i migliori suggerimenti per la tua rosa!""" #TODO inserire link instragram
+FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio!"""
 
 DEFAULT_STRAT_EXPLANATION_TEXT = """Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per avere maggiori informazioni su questa strategia!"""
 
