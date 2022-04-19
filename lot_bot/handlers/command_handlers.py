@@ -100,20 +100,20 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         lgr.logger.error(f"Could not send new user message to relative channel {cfg.config.NEW_USERS_CHANNEL_ID=} - {e=}")
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
-    #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
-    # context.bot.send_document(
-    #     chat_id = update.effective_user.id, 
-    #     document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", 
-    #     caption=cst.WELCOME_MESSAGE_v2, 
-    #     reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
-    #     parse_mode="HTML"
-    # )
-    context.bot.send_message(
-        cst.WELCOME_MESSAGE_v2, 
-        update.effective_user.id, 
+    # update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
+    context.bot.send_document(
+        chat_id = update.effective_user.id, 
+        document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", 
+        caption=cst.WELCOME_MESSAGE_v2, 
         reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
         parse_mode="HTML"
     )
+    # context.bot.send_message(
+    #     cst.WELCOME_MESSAGE_v2, 
+    #     update.effective_user.id, 
+    #     reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+    #     parse_mode="HTML"
+    # )
 
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
@@ -349,9 +349,10 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
                 parse_mode="HTML"
             )
         except Unauthorized:
-            lgr.logger.info(f"User {user_id} blocked the bot")
+            # lgr.logger.info(f"User {user_id} blocked the bot")
+            pass
         except Exception as e:
-            lgr.logger.info(f"Error in sending message: {str(e)}")
+            lgr.logger.warning(f"Error in sending message: {str(e)}")
 
 
 def broadcast_handler(update: Update, context: CallbackContext):
