@@ -165,7 +165,7 @@ def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     context.bot.edit_message_text(
-        text=cst.EXPERIENCE_MENU_MESSAGE,
+        text=cst.PAY_AND_REF_MENU_MESSAGE,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
@@ -178,6 +178,15 @@ def to_use_guide_menu(update: Update, context: CallbackContext):
         chat_id=update.callback_query.message.chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
+        parse_mode="HTML"
+    )
+
+def to_how_work(update: Update, context: CallbackContext):
+    context.bot.edit_message_text(
+        text=cst.HOW_WORK_MESSAGE,
+        chat_id=update.callback_query.message.chat_id,
+        message_id=update.callback_query.message.message_id,
+        reply_markup=kyb.TO_HOW_WORK_KEYBOARD,
         parse_mode="HTML"
     )
 
@@ -558,10 +567,24 @@ def sends_last_giocate_24h(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp())
     lgr.logger.debug(f"{last_giocate=}")
+
+    update_results = user_manager.update_user(chat_id,{"role":"user"})
+    if not update_results:
+        user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["name","username"])
+        dev_message = f"ERRORE nella registrazione dell'utente\n{chat_id} - {name} - @{username}."
+        message_handlers.send_messages_to_developers(context, [dev_message])
+
     if not last_giocate:
         context.bot.send_message(
             chat_id, 
-            "Attualmente non ci sono eventi da visualizzare, li riceverai nelle prossime ore qui nel bot!", 
+            text="""<b>Attualmente non ci sono eventi da visualizzare.</b>
+Ti invierò analisi non appena disponibili, promesso ✌️
+
+Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> conoscere gli altri appassionati e tutto il team di LoT, richiedere una <a href='https://t.me/LegacyOfTipstersBot'>consulenza</a> o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a> !
+
+<i>PS: hai già dato un'occhiata al nostro sistema di referall?  
+<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis !</b></i> 😍""", 
+            parse_mode ="HTML",
             reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
         return
 
@@ -602,10 +625,11 @@ def sends_last_giocate_24h(update: Update, context: CallbackContext):
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    socials_text = """Perfetto! Ti ricordo di seguirci su tutti i nostri social per non perdere preziosi contenuti, dirette, eventi ed attività! 
-LISTA SOCIALS
-E’ l’ora di iniziare ! Sto controllando se ci sono eventi analizzati !
-ps: ti ricordo che hai sempre a disposizione un consulente tramite l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> o gruppo meister per aiutarti nel tuo percorso e raggiungere i tuoi obiettivi !
+    socials_text = """<b>Finalmente è l’ora di iniziare !</b> 
+ 
+<i>Sto controllando se ci sono eventi analizzati ! 🟢
+
+PS: ti ricordo che hai sempre a disposizione un <b>consulente tramite l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a></b> e che trovi altri <b>appassionati nella nostra <a href='https://t.me/LoTVerse'>Community</a></b></i>
 """
     context.bot.send_message(
         text = socials_text,

@@ -68,16 +68,19 @@ def get_sport_channel_normal_message_filter() -> Filters:
 def get_homepage_filter() -> Filters:
     return Filters.regex(r"[hH]omepage")
 
-
 def get_bot_config_filter() -> Filters:
-    return Filters.regex(r"[Cc]onfigurazione [Bb]o[Tt]")
+    return Filters.regex(r"Il tuo [Bb]o[Tt]")
 
+def get_payment_and_referrals_filter() -> Filters:
+    return Filters.regex(r"Pagamenti e referral")
+
+def get_use_guide_filter() -> Filters:
+    return Filters.regex(r"[Gg]uida [Aa]ll'[Uu]so")
 
 def get_experience_settings_filter() -> Filters:
     return Filters.regex(r"[Gg]estione [Ee]sperienza")
 
-def get_use_guide_filter() -> Filters:
-    return Filters.regex(r"[Gg]uida [Aa]ll'[Uu]so")
+
 
 
 def get_assistance_filter() -> Filters:

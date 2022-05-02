@@ -498,11 +498,18 @@ def to_budget_menu(update: Update, context: CallbackContext):
 def create_first_budget(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    reply_text = """Molto bene! Impostiamo insieme un Budget DEMO ! 
-Questo ti permetterà di ricevere gli eventi con il suggerito stake massimo anche in euro!
-Quanto vuoi impostare di Budget Demo, utilizzando solo cifre ed eventuali virgole per i centesimi"""
+    reply_text = """Ottimo, adesso <b>impostiamo il tuo primo Budget 💰 ! </b> 
+ 
+<i>Questo ti permetterà di ricevere gli eventi con il <b>suggerito stake* massimo in % e euro!</b> 
+ 
+(*stake: porzione di capitale che si investe in un mercato) 
+ 
+PS: potrai modificarlo in un secondo momento ! </i> 
+ 
+Quando vuoi <b>invia</b> il tuo budget (es: scrivi "87,25" senza virgolette)👇👇"""
     update.effective_message.reply_text(
-    reply_text
+    reply_text,
+    parse_mode="HTML"
     ) 
     return SET_FIRST_BUDGET_BALANCE
 
@@ -520,7 +527,7 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
     except:
         invalid_budget = True
     if invalid_budget:
-        lgr.logger.error("BUDGET INSERITO NON VALIDO LALLALALALALLALALALL")
+        lgr.logger.error("Invalid budget error")
         update.effective_message.reply_text(
             retry_text
         )
@@ -534,10 +541,21 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
     if add_budget_result:
         lgr.logger.debug(f"Budget added - {str(budget_data)} for {chat_id}")
     # * send success message
-    message_text = f"Budget creato con successo:\n<b>{budget_name} - {new_budget_balance:.2f}€</b>!\n\nGuarda questo breve tutorial su come funziono e ti prometto che abbiamo finito !"
+    message_text = f"""Budget creato con successo:\n<b>{budget_name} - {new_budget_balance:.2f}€</b>! 
+
+<b>Ben fatto ! </b>🔥
+
+Guarda questo <b>breve tutorial su come funziono</b> e poi possiamo iniziare! 🎉""" #TODO add tutorial
     update.message.reply_text(
         message_text,
         reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START,
         parse_mode="HTML"
     )
+    file_id = 123
+    #context.bot.send_video(
+    #    chat_id,
+    #    file_id,
+    #    caption=message_text
+    #    )
+
     return ConversationHandler.END

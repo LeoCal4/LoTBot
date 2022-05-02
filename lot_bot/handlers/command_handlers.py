@@ -100,20 +100,20 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         lgr.logger.error(f"Could not send new user message to relative channel {cfg.config.NEW_USERS_CHANNEL_ID=} - {e=}")
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
-    # update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
+    #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
     context.bot.send_document(
         chat_id = update.effective_user.id, 
-        document="BQACAgQAAxkBAAIPKWIo5LruBU035TXs9GswyzoOGYIsAAJSCwACbMJJUTYPEp3OpQUtIwQ", 
-        caption=cst.WELCOME_MESSAGE_v2, 
+        document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE", #"BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ" 
+        caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
         reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
         parse_mode="HTML"
     )
-    # context.bot.send_message(
-    #     cst.WELCOME_MESSAGE_v2, 
-    #     update.effective_user.id, 
-    #     reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
-    #     parse_mode="HTML"
-    # )
+    #context.bot.send_message(
+    #    chat_id = update.effective_user.id, 
+    #    text=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name),
+    #    reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+    #    parse_mode="HTML"
+    #)
 
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
@@ -190,17 +190,21 @@ def start_command(update: Update, context: CallbackContext):
             teacherbet_code = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     # * check if the user exists
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions","role"])
     if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
         return
     # * existing user wants to link a referral code
+    elif user_data["role"] == "new_user":
+        lgr.logger.debug(f"LALALALLALALALALALLALALALLALALALALALLALALALALALLALALALALA\nLALALALLALALAALALALLAALLALALAL\nLALALLALALALALALLA")
+        return
     elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
     # * existing user wants to activate teacherbet trial
     elif teacherbet_code and ("teacherbet_code" not in user_data or user_data["teacherbet_code"] is None):
         existing_user_activating_teacherbet_trial_handler(update, user_id, user_data["subscriptions"], teacherbet_code)
+
     message_handlers.homepage_handler(update, context)
 
 

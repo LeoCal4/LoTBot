@@ -24,6 +24,11 @@ _homepage_buttons = [
 ]
 HOMEPAGE_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_homepage_buttons)
 
+_to_how_work_button = [
+    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")]
+]
+TO_HOW_WORK_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_how_work_button)
+
 # ===================================== FIRST START KEYBOARDS =====================================
 
 _to_first_budget_button = [
@@ -98,7 +103,7 @@ PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard
 # ===================================== PAGAMENTO E REFERRAL SUBMENU =====================================
 
 service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Rinnovo Abbonamento 🌟", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="🌟 Prolunga Servizio Bot 🌟", callback_data="to_add_referral")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data="to_payments_and_referrals_menu")]
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)
@@ -135,7 +140,7 @@ PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_
 # ======================================== GUIDA ALL'USO MENU =======================================
 
 _use_guide_buttons = [
-    [InlineKeyboardButton(text="🧮 Come funziona? (IN ARRIVO) 📖", callback_data= "new")],
+    [InlineKeyboardButton(text="🧮 Come funziona? 📖", callback_data= "to_how_work")],
     [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
     [InlineKeyboardButton(text="🗓  Storico Segnali  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],

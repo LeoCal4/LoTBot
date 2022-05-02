@@ -121,7 +121,19 @@ def to_payments(update: Update, context: CallbackContext):
     # price = user_manager.get_subscription_price_for_user(chat_id)
     prices = [LabeledPrice(sub.display_name, sub.price)]
     context.bot.send_invoice(
-        chat_id, "1 Mese di SportSignalsBot by LoT", "Comprende 1 mese di accesso illimitato a tutte le funzioni del BoT di LoT, l'accesso al gruppo privato LoT Meister, l'accesso anticipato a nuove funzioni e servizi!", payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
+        chat_id, "30 Giorni di SportSignalsBot Premium", """Comprende 30 giorni di servizio premium ovvero:
+
+<b>- Tutte le analisi del team LoT su Calcio, Basket, Tennis ed Exchange ✅️
+
+- Consulenza per personalizzazione percorso e supporto lungo termine ✅️
+
+- Assistenza Prioritaria h24</b> (anche su whatsapp)<b> ✅️
+
+- Analisi personalizzate in base a preferenze, orari ect. ✅️
+
+- Accesso anticipato a nuove funzioni e servizi ✅️
+
+- Accesso ad eventi privati, formativi e informativi ✅️</b>""", payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
         need_email=True, need_name=True, start_parameter="Paga"
     )
     return ConversationHandler.END

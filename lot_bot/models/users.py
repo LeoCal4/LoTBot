@@ -21,7 +21,7 @@ def create_base_user_data():
         "username": "",
         "email": "",
         "subscriptions": [],
-        "role": "user",
+        "role": "new_user",
         "referral_code": create_valid_referral_code(),
         "linked_referral_user": {
             "linked_user_id": None,

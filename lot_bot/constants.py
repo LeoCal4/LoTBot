@@ -6,9 +6,7 @@
 
 REFERRAL_CODE_LEN = 8
 
-PAYMENT_BASE_TEXT = """Se hai un <i>codice sconto o referral</i> <b>inseriscilo</b> adesso 🚀
-
-<i>(Durante il pagamento ti chiederemo email e nome al solo fine di contattarti in caso di necessità)</i>"""
+PAYMENT_BASE_TEXT = """<i>Se hai un <b>codice</b> sconto/amico o referral inseriscilo adesso e premi invio, oppure premi il pulsante sotto ! 😊</i>"""
 
 
 EXISTING_LINKED_REFERRAL_CODE_TEXT = """Il codice di referral a cui sei collegato è <b>{0}</b>.
@@ -20,9 +18,9 @@ ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral 
 
 
 UPDATE_PERSONAL_REFERRAL_CODE_TEXT = """Il tuo codice di referral attuale è <b>{0}</b>.
-Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere.
+<b>Invia un messaggio</b> con il codice che vorresti avere oppure premi il bottone sottostante per procedere ! ✌️
 
-ATTENZIONE: per essere valido, il nuovo codice deve contenere <i>solo lettere o numeri</i>. Inoltre, alla fine del codice, verrà aggiunto in automatico '-lot'.""" 
+<b>ATTENZIONE:</b> per essere valido il nuovo codice deve contenere solo lettere o numeri. Verrà aggiunto in automatico a fine codice "-lot" """ 
 
 
 SUCCESSFUL_PAYMENT_TEXT = """Grazie per il tuo acquisto!
@@ -82,15 +80,28 @@ Dal tuo ultimo pagamento, {2} altri utenti hanno rinnovato l'abbonamento utilizz
 
 # {0}: user referral code
 # {1}: user ref link
-REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice referral: <b>{0}</b> 
-E questo è il link che puoi condividere per farlo collegare ai tuoi amici: {1} 🚀
+REFERRAL_MENU_MESSAGE = """💥 Questo è il tuo codice amico (referral): <b>{0}</b> 
+<b>Condividi il tuo link 🔄:</b> {1} 🚀
 
-Ogni 10 amici che <i>tramite il tuo codice</i> attivano il bot, <b>riceverai un mese gratuito!</b>!
+Per ogni 10 amici che tramite il tuo codice <b>attivano</b> il bot, <b>riceverai un mese gratuito!!</b>
 
-🌟 <b>10 amici = LoT Gratis</b> ✅
+🌟 10 amici = BoT Gratis ✅
 
-Conteggio attuale degli utenti che hanno utilizzato il tuo codice:"""
-
+Conteggio attuale degli utenti che hanno utilizzato il tuo codice:
+"""
+HOW_WORK_MESSAGE = """<b>COME FUNZIONA ?</b> 
+ 
+<b>Il bot ti notifica eventi analizzati dai nostri analisti in base alle tue preferenze ! ✅</b> 
+ 
+Tramite il tasto "<i>il mio bot</i>" puoi configurare le tue preferenze! 
+ 
+<b>Ti basterà attendere un evento e premere SI o NO</b> per aggiungerlo alla tuo report e <b>ricevere una notifica ad evento concluso ! ✅</b>
+ 
+<b>Scopri di più sulla <a href="https://www.instagram.com/sportsignalsbot/">pagina Instagram</a> del bot o sul nostro <a href="https://www.lotverse.it/">sito web</a> ✌️</b> 
+ 
+<i>Ti ricordiamo che hai sempre a disposizione un <b>consulente</b> per aiutarti nel tuo percorso. 
+ 
+Parliamo di analisti sportivi che oltre a <b>fornirti analisi personalizzate</b> possono supportarti con competenza e passione nella <b>tua crescita personale e professionale</b> nel mondo del betting ! 🔥</i>"""
 
 BOT_CONFIG_BUTTON_TEXT = "⚙️ Il tuo Bot 🤖"
 PAYMENTS_AND_REFERRALS_BUTTON_TEXT = "🌟 Pagamenti e referral 💸"
@@ -98,6 +109,12 @@ USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 
 #TODO change these messages
 BOT_CONFIG_MENU_MESSAGE = """<b>Configurazione Bot</b> 📱
+
+👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+
+<b>Fatto in  🇮🇹  con</b> ♥️"""
+
+PAY_AND_REF_MENU_MESSAGE = """<b>Pagamenti e referral</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
 
@@ -139,18 +156,22 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>
 
 Versione 1.00"""
-WELCOME_MESSAGE_v2 = """Ciao! Io sono SportSignalsBoT il tuo strumento di supporto nel betting !
-Grazie alle mie funzioni potrai: 
-
-- Ricevere eventi analizzati da un team di analisi su vari sport!
-- Tracciare i tuoi investimenti e avere la tua reportistica personale!
-- Accedere al gruppo privato LoT – Meister dove trovi tutto il team di LoT per avere analisi personalizzate, consulenza per i tuoi obiettivi e migliorare i tuoi rendimenti !
-
-Queste sono solo alcune delle principali funzioni a tua disposizione!
-
-Prima di procedere per favore leggi il Disclaimer e la nostra breve Guida!
-Premi avanti quando sei pronto, sarò qui ad aspettarti !!"""
-
+WELCOME_MESSAGE_v2 = """<i><b>Ciao!</b> {0} 👋
+Io sono <b>SportSignalsBoT</b> il tuo strumento di supporto nel betting !  
+ 
+Grazie alle mie funzioni potrai: </i> 
+ 
+- Ricevere <b>eventi analizzati</b> dal <b>team di analisi</b> di LoT su vari sport! 
+ 
+- <b>Tracciare i tuoi investimenti</b> e avere la tua reportistica personale! 
+ 
+- Ricevere supporto da <b>un consulente a te dedicato</b> per il tuo percorso e per analisi personalizzate ! 
+ 
+<i>Queste sono solo alcune delle principali funzioni a tua disposizione !  
+ 
+<b>Prima di procedere per favore leggi il Disclaimer !</b></i> 
+ 
+Premi <b>avanti</b> quando sei pronto, sarò qui ad aspettarti ✌️"""
 
 # {0}: valid ref code
 SUCC_REFERRED_USER_MESSAGE = "Il tuo account è stato collegato con successo tramite il codice {0}!"
@@ -173,7 +194,7 @@ NEW_USER_MESSAGE = """Un nuovo utente ha avviato il bot!
 
 Telegram ID: {0}
 Nome: {1}
-Username: {2}"""
+Username: @{2}"""
 
 # {0}: user id
 # {1}: user first name
@@ -191,7 +212,7 @@ Servizio: {3}
 Valido fino al: {4}
 Costo: {5}\n"""
 
-FIRST_BUDGET_NAME = "Demo"
+FIRST_BUDGET_NAME = "Primo budget"
 # ================================== STRATEGIES EXPLANATION ========================================= 
 
 SINGOLALOW_EXPL_TEXT = """Singole analisi di eventi con quota inferiore o uguale a 2.10"""

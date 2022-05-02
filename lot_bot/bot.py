@@ -184,6 +184,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.select_sport_strategies, pattern=r"^sport_\w+$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.set_sport_strategy_state, pattern=r"^\w+_\w+_(activate|disable)$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_sports_menu, pattern=r"^to_sports_menu$"))
+    dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_how_work, pattern=r"^to_how_work$"))
     # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_social_menu, pattern=r"^to_social_menu$"))
     dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_service_status, pattern=r"^to_service_status$"))
     # dispatcher.add_handler(CallbackQueryHandler(callback_handlers.to_strat_expl_menu, pattern=r"^to_strat_expl_menu$"))
@@ -237,6 +238,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(MessageHandler(filters.get_broadcast_media_filter(), command_handlers.broadcast_media))
     dispatcher.add_handler(MessageHandler(filters.get_homepage_filter(), message_handlers.homepage_handler))
     dispatcher.add_handler(MessageHandler(filters.get_bot_config_filter(), message_handlers.bot_configuration_handler))
+    dispatcher.add_handler(MessageHandler(filters.get_payment_and_referrals_filter(), message_handlers.payment_and_referrals_handler))
     dispatcher.add_handler(MessageHandler(filters.get_experience_settings_filter(), message_handlers.experience_settings_handler))
     dispatcher.add_handler(MessageHandler(filters.get_use_guide_filter(), message_handlers.use_guide_handler))
 

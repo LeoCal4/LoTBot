@@ -150,6 +150,12 @@ def bot_configuration_handler(update: Update, _: CallbackContext):
         parse_mode="HTML"
     )
 
+def payment_and_referrals_handler(update: Update, _: CallbackContext):
+    update.message.reply_text(
+        cst.PAY_AND_REF_MENU_MESSAGE,
+        reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
+        parse_mode="HTML"
+    )
 
 def experience_settings_handler(update: Update, _: CallbackContext):
     update.message.reply_text(
