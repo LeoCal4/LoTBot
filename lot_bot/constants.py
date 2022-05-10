@@ -229,9 +229,9 @@ INSTAGRAMFREE_EXPL_TEXT = """Raccolta di eventi gratuiti pubblicati su Instagram
 MULTIPLA_EXPL_TEXT = """Multipla di qualsiasi capienza e quota con moltiplicatori alti"""
 SOFAR_EXPL_TEXT = """Eventi di lunga durata (settimane/mesi) come vincitori di tornei e competizioni"""
 
-PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate (puoi la personalizzazione degli stake scrivendo all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a>)"""
-LIVE_EXPL_TEXT = """Solo eventi Live, in generale di tipo Singola"""
-EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale (<i>10%\mese al massimo!</i>)"""
+PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate <i>(puoi avere la personalizzazione degli stake scrivendo all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a>)</i>"""
+LIVE_EXPL_TEXT = """ Solo eventi Live o che iniziano nei prossimi 15 minuti, in generale di tipo Singola"""
+EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale <i>(10%\mese al massimo!)</i> """
 TEST_EXPL_TEXT = """Utilizzata dal team per testare nuove strategie, analisi, parametri etc."""
 FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti! Spesso reperibili sui nostri vari social e canali ufficiali!"""
 COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme! <i>Together is Better!</i>"""
