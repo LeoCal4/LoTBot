@@ -111,33 +111,28 @@ USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 BOT_CONFIG_MENU_MESSAGE = """<b>Configurazione Bot</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
-
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+"""
 
 PAY_AND_REF_MENU_MESSAGE = """<b>Pagamenti e referral</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
-
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+"""
 
 EXPERIENCE_MENU_MESSAGE = """<b>Gestione Esperienza</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
-
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+"""
 
 USE_GUIDE_MENU_MESSAGE = """<b>Guida all' uso</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
-
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+"""
 
 #Configurazione Bot messaggi interni #valutare se modificare gestione budget con gestione andamento o gestione portafoglio oppure altro
 GESTIONE_BUDGET_MENU_MESSAGE = """<b>Gestione Budget</b> 📱
 
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
-
-<b>Fatto in  🇮🇹  con</b> ♥️"""
+"""
 
 
 # ================================== FIRST USAGE =========================================
@@ -231,7 +226,7 @@ SOFAR_EXPL_TEXT = """Eventi di lunga durata (settimane/mesi) come vincitori di t
 
 PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate <i>(puoi avere la personalizzazione degli stake scrivendo all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a>)</i>"""
 LIVE_EXPL_TEXT = """ Solo eventi Live o che iniziano nei prossimi 15 minuti, in generale di tipo Singola"""
-EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale <i>(10%\mese al massimo!)</i> """
+EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale <i>(10%/mese al massimo!)</i> """
 TEST_EXPL_TEXT = """Utilizzata dal team per testare nuove strategie, analisi, parametri etc."""
 FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti! Spesso reperibili sui nostri vari social e canali ufficiali!"""
 COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme! <i>Together is Better!</i>"""

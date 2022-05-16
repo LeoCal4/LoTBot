@@ -131,6 +131,7 @@ def homepage_handler(update: Update, context: CallbackContext):
     try:
         update.message.reply_text(
             cst.HOMEPAGE_MESSAGE,
+            disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
         )
@@ -138,6 +139,7 @@ def homepage_handler(update: Update, context: CallbackContext):
         context.bot.send_message(
             update.effective_user.id,
             cst.HOMEPAGE_MESSAGE,
+            disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
         )

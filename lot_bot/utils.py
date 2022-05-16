@@ -199,8 +199,8 @@ def get_month_and_year_string(previous_month:bool=False):
 
 
 def create_strategies_explanation_message(sport: spr.Sport) -> str:
-    message = f"Ecco le strategie disponibili per <b>{sport.display_name}</b>:\n"
+    message = f"Ecco le strategie disponibili per <b>{sport.display_name}</b>:"
     for strategy in sport.strategies:
-        message += f"- <b>{strategy.display_name}</b>: {strategy.explanation}\n"
+        message += f"\n\n- <b>{strategy.display_name}</b>: {strategy.explanation}"
     return message
     

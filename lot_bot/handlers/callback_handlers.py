@@ -1,5 +1,6 @@
 """Module for the Callback Query Handlers"""
 import datetime
+import random
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
@@ -137,6 +138,7 @@ def to_homepage(update: Update, context: CallbackContext):
         context.bot.edit_message_text(
             cst.HOMEPAGE_MESSAGE,
             chat_id=chat_id,
+            disable_web_page_preview=True,
             message_id=message_id,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
@@ -146,6 +148,7 @@ def to_homepage(update: Update, context: CallbackContext):
         context.bot.send_message(
             chat_id,
             cst.HOMEPAGE_MESSAGE,
+            disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
         )
@@ -226,6 +229,12 @@ def to_service_status(update: Update, context: CallbackContext):
         sub_name = subs_model.sub_container.get_subscription(sub["name"])
         sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
         service_status += f"\n- {sub_emoji} {sub_name.display_name}{expiration_date_text}"
+    if "- 🟢 LoT Versione Premium:" in service_status:
+        service_status = service_status.replace("\n- 🟢 LoT Versione Base","")
+    #if "- 🔴 Lot Versione Premium" in service_status:
+        #mettere prima versione base in alto e sotto "- 🔴 Lot Versione Premium"
+        #magari aggiungendo una frase per far acquistare al cliente il Premium
+
     context.bot.edit_message_text(
         service_status,
         user_id, 
@@ -625,11 +634,12 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    socials_text = """<b>Finalmente è l’ora di iniziare !</b> 
+    consulente = random.choice(["@Pentium077","@massi_grim"])
+    socials_text = f"""<b>Finalmente è l’ora di iniziare !</b> 
  
-<i>Sto controllando se ci sono eventi analizzati ! 🟢
+<i>Sto controllando se ci sono eventi analizzati ! 🟢</i>
 
-PS: ti ricordo che hai sempre a disposizione un <b>consulente tramite l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a></b> e che trovi altri <b>appassionati nella nostra <a href='https://t.me/LoTVerse'>Community</a></b></i>
+PS: Il tuo consulente personale è {consulente}, contattalo per dubbi o quesiti sul funzionamento del bot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>
 """
     context.bot.send_message(
         text = socials_text,
