@@ -634,12 +634,12 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    consulente = random.choice(["@Pentium077","@massi_grim"])
+    #consulente = random.choice(["@Pentium077","@massi_grim"])
     socials_text = f"""<b>Finalmente è l’ora di iniziare !</b> 
  
 <i>Sto controllando se ci sono eventi analizzati ! 🟢</i>
 
-PS: Il tuo consulente personale è {consulente}, contattalo per dubbi o quesiti sul funzionamento del bot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>
+PS: Scrivi a @teamlot per dubbi o quesiti sul funzionamento del bot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>
 """
     context.bot.send_message(
         text = socials_text,

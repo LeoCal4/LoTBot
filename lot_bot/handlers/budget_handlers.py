@@ -544,8 +544,7 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
     message_text = f"""Budget creato con successo:\n<b>{budget_name} - {new_budget_balance:.2f}€</b>! 
 
 <b>Ben fatto ! </b>🔥
-
-Guarda questo <b>breve tutorial su come funziono</b> e poi possiamo iniziare! 🎉""" #TODO add tutorial
+""" #TODO add tutorial Guarda questo <b>breve tutorial su come funziono</b> e poi possiamo iniziare! 🎉
     update.message.reply_text(
         message_text,
         reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START,
