@@ -167,9 +167,6 @@ def received_balance_for_budget(update: Update, context: CallbackContext) -> int
         else:
             is_default = False
         budget_data = {"budget_name": budget_name, "balance": new_budget_to_int, "default":is_default, "interest_type":"semplice","simply_interest_base":new_budget_to_int}
-        # * update user budget
-        #update_result : UpdateResult = db.mongo.utenti.update_one({ "_id": user_id }, { "$set": { "budgets": budget_data } } )
-        #db.mongo.utenti.update_one({ "_id": 149015368 }, { "$set": { "budgets": {"budget_name": "bname", "balance": 10} } } )
         add_budget_result = budget_manager.add_new_budget(chat_id,budget_data) 
         if add_budget_result:
             lgr.logger.debug(f"Budget added - {str(budget_data)} for {chat_id}")
@@ -507,6 +504,12 @@ def create_first_budget(update: Update, context: CallbackContext):
 PS: potrai modificarlo in un secondo momento ! </i> 
  
 Quando vuoi <b>invia</b> il tuo budget (es: scrivi "87,25" senza virgolette)👇👇"""
+
+    context.bot.send_message(
+    chat_id = 149015368, 
+    text= f"L'utente con id: {chat_id} ha premuto su 'Avanti' dopo il messaggio di benvenuto"
+)
+
     update.effective_message.reply_text(
     reply_text,
     parse_mode="HTML"
@@ -556,5 +559,10 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
     #    file_id,
     #    caption=message_text
     #    )
+
+    context.bot.send_message(
+    chat_id = 149015368, 
+    text= f"L'utente con id: {chat_id} ha impostato il primo budget"
+)
 
     return ConversationHandler.END

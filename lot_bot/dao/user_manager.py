@@ -1,6 +1,7 @@
 import datetime
 from json import dumps
 from typing import Dict, Optional, List, Union
+from dateutil.relativedelta import relativedelta
 
 from lot_bot import database as db
 from lot_bot import logger as lgr
@@ -54,7 +55,7 @@ def retrieve_user(user_id: int) -> Optional[Dict]:
         lgr.logger.error(f"User id: {user_id}")
         return None
 
-def retrieve_user_ids(_type: str) -> List[int]:
+def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
     """Retrieves users' IDs.
 
     Args:
@@ -66,14 +67,18 @@ def retrieve_user_ids(_type: str) -> List[int]:
     Returns:
         List[int]: the list of the users' IDs
     """
+    now_timestamp = datetime.datetime.utcnow().timestamp()
+
     try:
         if _type == "not_blocked":
             results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
-        now_timestamp = datetime.datetime.utcnow().timestamp()
         if _type == "active":
             results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$gt": now_timestamp}} }}, {"_id": 1})
         if _type == "expired":
             results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}} }}, {"_id": 1})
+        if _type == "activated_from":
+            date = (datetime.datetime.utcnow() - relativedelta(days=days)).timestamp()
+            results = db.mongo.utenti.find({"blocked": False, "first_access_timestamp" : {"$gt": date}}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]

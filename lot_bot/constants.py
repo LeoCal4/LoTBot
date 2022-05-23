@@ -152,7 +152,7 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 
 Versione 1.00"""
 WELCOME_MESSAGE_v2 = """<i><b>Ciao!</b> {0} 👋
-Io sono <b>SportSignalsBoT</b> il tuo strumento di supporto nel betting !  
+Io sono <b>SportSignalsBoT</b> il tuo strumento di supporto nel betting!  
  
 Grazie alle mie funzioni potrai: </i> 
  
@@ -160,11 +160,11 @@ Grazie alle mie funzioni potrai: </i>
  
 - <b>Tracciare i tuoi investimenti</b> e avere la tua reportistica personale! 
  
-- Ricevere supporto da <b>un consulente a te dedicato</b> per il tuo percorso e per analisi personalizzate ! 
+- Ricevere supporto da <b>un consulente a te dedicato</b> per il tuo percorso e per analisi personalizzate! 
  
-<i>Queste sono solo alcune delle principali funzioni a tua disposizione !  
+<i>Queste sono solo alcune delle principali funzioni a tua disposizione!  
  
-<b>Prima di procedere per favore leggi il Disclaimer !</b></i> 
+<b>Prima di procedere per favore leggi il Disclaimer!</b></i> 
  
 Premi <b>avanti</b> quando sei pronto, sarò qui ad aspettarti ✌️"""
 

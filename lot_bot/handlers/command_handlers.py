@@ -101,20 +101,24 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
     #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
-    context.bot.send_document(
-        chat_id = update.effective_user.id, 
-        document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE", # test "BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ" bot "BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE"
-        caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
-        reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
-        parse_mode="HTML"
-    )
-    #context.bot.send_message(
-    #    chat_id = update.effective_user.id, 
-    #    text=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name),
-    #    reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
-    #    parse_mode="HTML"
-    #)
-
+    try: 
+        context.bot.send_document(
+            chat_id = update.effective_user.id, 
+            document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE",
+            #document="BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ", # bot test
+            caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
+            reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+            parse_mode="HTML"
+        )
+    except:
+        context.bot.send_document(
+            chat_id = update.effective_user.id, 
+            #document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE",
+            document="BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ", # bot test
+            caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
+            reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+            parse_mode="HTML"
+        )
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
         # * connect user to used ref_code
@@ -197,7 +201,7 @@ def start_command(update: Update, context: CallbackContext):
         return
     # * existing user wants to link a referral code
     elif user_data["role"] == "new_user":
-        lgr.logger.debug(f"LALALALLALALALALALLALALALLALALALALALLALALALALALLALALALALA\nLALALALLALALAALALALLAALLALALAL\nLALALLALALALALALLA")
+        lgr.logger.debug(f"received start command from a new_user")
         return
     elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
@@ -343,7 +347,7 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
         _type (str) - broadcast type. can be "not_blocked","expired","active",activated_from","expires_in"
         days (int) - optional, should be present only for activated_from and expires_in type
     """
-    user_ids = user_manager.retrieve_user_ids(_type)
+    user_ids = user_manager.retrieve_user_ids(_type, days)
     lgr.logger.info(f"Starting to send -{_type}- broadcast message in async to approx. {len(user_ids)} users")
     for user_id in user_ids:
         try:
@@ -412,6 +416,31 @@ def broadcast_attivi_handler(update: Update, context: CallbackContext):
     parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
     # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
     _send_broadcast_messages(context, parsed_text, "active")
+
+def broadcast_nuovi_handler(update: Update, context: CallbackContext):
+    """ Sends a message to all the users with active subscription in the db.
+    /broadcast_attivi LINE BREAK <message>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    lgr.logger.info("Received /broadcast_nuovi")
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    str_days = update.effective_message.text.split(" ")[1].partition("\n")[0]
+    try:
+        days = int(str_days)
+        parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
+        _send_broadcast_messages(context, parsed_text, "activated_from", days)
+    except ValueError:
+        update.effective_message.reply_text(f"ERRORE: '{str_days}' non è un numero di giorni valido. Controlla che il messaggio sia tipo:\n\n/broadcast_nuovi 3\nMessaggio da inviare")
+    except Exception as e:
+        lgr.logger.warning(f"Error in sending broadcast_nuovi message: {str(e)}")
+        update.effective_message.reply_text("ERRORE: Controlla che il messaggio sia tipo:\n\n/broadcast_nuovi 3\nMessaggio da inviare")
 
 def unlock_messages_to_user(update: Update, context: CallbackContext):
     """/sblocca_utente <username or ID>

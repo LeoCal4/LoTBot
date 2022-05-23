@@ -580,6 +580,7 @@ def sends_last_giocate_24h(update: Update, context: CallbackContext):
     update_results = user_manager.update_user(chat_id,{"role":"user"})
     if not update_results:
         user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["name","username"])
+        name, username = user_data["name"], user_data["username"]
         dev_message = f"ERRORE nella registrazione dell'utente\n{chat_id} - {name} - @{username}."
         message_handlers.send_messages_to_developers(context, [dev_message])
 
