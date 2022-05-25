@@ -312,7 +312,7 @@ def create_budgets_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
         budget_keyboard_button = InlineKeyboardButton(text=name, callback_data=budget_callback_data)
         keyboard_budget.append([budget_keyboard_button])
     #keyboard_budget.append([InlineKeyboardButton(text=f"Aggiungi budget", callback_data= "create_new_budget"),InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
-    keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
+    keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_budget)
 
 def create_edit_budget_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
