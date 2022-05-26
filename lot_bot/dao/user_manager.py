@@ -59,7 +59,7 @@ def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
     """Retrieves users' IDs.
 
     Args:
-        _type: can be "not_blocked","expired","active",activated_from","expires_in"
+        _type: can be "not_blocked","expired","active",activated_from","expires_in","new_users"
 
     Raises:
         e: in case of db errors
@@ -79,6 +79,8 @@ def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
         if _type == "activated_from":
             date = (datetime.datetime.utcnow() - relativedelta(days=days)).timestamp()
             results = db.mongo.utenti.find({"blocked": False, "first_access_timestamp" : {"$gt": date}}, {"_id": 1})
+        if _type == "new_users":
+            results = db.mongo.utenti.find({"role": "new_user"}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]
@@ -319,7 +321,7 @@ def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
         lgr.logger.error(f"Error during personal stake registration: {user_id=} - {personal_stake=}")
         raise e
 
-
+        
 def update_user_giocata_with_previous_budget(user_id: int, giocata_id, previous_budget: int) -> bool:
     """Adds the pre-giocata budget to a personal user giocata.
 

@@ -73,22 +73,26 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     """
     user = update.effective_user
     first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code, teacherbet_code=teacherbet_code)
+
+
+
     # * get trial sub and add date visualization offset
-    user_main_sub = subscriptions.sub_container.get_subscription(first_time_user_data["subscriptions"][0]["name"])
-    trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["subscriptions"][0]["expiration_date"]) + datetime.timedelta(hours=1)
-    trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
+    #user_main_sub = subscriptions.sub_container.get_subscription(first_time_user_data["subscriptions"][0]["name"])
+    #trial_expiration_date = datetime.datetime.utcfromtimestamp(first_time_user_data["subscriptions"][0]["expiration_date"]) + datetime.timedelta(hours=1)
+    #trial_expiration_date_string = trial_expiration_date.strftime("%d/%m/%Y alle %H:%M")
     # * escape chars for HTML
-    parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, user_main_sub.display_name, trial_expiration_date_string)
+    #parsed_first_name = user.first_name.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    #welcome_message = cst.WELCOME_MESSAGE.format(parsed_first_name, user_main_sub.display_name, trial_expiration_date_string)
     # * check if the referral code was successfulyl added 
-    if ref_code:
-        if first_time_user_data["linked_referral_user"]["linked_user_id"] is None:
-            welcome_message += f"\n\n{cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)}"
-        else:
-            welcome_message += f"\n\n{cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)}"
+    #if ref_code:
+    #    if first_time_user_data["linked_referral_user"]["linked_user_id"] is None:
+    #        welcome_message += f"\n\n{cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)}"
+    #    else:
+    #        welcome_message += f"\n\n{cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)}"
     # * check if there was a tb code and notify user
-    if teacherbet_code:
-        welcome_message += f"\n\n{cst.SUCC_TEACHERBET_TRIAL_MESSAGE}"
+    #if teacherbet_code:
+    #    welcome_message += f"\n\n{cst.SUCC_TEACHERBET_TRIAL_MESSAGE}"
+    
     new_user_channel_message = cst.NEW_USER_MESSAGE.format(
         update.effective_user.id, 
         update.effective_user.first_name, 
@@ -100,8 +104,10 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         lgr.logger.error(f"Could not send new user message to relative channel {cfg.config.NEW_USERS_CHANNEL_ID=} - {e=}")
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
-    #update.message.reply_text(cst.WELCOME_MESSAGE_v2, reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, parse_mode="HTML")
-    try: 
+
+    update.message.reply_text(cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), disable_web_page_preview = True, reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START,  parse_mode="HTML")
+
+    '''try: 
         context.bot.send_document(
             chat_id = update.effective_user.id, 
             document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE",
@@ -118,7 +124,7 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
             caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
             reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
             parse_mode="HTML"
-        )
+        )'''
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
         # * connect user to used ref_code
@@ -419,7 +425,7 @@ def broadcast_attivi_handler(update: Update, context: CallbackContext):
 
 def broadcast_nuovi_handler(update: Update, context: CallbackContext):
     """ Sends a message to all the users with active subscription in the db.
-    /broadcast_attivi LINE BREAK <message>
+    /broadcast_nuovi dd/mm-dd/mm LINE BREAK <message> 
 
     Args:
         update (Update)
@@ -459,7 +465,7 @@ def block_messages_to_user(update: Update, context: CallbackContext):
         update (Update)
         context (CallbackContext)
     """
-    set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza! ❌")
+    set_user_blocked_status(update, context, True, "⚠️ ATTENZIONE ⚠️: sei stato bloccato, contatta l'Assistenza scrivendoci su @teamlot! ❌")
 
 
 def set_user_blocked_status(update: Update, context: CallbackContext, user_status: bool, user_message: str):
@@ -895,6 +901,31 @@ L'utente risulta """
     #stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
     update.effective_message.reply_text(user_info_text, parse_mode="HTML")
 
+def activate_all_users(update: Update, context: CallbackContext):
+    """Sends a message containing target user's personalized stakes.
+    
+        /visualizza_stake <username o ID>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+    # * retrieve all new_users
+    users = user_manager.retrieve_user_ids("new_users")
+    # * check if there are new_users
+    if target_user_data is None:
+        update.effective_message.reply_text("ERRORE: non ci sono nuovi utenti che devono ancora completare l'avvio del bot")
+        return
+    # * set a default budget
+    
+    stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
+    stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
+    update.effective_message.reply_text(stakes_message)
 ############################################ OTHER COMMANDS ############################################
 
 def send_file_id(update: Update, _):

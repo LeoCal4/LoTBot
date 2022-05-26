@@ -252,14 +252,14 @@ def send_giocata_outcome(context: CallbackContext, giocata_id: str, outcome_text
         outcome_text_to_send = outcome_text
         user_id = user_data["_id"]
         #user_budget = user_data["budget"] temporary 
-        user_budget = budget_manager.retrieve_default_budget_from_user_id(user_id)['balance']
-        if not user_budget is None:
+        user_budget = budget_manager.retrieve_default_budget_from_user_id(user_id)
+        if user_budget:
             user_personal_stake = int(user_data["giocate"]["personal_stake"])
             if user_personal_stake:
                 stake = user_personal_stake
             else:
                 stake = giocata["base_stake"]
-            outcome_text_to_send = giocata_model.update_outcome_text_with_money_value(outcome_text_to_send, user_budget, stake, giocata["base_quota"], giocata["outcome"])
+            outcome_text_to_send = giocata_model.update_outcome_text_with_money_value(outcome_text_to_send, user_budget['balance'], stake, giocata["base_quota"], giocata["outcome"])
         try:
             context.bot.send_message(
                 user_id, 

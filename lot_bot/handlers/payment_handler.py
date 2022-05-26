@@ -154,7 +154,7 @@ def pre_checkout_handler(update: Update, context: CallbackContext):
     payload = query.invoice_payload
     context.user_data["payment_payload"] = payload
     if payload != "payment_lotcomplete" and payload != "payment_teacherbet": # TODO create method to check if valid
-        query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza")
+        query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza su @teamlot")
     elif ("payment_limit_timestamp" not in context.user_data or 
         context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
         query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")
@@ -229,7 +229,7 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     if not register_result or not user_update_result:
         lgr.logger.error(f"Could not register payment {str(payment_data)} for user {user_id}")
         payment_final_message = f"ERRORE: il pagamento è stato effettuato con successo, ma non siamo riusciti a registrarlo correttamente.\n"
-        payment_final_message += f"Si prega di contattare l'assistenza e di riportare il seguente codice: {payment_data['payment_id']}"
+        payment_final_message += f"Si prega di contattarci su @teamlot e di riportare il seguente codice: {payment_data['payment_id']}"
         dev_message = "ERRORE: pagamento non registrato per l'utente {user_id}.\n"
         dev_message += f"Update dati utente: {user_update_result=} - registrazione pagamento: {register_result=}\n"
         dev_message += f"Dati pagamento:\n {str(payment_data)}"

@@ -68,7 +68,6 @@ def create_cashout_message(message_text: str) -> str:
     else:        
         return f"{emoji} CASHOUT Exchange #{giocata_num} {emoji}"
 
-
 def parse_float_string(float_string: str) -> float:
     try:
         return float(float_string.strip().replace(",", "."))

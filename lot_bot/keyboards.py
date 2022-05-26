@@ -37,7 +37,7 @@ _to_first_budget_button = [
 TO_FIRST_BUDGET_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_first_budget_button)
 
 _to_socials_list_button = [
-    [InlineKeyboardButton(text="Avanti", callback_data= "send_socials_list")]
+    [InlineKeyboardButton(text="Inviami gli eventi ancora in corso", callback_data= "send_socials_list")]
 ]
 TO_SOCIALS_LIST_FIRST_START = InlineKeyboardMarkup(inline_keyboard=_to_socials_list_button)
 
@@ -141,7 +141,7 @@ PROCEED_TO_PAYMENTS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_proceed_to_
 
 _use_guide_buttons = [
     [InlineKeyboardButton(text="🧮 Come funziona? 📖", callback_data= "to_how_work")],
-    [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/LegacyOfTipstersBot")],
+    [InlineKeyboardButton(text="🧑🏽‍💻 Assistenza 👩🏻‍💼 ", url="https://t.me/teamlot")],
     [InlineKeyboardButton(text="🗓  Storico Segnali  🗃", url="t.me/LoT_Tracciabilita")],
     [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_homepage")],
 ]
@@ -311,7 +311,8 @@ def create_budgets_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
         budget_callback_data = f"edit_budget_{name}"
         budget_keyboard_button = InlineKeyboardButton(text=name, callback_data=budget_callback_data)
         keyboard_budget.append([budget_keyboard_button])
-    #keyboard_budget.append([InlineKeyboardButton(text=f"Aggiungi budget", callback_data= "create_new_budget"),InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
+    if not budget_names: # user can create a budget only if there isn't one
+        keyboard_budget.append([InlineKeyboardButton(text=f"Aggiungi budget", callback_data= "create_new_budget"),InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
     keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_budget)
 
