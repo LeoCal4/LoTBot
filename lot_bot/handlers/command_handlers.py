@@ -104,18 +104,16 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     try: 
         context.bot.send_document(
             chat_id = update.effective_user.id, 
-            document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE",
-            #document="BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ", # bot test
+            document=cfg.config.WELCOME_DOCUMENT_FILE_ID,
             caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
             reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
             parse_mode="HTML"
         )
-    except:
-        context.bot.send_document(
-            chat_id = update.effective_user.id, 
-            #document="BQACAgQAAxkBAAEBehhibtDDLKEinGC7LD5u7mmBaWbO9gACigwAArV3eFNtvNkjLkuHayQE",
-            document="BQACAgQAAxkBAAIQXmJr6W_b65H88lvh3ZR7G_dTB_uVAALUCwACR39ZUxuRIAm0N21eJAQ", # bot test
-            caption=cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
+    except Exception as e:
+        lgr.logger.info(f"Could not send welcome initial message with document.\nError: {e}")
+        context.bot.send_message(
+            update.effective_user.id, 
+            cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), 
             reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
             parse_mode="HTML"
         )

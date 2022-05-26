@@ -25,6 +25,7 @@ class Config(object):
     NEW_USERS_CHANNEL_ID = None
     NEW_PAYMENTS_CHANNEL_ID = None
     TEACHERBET_CHANNEL_ID = None
+    WELCOME_DOCUMENT_FILE_ID = None
     LOG_ON_FILE = False
     LOG_PATH = "test_log.log"
     DEVELOPER_CHAT_IDS = []
@@ -58,6 +59,7 @@ class Development(Config):
     NEW_USERS_CHANNEL_ID = None # TBA
     NEW_PAYMENTS_CHANNEL_ID = None # TBA
     TEACHERBET_CHANNEL_ID = None # TBA
+    WELCOME_DOCUMENT_FILE_ID = None # TBA
     
 
 
@@ -78,6 +80,7 @@ class Testing(Config):
     TEACHERBET_CHANNEL_ID = None # TBA
     VIDEO_FILE_NAMES = [] # TBA
     VIDEO_FILE_IDS = [] # TBA
+    WELCOME_DOCUMENT_FILE_ID = None # TBA
     # to get the following two, use the following guide
     # https://core.telegram.org/api/obtaining_api_id#obtaining-api-id
     API_ID = None # TBA
@@ -122,6 +125,8 @@ def load_env_variables():
     config.VIDEO_FILE_NAMES = os.getenv("VIDEO_FILE_NAMES", [])
     config.VIDEO_FILE_IDS = os.getenv("VIDEO_FILE_IDS", {})
     config.VIDEO_FILE_EXTENSIONS = os.getenv("VIDEO_FILE_EXTENSIONS", ())
+
+    config.WELCOME_DOCUMENT_FILE_ID = os.getenv("WELCOME_DOCUMENT_FILE_ID", "")
 
 
 def create_config():

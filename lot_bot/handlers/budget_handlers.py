@@ -3,6 +3,7 @@
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import constants as cst
+from lot_bot import config as cfg
 from lot_bot import utils
 from lot_bot.dao import user_manager, budget_manager
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
@@ -506,7 +507,7 @@ PS: potrai modificarlo in un secondo momento ! </i>
 Quando vuoi <b>invia</b> il tuo budget (es: scrivi "87,25" senza virgolette)👇👇"""
 
     context.bot.send_message(
-    chat_id = 149015368, 
+    chat_id = cfg.config.NEW_USERS_CHANNEL_ID,
     text= f"L'utente con id: {chat_id} ha premuto su 'Avanti' dopo il messaggio di benvenuto"
 )
 
@@ -553,7 +554,7 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
         reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START,
         parse_mode="HTML"
     )
-    file_id = 123
+    # file_id = 123
     #context.bot.send_video(
     #    chat_id,
     #    file_id,
@@ -561,7 +562,7 @@ def received_balance_for_first_budget(update: Update, context: CallbackContext) 
     #    )
 
     context.bot.send_message(
-    chat_id = 149015368, 
+    chat_id = cfg.config.NEW_USERS_CHANNEL_ID, 
     text= f"L'utente con id: {chat_id} ha impostato il primo budget"
 )
 
