@@ -105,7 +105,7 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         error_message = f"Non è stato possibile inviare il messaggio di nuovo utente per {update.effective_user.id}\n{new_user_channel_message}\n{cfg.config.NEW_USERS_CHANNEL_ID=}"
         message_handlers.send_messages_to_developers(context, [error_message])
 
-    update.message.reply_text(cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), disable_web_page_preview = True, reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START,  parse_mode="HTML")
+    update.message.reply_text(cst.WELCOME_MESSAGE_v2.format(update.effective_user.first_name), disable_web_page_preview = True, reply_markup=kyb.TO_SOCIALS_LIST_FIRST_START, parse_mode="HTML")
 
     '''try: 
         context.bot.send_document(

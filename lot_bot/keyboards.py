@@ -39,7 +39,7 @@ TO_FIRST_BUDGET_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_to_first_budget
 _to_socials_list_button = [
     [InlineKeyboardButton(text="Inviami gli eventi ancora in corso", callback_data= "send_socials_list")]
 ]
-TO_SOCIALS_LIST_FIRST_START = InlineKeyboardMarkup(inline_keyboard=_to_socials_list_button)
+TO_SOCIALS_LIST_FIRST_START = InlineKeyboardMarkup(inline_keyboard=_to_socials_list_button,one_time_keyboard=True)
 
 # ===================================== CONFIGURAZIONE BOT MENU =====================================
 

@@ -17,7 +17,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import subscriptions as subs_model
 from lot_bot.handlers import message_handlers
-from telegram import Update
+from telegram import Update, ReplyKeyboardRemove
 from telegram.error import BadRequest
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -651,8 +651,8 @@ def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     #consulente = random.choice(["@Pentium077","@massi_grim"])
+    update.callback_query.edit_message_reply_markup(reply_markup = None)
     sends_last_giocate_24h(update,context)
-
     #Creating user subscription
     free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     #if not teacherbet_code:
