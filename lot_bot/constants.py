@@ -208,6 +208,15 @@ Valido fino al: {4}
 Costo: {5}\n"""
 
 FIRST_BUDGET_NAME = "Primo budget"
+
+# ================================== TUTORIAL CHECKLIST ==========================================
+# spots needs to be filled with the relative emoji (✅ or ❌)
+TUTORIAL_CHECKLIST = """Completa i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
+✅ Avvio del bot
+{budget_check} Imposta il budget
+{event_check} Registra un evento
+{referral_check} Personalizza il codice referral"""
+
 # ================================== STRATEGIES EXPLANATION ========================================= 
 
 SINGOLALOW_EXPL_TEXT = """Singole analisi di eventi con quota inferiore o uguale a 2.10"""
