@@ -7,6 +7,7 @@ from lot_bot import constants as cst
 from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
+from lot_bot import database as db
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
                          user_manager, budget_manager, analytics_manager)
@@ -16,7 +17,7 @@ from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import subscriptions as subs_model
 from lot_bot.handlers import message_handlers
-from telegram import Update
+from telegram import Update, ReplyKeyboardRemove
 from telegram.error import BadRequest
 from telegram.ext.dispatcher import CallbackContext
 from telegram.files.inputmedia import InputMediaVideo
@@ -591,36 +592,42 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
 
 #actually 10h
 def sends_last_giocate_24h(update: Update, context: CallbackContext):
-    lgr.logger.debug("Sending last 5 giocate in last 24h")
+    lgr.logger.debug("Sending last 5 giocate in last 10h")
     chat_id = update.callback_query.message.chat_id
     last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp())
     lgr.logger.debug(f"{last_giocate=}")
 
-    update_results = user_manager.update_user(chat_id,{"role":"user"})
+    '''update_results = user_manager.update_user(chat_id,{"role":"user"})
     if not update_results:
         user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["name","username"])
         name, username = user_data["name"], user_data["username"]
         dev_message = f"ERRORE nella registrazione dell'utente\n{chat_id} - {name} - @{username}."
-        message_handlers.send_messages_to_developers(context, [dev_message])
+        message_handlers.send_messages_to_developers(context, [dev_message])'''
 
     if not last_giocate:
         context.bot.send_message(
             chat_id, 
             text="""<b>Attualmente non ci sono eventi da visualizzare.</b>
-Ti invierò analisi non appena disponibili, promesso ✌️
+Ti verranno inviati non appena disponibili, promesso ✌️
 
-Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> conoscere gli altri appassionati e tutto il team di LoT, richiedere una <a href='https://t.me/LegacyOfTipstersBot'>consulenza</a> o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a> !
+Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
 
 <i>PS: hai già dato un'occhiata al nostro sistema di referall?  
-<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis !</b></i> 😍""", 
+<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍""", 
+            disable_web_page_preview=True,
             parse_mode ="HTML",
             reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
         return
-
-
+    context.bot.send_message(
+        text = "Ecco gli eventi che potrebbero essere ancora in corso!",
+        chat_id=chat_id,
+        disable_web_page_preview=True,
+        reply_markup=kyb.STARTUP_REPLY_KEYBOARD,
+        parse_mode="HTML"
+    )
     sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
     for i, giocata in enumerate(last_giocate):
-        if i > 5:
+        if i > 0:
             return
         if giocata["sport"] in sport_validi:
             original_text = giocata["raw_text"]
@@ -650,26 +657,32 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
                 messages_to_be_sent -= 1
             except Exception as e:
                 lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
+        
+        context.bot.send_message(
+            chat_id,
+            cst.HOMEPAGE_MESSAGE,
+            disable_web_page_preview=True,
+            reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+            parse_mode="HTML"
+        )
 
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     #consulente = random.choice(["@Pentium077","@massi_grim"])
-    socials_text = f"""<b>Finalmente è l’ora di iniziare !</b> 
- 
-<i>Sto controllando se ci sono eventi analizzati ! 🟢</i>
-
-PS: Scrivi a @teamlot per dubbi o quesiti sul funzionamento del bot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>
-"""
-    context.bot.send_message(
-        text = socials_text,
-        chat_id=chat_id,
-        disable_web_page_preview=True,
-        reply_markup=kyb.STARTUP_REPLY_KEYBOARD,
-        parse_mode="HTML"
-    )
+    update.callback_query.edit_message_reply_markup(reply_markup = None)
     sends_last_giocate_24h(update,context)
-
+    #Creating user subscription
+    free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
+    #if not teacherbet_code:
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
+    sub = {"name": subs_model.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
+    #else:
+    #    sub = subs_model.create_teacherbet_base_sub()
+    subscriptions = [sub,free_sub]
+    db.mongo.utenti.update_one({ "_id": chat_id }, { "$set": { "subscriptions": subscriptions } } )
+    #user_data["subscriptions"].append(sub)
+    #user_data["subscriptions"].append(free_sub)
 
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):
     """[summary]
@@ -705,7 +718,7 @@ def get_free_month_subscription(update: Update, context: CallbackContext):
     free_sub_message = "Mese gratuito riscattato con successo!"
     if not user_update_result:
         lgr.logger.error(f"Could not add free month for user {user_id}")
-        free_sub_message = "ERRORE: impossibile riscattare il mese gratuito, contattare l'<a href='https://t.me/LegacyOfTipstersBot'>Assistenza</a>"
+        free_sub_message = "ERRORE: impossibile riscattare il mese gratuito, contattaci su @teamlot"
     free_sub_message += "\n\n" + utils.create_personal_referral_updated_text(retrieved_user["referral_code"], 0)
     context.bot.edit_message_text(
         free_sub_message,

@@ -473,7 +473,7 @@ def delete_budget(update: Update, context: CallbackContext) -> int:
     )
     else:
         context.bot.edit_message_text(
-        f"Non è stato possibile eliminare <b>{new_default_budget_name}</b> a causa di un errore, riprova più tardi o contatta l' <a href='https://t.me/LegacyOfTipstersBot'>assistenza</a>",
+        f"Non è stato possibile eliminare <b>{new_default_budget_name}</b> a causa di un errore, riprova più tardi o contattaci su @teamlot",
         chat_id=chat_id,
         message_id=message_id,
         parse_mode="HTML"
@@ -496,13 +496,11 @@ def to_budget_menu(update: Update, context: CallbackContext):
 def create_first_budget(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    reply_text = """Ottimo, adesso <b>impostiamo il tuo primo Budget 💰 ! </b> 
+    reply_text = """Ottimo, adesso <b>impostiamo il tuo primo Budget 💰! </b>  
  
-<i>Questo ti permetterà di ricevere gli eventi con il <b>suggerito stake* massimo in % e euro!</b> 
+<i>Questo ti permetterà di ricevere gli eventi con il suggerito stake massimo in euro! </b> 
  
-(*stake: porzione di capitale che si investe in un mercato) 
- 
-PS: potrai modificarlo in un secondo momento ! </i> 
+PS: potrai modificarlo in un secondo momento! </i> 
  
 Quando vuoi <b>invia</b> il tuo budget (es: scrivi "87,25" senza virgolette)👇👇"""
 

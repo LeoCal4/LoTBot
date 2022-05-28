@@ -21,7 +21,7 @@ def create_base_user_data():
         "username": "",
         "email": "",
         "subscriptions": [],
-        "role": "new_user",
+        "role": "user",
         "referral_code": create_valid_referral_code(),
         "linked_referral_user": {
             "linked_user_id": None,
@@ -326,14 +326,7 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
             update_result = user_manager.update_user_succ_referrals(ref_user_id, user.id)
         if not ref_user_data or not update_result:
             lgr.logger.warning(f"Upon creating a new user, {ref_code=} was not valid")
-    free_sub = {"name": subs.sub_container.LOTFREE.name, "expiration_date": 9999999999}
-    if not teacherbet_code:
-        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
-        sub = {"name": subs.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
-    else:
-        sub = subs.create_teacherbet_base_sub()
-    user_data["subscriptions"].append(sub)
-    user_data["subscriptions"].append(free_sub)
+
     user_manager.create_user(user_data)
     return user_data
 

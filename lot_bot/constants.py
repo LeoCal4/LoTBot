@@ -56,7 +56,7 @@ HOMEPAGE_MESSAGE = """<b>Homepage</b> 📱
 
 STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scoprire 🚀
 
-<i>PS: tramite l'assistenza possiamo <b>personalizzarle</b> solo per te!</i>"""
+<i>PS: contattaci su @teamlot per maggiori informazioni!</i>"""
 
 
 BASE_RESOCONTI_MESSAGE = "Scegli il tipo di resoconto:"
@@ -146,12 +146,19 @@ WELCOME_MESSAGE = """Benvenuto/a {0}! 👍
 
 -Premi <b>Configurazione Bot</b> per scegliere gli <i>sport</i>, le <i>strategie</i>, modificare il tuo <i>budget</i> etc.
 
--Scrivi in <b>Assistenza</b> per <i>personalizzare la tua esperienza</i> in base alle tue preferenze e obiettivi
+-Scrivi a <b>@teamlot</b> per <i>personalizzare la tua esperienza</i> in base alle tue preferenze e obiettivi
 
 <b>La tua prova gratuita per l'abbonamento <b>{1}</b> scadrà il {2}</b>
 
 Versione 1.00"""
-WELCOME_MESSAGE_v2 = """<i><b>Ciao!</b> {0} 👋
+WELCOME_MESSAGE_v2 = """<i><b>Ciao {0}! </b></i>👋
+
+Tramite questo bot riceverai <b>eventi analizzati</b> dal nostro team di analisti su vari sport e <b>molto altro.</b>
+Se premi il pulsante in basso ti verranno inviati gli <b>eventi</b> che potrebbero essere ancora in corso!
+
+Per qualsiasi dubbio o richiesta contattaci su @teamlot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>"""
+
+"""<i><b>Ciao {0}! </b>👋
 Io sono <b>SportSignalsBoT</b> il tuo strumento di supporto nel betting!  
  
 Grazie alle mie funzioni potrai: </i> 
@@ -168,18 +175,19 @@ Grazie alle mie funzioni potrai: </i>
  
 Premi <b>avanti</b> quando sei pronto, sarò qui ad aspettarti ✌️"""
 
+
 # {0}: valid ref code
 SUCC_REFERRED_USER_MESSAGE = "Il tuo account è stato collegato con successo tramite il codice {0}!"
 
 # {0}: invalid ref code
 NO_REFERRED_USER_FOUND_MESSAGE = """Purtroppo non siamo riusciti a trovare nessun utente collegato al codice referral {0}.
-Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> e riporta il problema nella chat."""
+Contattaci su @teamlot e riporta il problema nella chat."""
 
 
 SUCC_TEACHERBET_TRIAL_MESSAGE = "Il tuo account ha ottenuto 3 giorni di prova gratuita per l'abbonamento Teacherbet!"
 ALREADY_USED_TEACHERBET_TRIAL_MESSAGE = "Il tuo account non può più utilizzare la prova gratuita per l'abbonamento Teacherbet."
 FAILED_TEACHERBET_TRIAL_MESSAGE = """Purtroppo non siamo riusciti ad attivare la prova gratuita di Teacherbet.
-Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> e riporta il problema nella chat."""
+Contattaci su @teamlot e riporta il problema nella chat."""
 
 
 # {0}: user id
@@ -233,7 +241,7 @@ INSTAGRAMFREE_EXPL_TEXT = """Raccolta di eventi gratuiti pubblicati su Instagram
 MULTIPLA_EXPL_TEXT = """Multipla di qualsiasi capienza e quota con moltiplicatori alti"""
 SOFAR_EXPL_TEXT = """Eventi di lunga durata (settimane/mesi) come vincitori di tornei e competizioni"""
 
-PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate <i>(puoi avere la personalizzazione degli stake scrivendo all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a>)</i>"""
+PRODUZIONE_EXPL_TEXT = """La strategia base di LoT per ogni sport con analisi ed esposizioni mirate <i>(puoi avere la personalizzazione degli stake scrivendo su @teamlot)</i>"""
 LIVE_EXPL_TEXT = """ Solo eventi Live o che iniziano nei prossimi 15 minuti, in generale di tipo Singola"""
 EXTRA_EXPL_TEXT = """Tutte le analisi che non rientrano nelle altre strategie, generalmente eventi più rischiosi che vanno gestiti con una minima quota del capitale <i>(10%/mese al massimo!)</i> """
 TEST_EXPL_TEXT = """Utilizzata dal team per testare nuove strategie, analisi, parametri etc."""
@@ -243,10 +251,10 @@ INFORMAZIONE_EXPL_TEXT = """Tutte le notizie del mondo del gioco d’azzardo dir
 FANTACONSIGLI_EXPL_TEXT = """In collaborazione con <a href="https://www.instagram.com/calciatori_per_sbaglio_">@CalciatoriPerSbaglio</a> i migliori suggerimenti per la tua rosa!""" #TODO inserire link instragram
 FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio!"""
 
-DEFAULT_STRAT_EXPLANATION_TEXT = """Contatta l'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per avere maggiori informazioni su questa strategia!"""
+DEFAULT_STRAT_EXPLANATION_TEXT = """Contattaci su @teamlot per avere maggiori informazioni su questa strategia!"""
 
 # ================================== ERRORS =========================================
 
 ERROR_MESSAGE = """☠️ Abbiamo riscontrato un problema tecnico con il bot ☠️
 
-Invia <i>uno screen</i> di questa chat all'<a href="https://t.me/LegacyOfTipstersBot">Assistenza</a> per mostrarci l'errore, <i>scrivendo brevemente</i> cosa stavi cercando di fare, grazie 🔥"""
+Invia <i>uno screen</i> di questa chat a @teamlot per mostrarci l'errore, <i>scrivendo brevemente</i> cosa stavi cercando di fare, grazie 🔥"""
