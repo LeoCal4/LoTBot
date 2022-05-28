@@ -3,6 +3,7 @@
 import html
 import json
 import traceback
+import datetime
 from typing import List
 
 from lot_bot import config as cfg
@@ -12,11 +13,12 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
-                         user_manager,budget_manager)
+                         user_manager, budget_manager)
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users
+from lot_bot.models import subscriptions as subs_model
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -326,6 +328,16 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
     )
     # * update the budget of all the user's who accepted the giocata
     # users.update_users_budget_with_giocata(updated_giocata)
+
+
+def checklist_completed_handler(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    days_update_results = users.add_days_to_user_subscription(user_id, 2)
+    days_update_message = "Complimenti! Hai completato tutti gli obiettivi, il tuo abbonamento è stato esteso di 2 giorni"
+    if not days_update_results:
+        days_update_message = "ATTENZIONE: hai completato tutti gli obiettivi, ma è stato riscontrato un errore con l'estensione del tuo abbonamento. Contatta l'<a href='https://t.me/teamlot'>Assistenza</a>."
+    context.bot.send_message(user_id, days_update_message)
+
 
 
 def unrecognized_message(update: Update, _):
