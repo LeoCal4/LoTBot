@@ -24,20 +24,12 @@ _base_strategies = [
     strats.EXTRA,
     strats.TEST
 ]
-#now unused
-'''_adv_strategies = [
-    strats.SINGOLALOW,
-    strats.SINGOLAHIGH,
-    strats.MULTIPLALIGHT, 
-    strats.RADDOPPIO, 
-    strats.SPECIALI,
-    strats.LIVE,
-    strats.TEST
-]'''
+
 _analisi_miste_strategies = [
     strats.FREEBET, 
     strats.COMMUNITYBET, 
 ]
+
 _news_strategies = [
     strats.INFORMAZIONE,
     strats.FANTACONSIGLI,
@@ -58,7 +50,6 @@ class SportsContainer:
     #PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
-    #TEACHERBET : Sport = Sport("teacherbet", [strats.TEACHERBETLUXURY], display_name="Teacherbet", outcome_percentage_in_resoconto=False, show_in_menu=False)
     ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
     NEWS : Sport = Sport("news", _news_strategies, display_name="News") 
 

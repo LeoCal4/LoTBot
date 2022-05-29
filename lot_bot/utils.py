@@ -8,6 +8,7 @@ from lot_bot import logger as lgr
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
+from lot_bot.dao import analytics_manager
 from lot_bot import constants as cst
 
 
@@ -203,3 +204,15 @@ def create_strategies_explanation_message(sport: spr.Sport) -> str:
         message += f"\n\n- <b>{strategy.display_name}</b>: {strategy.explanation}"
     return message
     
+
+def create_checklist_completion_message(chat_id: int) -> str:
+    checklist_info = analytics_manager.retrieve_checklist_information_by_user_id(chat_id)
+    if checklist_info["has_completed_checklist"]:
+        return ""
+    #* extend message with checklist
+    budget_check = "✅" if bool(checklist_info["has_modified_budget"]) else "❌"
+    event_registered_check = "✅" if bool(checklist_info["accepted_giocate"]) else "❌"
+    referral_check = "✅" if bool(checklist_info["has_modified_referral"]) else "❌"
+    return "\n" + cst.TUTORIAL_CHECKLIST.format(
+        budget_check=budget_check, event_check=event_registered_check, referral_check=referral_check
+    )

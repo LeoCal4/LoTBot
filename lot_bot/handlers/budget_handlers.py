@@ -5,7 +5,8 @@ from lot_bot import logger as lgr
 from lot_bot import constants as cst
 from lot_bot import config as cfg
 from lot_bot import utils
-from lot_bot.dao import user_manager, budget_manager
+from lot_bot.dao import user_manager, budget_manager, analytics_manager
+from lot_bot.handlers import message_handlers
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler
 from telegram.ext.dispatcher import CallbackContext
@@ -119,10 +120,8 @@ def received_interest_type_for_new_budget(update: Update, context: CallbackConte
     return SET_BUDGET_BALANCE
 
 def received_balance_for_budget(update: Update, context: CallbackContext) -> int:
-    '''
-    This function can be used to set the balance for a new budget, that will be created here
-    or to update the balance of an existing budget.
-    '''
+    '''This function can be used to set the balance for a new budget, that will be created here
+    or to update the balance of an existing budget.'''
     chat_id = update.effective_user.id
     # * check if the budget is valid and get the eventual error
     invalid_budget = False
@@ -171,6 +170,12 @@ def received_balance_for_budget(update: Update, context: CallbackContext) -> int
         add_budget_result = budget_manager.add_new_budget(chat_id,budget_data) 
         if add_budget_result:
             lgr.logger.debug(f"Budget added - {str(budget_data)} for {chat_id}")
+        #* update analtics and check checklist completion
+        analytics_update = analytics_manager.update_analytics(chat_id, {"has_modified_budget": True})
+        if not analytics_update:
+            lgr.logger.warning(f"Could not update analytics with modified budget")
+        if analytics_manager.check_checklist_completion(chat_id):
+            message_handlers.checklist_completed_handler(update, context)
         # * send success message
         message_text = f"Budget creato con successo:\n<b>{budget_name} - {new_budget_balance:.2f}€</b>!"
         update.message.reply_text(

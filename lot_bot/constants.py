@@ -18,9 +18,9 @@ ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral 
 
 
 UPDATE_PERSONAL_REFERRAL_CODE_TEXT = """Il tuo codice di referral attuale è <b>{0}</b>.
-<b>Invia un messaggio</b> con il codice che vorresti avere oppure premi il bottone sottostante per procedere ! ✌️
+<b>Invia un messaggio</b> con il codice che vorresti avere oppure premi il bottone sottostante per tornare indietro! ✌️
 
-<b>ATTENZIONE:</b> per essere valido il nuovo codice deve contenere solo lettere o numeri. Verrà aggiunto in automatico a fine codice "-lot" """ 
+<b>ATTENZIONE:</b> per essere valido il nuovo codice deve contenere solo lettere e/o numeri. Alla fine codice verrà aggiunto in automatico "-lot" se non è già presente.""" 
 
 
 SUCCESSFUL_PAYMENT_TEXT = """Grazie per il tuo acquisto!
@@ -175,6 +175,14 @@ Grazie alle mie funzioni potrai: </i>
  
 Premi <b>avanti</b> quando sei pronto, sarò qui ad aspettarti ✌️"""
 
+NO_GIOCATA_TO_SEND_ON_FIRST_USAGE = """<b>Attualmente non ci sono eventi da visualizzare.</b>
+Ti verranno inviati non appena disponibili, promesso ✌️
+
+Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
+
+<i>PS: hai già dato un'occhiata al nostro sistema di referall?  
+<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍"""
+
 
 # {0}: valid ref code
 SUCC_REFERRED_USER_MESSAGE = "Il tuo account è stato collegato con successo tramite il codice {0}!"
@@ -219,11 +227,13 @@ FIRST_BUDGET_NAME = "Primo budget"
 
 # ================================== TUTORIAL CHECKLIST ==========================================
 # spots needs to be filled with the relative emoji (✅ or ❌)
-TUTORIAL_CHECKLIST = """Completa i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
-✅ Avvio del bot
+TUTORIAL_CHECKLIST = """\nCompleta i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
+✅ Avvia il bot
 {budget_check} Imposta il budget
 {event_check} Registra un evento
 {referral_check} Personalizza il codice referral"""
+
+CHECKLIST_COMPLETED =  "💥 <b>Complimenti!</b> 💥\nHai completato tutti gli obiettivi, il tuo abbonamento è stato esteso di 2 giorni! 🚀"
 
 # ================================== STRATEGIES EXPLANATION ========================================= 
 

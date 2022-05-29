@@ -123,7 +123,7 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     )
 
 
-def to_homepage(update: Update, context: CallbackContext):
+def to_homepage(update: Update, context: CallbackContext, send_new_message: bool = False, delete_last_message: bool = True):
     """Loads the homepage of the bot.
     If the last message sent has a text field, it directly modifies that message, 
     otherwise it sends another one.
@@ -135,12 +135,12 @@ def to_homepage(update: Update, context: CallbackContext):
     """
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    # check if user completed tutorial
-    # if not, extend message with checklist
-    # homepage_message += "\n" + cst.TUTORIAL_CHECKLIST.format()
-    if hasattr(update.callback_query.message, "text") and update.callback_query.message.text:
+    homepage_message = cst.HOMEPAGE_MESSAGE
+    #* check if user completed tutorial
+    homepage_message += utils.create_checklist_completion_message(chat_id)
+    if hasattr(update.callback_query.message, "text") and update.callback_query.message.text and not send_new_message:
         context.bot.edit_message_text(
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             chat_id=chat_id,
             disable_web_page_preview=True,
             message_id=message_id,
@@ -148,10 +148,11 @@ def to_homepage(update: Update, context: CallbackContext):
             parse_mode="HTML"
         )
     else:
-        delete_message_if_possible(update, context)
+        if delete_last_message:
+            delete_message_if_possible(update, context)
         context.bot.send_message(
             chat_id,
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
@@ -160,8 +161,11 @@ def to_homepage(update: Update, context: CallbackContext):
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
+    menu_message = cst.BOT_CONFIG_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text = cst.BOT_CONFIG_MENU_MESSAGE,
+        text = menu_message,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
@@ -171,8 +175,11 @@ def to_bot_config_menu(update: Update, context: CallbackContext):
 def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
+    menu_message = cst.PAY_AND_REF_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text=cst.PAY_AND_REF_MENU_MESSAGE,
+        text=menu_message,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
@@ -180,9 +187,13 @@ def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     )
 
 def to_use_guide_menu(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    menu_message = cst.USE_GUIDE_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text=cst.USE_GUIDE_MENU_MESSAGE,
-        chat_id=update.callback_query.message.chat_id,
+        text=menu_message,
+        chat_id=chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
@@ -443,7 +454,9 @@ def accept_register_giocata(update: Update, context: CallbackContext):
             if not update_result:
                 context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
     #* update analtics and check checklist completion
-    analytics_manager.update_accepted_giocate(user_chat_id, retrieved_giocata["_id"])
+    analytics_update = analytics_manager.update_accepted_giocate(user_chat_id, retrieved_giocata["_id"])
+    if not analytics_update:
+        lgr.logger.warning(f"Could not update analytics with accepted giocata {retrieved_giocata['_id']}")
     if analytics_manager.check_checklist_completion(user_chat_id):
         message_handlers.checklist_completed_handler(update, context)
     #* complete operation editing the giocata message
@@ -590,30 +603,18 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
             resoconto_message,
         )
 
-#actually 10h
-def sends_last_giocate_24h(update: Update, context: CallbackContext):
+def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
     lgr.logger.debug("Sending last 5 giocate in last 10h")
     chat_id = update.callback_query.message.chat_id
-    last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp())
-    lgr.logger.debug(f"{last_giocate=}")
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(
+        datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp()
+    )
+    lgr.logger.debug(f"{latest_giocate=}")
 
-    '''update_results = user_manager.update_user(chat_id,{"role":"user"})
-    if not update_results:
-        user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["name","username"])
-        name, username = user_data["name"], user_data["username"]
-        dev_message = f"ERRORE nella registrazione dell'utente\n{chat_id} - {name} - @{username}."
-        message_handlers.send_messages_to_developers(context, [dev_message])'''
-
-    if not last_giocate:
+    if not latest_giocate:
         context.bot.send_message(
             chat_id, 
-            text="""<b>Attualmente non ci sono eventi da visualizzare.</b>
-Ti verranno inviati non appena disponibili, promesso ✌️
-
-Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
-
-<i>PS: hai già dato un'occhiata al nostro sistema di referall?  
-<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍""", 
+            text=cst.NO_GIOCATA_TO_SEND_ON_FIRST_USAGE, 
             disable_web_page_preview=True,
             parse_mode ="HTML",
             reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
@@ -626,11 +627,10 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
         parse_mode="HTML"
     )
     sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
-    for i, giocata in enumerate(last_giocate):
+    for i, giocata in enumerate(latest_giocate):
         if i > 0:
-            return
+            break
         if giocata["sport"] in sport_validi:
-            original_text = giocata["raw_text"]
             text = giocata["raw_text"]
  
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
@@ -651,27 +651,24 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
                     chat_id, 
                     text, 
                     reply_markup=custom_reply_markup)
-            # * check if the user has blocked the bot
-            except Unauthorized:
-                lgr.logger.warning(f"Could not send message: user {chat_id} blocked the bot")
-                messages_to_be_sent -= 1
             except Exception as e:
                 lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
-        
-        context.bot.send_message(
-            chat_id,
-            cst.HOMEPAGE_MESSAGE,
-            disable_web_page_preview=True,
-            reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="HTML"
-        )
+
+    to_homepage(update, context, send_new_message=True, delete_last_message=False)
+    # context.bot.send_message(
+    #     chat_id,
+    #     cst.HOMEPAGE_MESSAGE,
+    #     disable_web_page_preview=True,
+    #     reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+    #     parse_mode="HTML"
+    # )
 
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     #consulente = random.choice(["@Pentium077","@massi_grim"])
     update.callback_query.edit_message_reply_markup(reply_markup = None)
-    sends_last_giocate_24h(update,context)
+    send_latest_giocate_to_new_user(update,context)
     #Creating user subscription
     free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     #if not teacherbet_code:
@@ -698,6 +695,7 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     # * avoid sending again the same type of resoconto
     if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
         return
+    # TODO add analyitics with type and timestamp
     # context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
     _create_and_send_resoconto(context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
 

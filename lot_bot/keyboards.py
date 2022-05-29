@@ -313,7 +313,7 @@ def create_budgets_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
         keyboard_budget.append([budget_keyboard_button])
     if not budget_names: # user can create a budget only if there isn't one
         keyboard_budget.append([InlineKeyboardButton(text=f"Aggiungi budget", callback_data= "create_new_budget"),InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
-    keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])
+    keyboard_budget.append([InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_bot_config_menu")])
     return InlineKeyboardMarkup(inline_keyboard=keyboard_budget)
 
 def create_edit_budget_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
