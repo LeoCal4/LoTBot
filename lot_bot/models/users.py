@@ -87,6 +87,42 @@ def extend_expiration_date(expiration_date_timestamp: float, giorni_aggiuntivi: 
     return (datetime.datetime.utcfromtimestamp(base_timestamp) + relativedelta(days=giorni_aggiuntivi)).timestamp()
 
 
+def add_days_to_user_subscription(user_id: int, days: int) -> bool:
+    """Extends the main Lot subscription for the user_id by the specified days.
+
+    Args:
+        user_id (int)
+        days (int)
+
+    Returns:
+        bool: _description_
+    """
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions"])
+    # extend subscription of 2 month
+    retrieved_user_subs = retrieved_user["subscriptions"]
+    user_subs_names = [entry["name"] for entry in retrieved_user_subs]
+    lot_sub_name = subs.sub_container.LOTCOMPLETE.name
+    if lot_sub_name not in user_subs_names:
+        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=days)).timestamp()
+        retrieved_user_subs.append({"name": lot_sub_name, "expiration_date": new_expiration_date})
+    else:
+        base_exp_date = [entry["expiration_date"] for entry in retrieved_user_subs if entry["name"] == lot_sub_name][0]
+        new_expiration_date: float = extend_expiration_date(base_exp_date, days)
+        for sub_entry in retrieved_user_subs:
+            if sub_entry["name"] == lot_sub_name:
+                sub_entry["expiration_date"] = new_expiration_date
+                break
+    # * reset user successful referrals
+    user_data = {
+        "subscriptions": retrieved_user_subs,
+    }
+    try:
+        user_update_result = user_manager.update_user(user_id, user_data)
+    except:
+        user_update_result = False
+    return user_update_result
+
+
 def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personalized_stake: int = None) -> int:
     """[summary]
 

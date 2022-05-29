@@ -5,7 +5,7 @@ from lot_bot import constants as cst
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
-from lot_bot.dao import user_manager
+from lot_bot.dao import user_manager, analytics_manager
 from lot_bot.handlers import callback_handlers, message_handlers
 from telegram import Update
 from telegram.ext.conversationhandler import ConversationHandler
@@ -112,6 +112,10 @@ def received_personal_referral(update: Update, context: CallbackContext) -> int:
         return UPDATE_PERSONAL_REFERRAL
     # * update user referral code
     user_manager.update_user(chat_id, {"referral_code": new_ref_code})
+    #* update analtics and check checklist completion
+    analytics_manager.update_analytics(chat_id, {"has_modified_referral": True})
+    if analytics_manager.check_checklist_completion(chat_id):
+        message_handlers.checklist_completed_handler(update, context)
     lgr.logger.debug(f"Correctly updated referral code {new_ref_code} for user {chat_id}")
     # * send success message
     message_text = f"Codice di referral aggiornato con successo in <b>{new_ref_code}</b>!\n\n"

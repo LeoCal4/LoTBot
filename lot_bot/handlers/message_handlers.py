@@ -3,6 +3,7 @@
 import html
 import json
 import traceback
+import datetime
 from typing import List
 
 from lot_bot import config as cfg
@@ -12,11 +13,12 @@ from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
-                         user_manager,budget_manager)
+                         user_manager, budget_manager)
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
 from lot_bot.models import strategies as strat
 from lot_bot.models import users
+from lot_bot.models import subscriptions as subs_model
 from telegram import ParseMode, Update
 from telegram.error import Unauthorized
 from telegram.ext.dispatcher import CallbackContext
@@ -128,9 +130,12 @@ def send_message_to_all_subscribers(update: Update, context: CallbackContext, or
 
 
 def homepage_handler(update: Update, context: CallbackContext):
+    homepage_message = cst.HOMEPAGE_MESSAGE
+    #* check if user completed tutorial
+    homepage_message += utils.create_checklist_completion_message(update.effective_user.id)
     try:
         update.message.reply_text(
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
@@ -138,7 +143,7 @@ def homepage_handler(update: Update, context: CallbackContext):
     except AttributeError: # * this happens when the homepage handler is called by a method with no "message" field in the update
         context.bot.send_message(
             update.effective_user.id,
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
@@ -146,15 +151,21 @@ def homepage_handler(update: Update, context: CallbackContext):
 
 
 def bot_configuration_handler(update: Update, _: CallbackContext):
+    bot_config_message = cst.BOT_CONFIG_MENU_MESSAGE
+    #* check if user completed tutorial
+    bot_config_message += utils.create_checklist_completion_message(update.effective_user.id)
     update.message.reply_text(
-        cst.BOT_CONFIG_MENU_MESSAGE,
+        bot_config_message,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
 
 def payment_and_referrals_handler(update: Update, _: CallbackContext):
+    menu_message = cst.PAY_AND_REF_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(update.effective_user.id)
     update.message.reply_text(
-        cst.PAY_AND_REF_MENU_MESSAGE,
+        menu_message,
         reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
         parse_mode="HTML"
     )
@@ -168,8 +179,11 @@ def experience_settings_handler(update: Update, _: CallbackContext):
 
 def use_guide_handler(update: Update, _: CallbackContext):
     lgr.logger.debug("in use guide handler")
+    menu_message = cst.USE_GUIDE_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(update.effective_user.id)
     update.message.reply_text(
-        cst.USE_GUIDE_MENU_MESSAGE,
+        menu_message,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
     )
@@ -326,6 +340,20 @@ def exchange_cashout_handler(update: Update, context: CallbackContext):
     )
     # * update the budget of all the user's who accepted the giocata
     # users.update_users_budget_with_giocata(updated_giocata)
+
+
+def checklist_completed_handler(update: Update, context: CallbackContext):
+    user_id = update.effective_user.id
+    days_update_results = users.add_days_to_user_subscription(user_id, 2)
+    days_update_message = cst.CHECKLIST_COMPLETED
+    if not days_update_results:
+        days_update_message = "ATTENZIONE: hai completato tutti gli obiettivi, ma è stato riscontrato un errore con l'estensione del tuo abbonamento. Contatta l'<a href='https://t.me/teamlot'>Assistenza</a>."
+    context.bot.send_message(
+        user_id, 
+        days_update_message,
+        parse_mode="HTML"
+    )
+
 
 
 def unrecognized_message(update: Update, _):

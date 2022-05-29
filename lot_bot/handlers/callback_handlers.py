@@ -10,7 +10,7 @@ from lot_bot import logger as lgr
 from lot_bot import database as db
 from lot_bot import utils
 from lot_bot.dao import (giocate_manager, sport_subscriptions_manager,
-                         user_manager, budget_manager)
+                         user_manager, budget_manager, analytics_manager)
 from lot_bot.models import users
 from lot_bot.models import giocate as giocata_model
 from lot_bot.models import sports as spr
@@ -123,7 +123,7 @@ def set_sport_strategy_state(update: Update, context: CallbackContext):
     )
 
 
-def to_homepage(update: Update, context: CallbackContext):
+def to_homepage(update: Update, context: CallbackContext, send_new_message: bool = False, delete_last_message: bool = True):
     """Loads the homepage of the bot.
     If the last message sent has a text field, it directly modifies that message, 
     otherwise it sends another one.
@@ -135,9 +135,12 @@ def to_homepage(update: Update, context: CallbackContext):
     """
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    if hasattr(update.callback_query.message, "text") and update.callback_query.message.text:
+    homepage_message = cst.HOMEPAGE_MESSAGE
+    #* check if user completed tutorial
+    homepage_message += utils.create_checklist_completion_message(chat_id)
+    if hasattr(update.callback_query.message, "text") and update.callback_query.message.text and not send_new_message:
         context.bot.edit_message_text(
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             chat_id=chat_id,
             disable_web_page_preview=True,
             message_id=message_id,
@@ -145,10 +148,11 @@ def to_homepage(update: Update, context: CallbackContext):
             parse_mode="HTML"
         )
     else:
-        delete_message_if_possible(update, context)
+        if delete_last_message:
+            delete_message_if_possible(update, context)
         context.bot.send_message(
             chat_id,
-            cst.HOMEPAGE_MESSAGE,
+            homepage_message,
             disable_web_page_preview=True,
             reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
             parse_mode="HTML"
@@ -157,8 +161,11 @@ def to_homepage(update: Update, context: CallbackContext):
 def to_bot_config_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
+    menu_message = cst.BOT_CONFIG_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text = cst.BOT_CONFIG_MENU_MESSAGE,
+        text = menu_message,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.BOT_CONFIGURATION_INLINE_KEYBOARD,
@@ -168,8 +175,11 @@ def to_bot_config_menu(update: Update, context: CallbackContext):
 def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
+    menu_message = cst.PAY_AND_REF_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text=cst.PAY_AND_REF_MENU_MESSAGE,
+        text=menu_message,
         chat_id=chat_id,
         message_id=message_id,
         reply_markup=kyb.PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD,
@@ -177,9 +187,13 @@ def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     )
 
 def to_use_guide_menu(update: Update, context: CallbackContext):
+    chat_id = update.callback_query.message.chat_id
+    menu_message = cst.USE_GUIDE_MENU_MESSAGE
+    #* check if user completed tutorial
+    menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
-        text=cst.USE_GUIDE_MENU_MESSAGE,
-        chat_id=update.callback_query.message.chat_id,
+        text=menu_message,
+        chat_id=chat_id,
         message_id=update.callback_query.message.message_id,
         reply_markup=kyb.USE_GUIDE_MENU_KEYBOARD,
         parse_mode="HTML"
@@ -439,6 +453,13 @@ def accept_register_giocata(update: Update, context: CallbackContext):
             update_result = users.update_single_user_budget_with_giocata2(user_chat_id, default_budget_balance, personal_user_giocata["original_id"], retrieved_giocata)
             if not update_result:
                 context.bot.send_message(user_chat_id, "ERRORE: impossibile aggiornare il budget, la giocata non è stata trovata")
+    #* update analtics and check checklist completion
+    analytics_update = analytics_manager.update_accepted_giocate(user_chat_id, retrieved_giocata["_id"])
+    if not analytics_update:
+        lgr.logger.warning(f"Could not update analytics with accepted giocata {retrieved_giocata['_id']}")
+    if analytics_manager.check_checklist_completion(user_chat_id):
+        message_handlers.checklist_completed_handler(update, context)
+    #* complete operation editing the giocata message
     try:                      
         context.bot.edit_message_text(
             updated_giocata_text,
@@ -459,9 +480,20 @@ def refuse_register_giocata(update: Update, context: CallbackContext):
         update (Update): [description]
         context (CallbackContext): [description]
     """
+    user_chat_id = update.callback_query.message.chat_id
     giocata_text = update.callback_query.message.text
     giocata_text_without_answer_row = "\n".join(giocata_text.split("\n")[:-1])
     updated_giocata_text = giocata_text_without_answer_row + "\n🟥 Operazione non effettuata 🟥"
+    #* retrieve giocata id
+    parsed_giocata = giocata_model.parse_giocata(giocata_text, message_sent_timestamp=update.callback_query.message.date)
+    retrieved_giocata = giocate_manager.retrieve_giocata_by_num_and_sport(parsed_giocata["giocata_num"], parsed_giocata["sport"])
+    if not retrieved_giocata:
+        lgr.logger.error(f"Cannot retrieve giocata upon giocata acceptation - {parsed_giocata['giocata_num']=} {parsed_giocata['sport']=}")
+        raise Exception("Cannot retrieve giocata upon giocata acceptation")
+    #* update analtics and check checklist completion
+    analytics_manager.update_refused_giocate(user_chat_id, retrieved_giocata["_id"])
+    if analytics_manager.check_checklist_completion(user_chat_id):
+        message_handlers.checklist_completed_handler(update, context)
     try:
         context.bot.edit_message_text(
             updated_giocata_text,
@@ -571,30 +603,18 @@ def _create_and_send_resoconto(context: CallbackContext, chat_id: int, giocate_s
             resoconto_message,
         )
 
-#actually 10h
-def sends_last_giocate_24h(update: Update, context: CallbackContext):
+def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
     lgr.logger.debug("Sending last 5 giocate in last 10h")
     chat_id = update.callback_query.message.chat_id
-    last_giocate = giocate_manager.retrieve_giocate_between_timestamps(datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp())
-    lgr.logger.debug(f"{last_giocate=}")
+    latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(
+        datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp()
+    )
+    lgr.logger.debug(f"{latest_giocate=}")
 
-    '''update_results = user_manager.update_user(chat_id,{"role":"user"})
-    if not update_results:
-        user_data = user_manager.retrieve_user_fields_by_user_id(chat_id,["name","username"])
-        name, username = user_data["name"], user_data["username"]
-        dev_message = f"ERRORE nella registrazione dell'utente\n{chat_id} - {name} - @{username}."
-        message_handlers.send_messages_to_developers(context, [dev_message])'''
-
-    if not last_giocate:
+    if not latest_giocate:
         context.bot.send_message(
             chat_id, 
-            text="""<b>Attualmente non ci sono eventi da visualizzare.</b>
-Ti verranno inviati non appena disponibili, promesso ✌️
-
-Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
-
-<i>PS: hai già dato un'occhiata al nostro sistema di referall?  
-<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍""", 
+            text=cst.NO_GIOCATA_TO_SEND_ON_FIRST_USAGE, 
             disable_web_page_preview=True,
             parse_mode ="HTML",
             reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
@@ -607,11 +627,10 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
         parse_mode="HTML"
     )
     sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
-    for i, giocata in enumerate(last_giocate):
+    for i, giocata in enumerate(latest_giocate):
         if i > 0:
-            return
+            break
         if giocata["sport"] in sport_validi:
-            original_text = giocata["raw_text"]
             text = giocata["raw_text"]
  
             custom_reply_markup = kyb.REGISTER_GIOCATA_KEYBOARD
@@ -632,27 +651,24 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
                     chat_id, 
                     text, 
                     reply_markup=custom_reply_markup)
-            # * check if the user has blocked the bot
-            except Unauthorized:
-                lgr.logger.warning(f"Could not send message: user {chat_id} blocked the bot")
-                messages_to_be_sent -= 1
             except Exception as e:
                 lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
-        
-        context.bot.send_message(
-            chat_id,
-            cst.HOMEPAGE_MESSAGE,
-            disable_web_page_preview=True,
-            reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
-            parse_mode="HTML"
-        )
+
+    to_homepage(update, context, send_new_message=True, delete_last_message=False)
+    # context.bot.send_message(
+    #     chat_id,
+    #     cst.HOMEPAGE_MESSAGE,
+    #     disable_web_page_preview=True,
+    #     reply_markup=kyb.HOMEPAGE_INLINE_KEYBOARD,
+    #     parse_mode="HTML"
+    # )
 
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     #consulente = random.choice(["@Pentium077","@massi_grim"])
     update.callback_query.edit_message_reply_markup(reply_markup = None)
-    sends_last_giocate_24h(update,context)
+    send_latest_giocate_to_new_user(update,context)
     #Creating user subscription
     free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     #if not teacherbet_code:
@@ -679,6 +695,7 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
     # * avoid sending again the same type of resoconto
     if resoconto_message_header.strip().lower() in last_message_text.split("\n")[0].strip().lower():
         return
+    # TODO add analyitics with type and timestamp
     # context.dispatcher.run_async(_create_and_send_resoconto, context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
     _create_and_send_resoconto(context, chat_id, giocate_since_timestamp, resoconto_message_header, message_id=message_id)
 
@@ -686,33 +703,19 @@ def send_resoconto_since_timestamp(update: Update, context: CallbackContext, gio
 def get_free_month_subscription(update: Update, context: CallbackContext):
     # extend subscription of 1 month
     user_id = update.effective_user.id
-    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["subscriptions", "successful_referrals_since_last_payment", "referral_code"])
-    # check if the user actually has 10 refs
-    retrieved_user_subs = retrieved_user["subscriptions"]
-    user_subs_name = [entry["name"] for entry in retrieved_user_subs]
-    lot_sub_name = subs_model.sub_container.LOTCOMPLETE.name
-    if lot_sub_name not in user_subs_name:
-        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).timestamp()
-        retrieved_user_subs.append({"name": lot_sub_name, "expiration_date": new_expiration_date})
-    else:
-        base_exp_date = [entry["expiration_date"] for entry in retrieved_user_subs if entry["name"] == lot_sub_name][0]
-        new_expiration_date: float = users.extend_expiration_date(base_exp_date, 30)
-        for sub_entry in retrieved_user_subs:
-            if sub_entry["name"] == lot_sub_name:
-                sub_entry["expiration_date"] = new_expiration_date
-                break
+    user_update_result = users.add_days_to_user_subscription(user_id, 30)
+    if not user_update_result:
+        lgr.logger.warning(f"Could not extend user {user_id}'s sub by 30 days")
+    retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["successful_referrals_since_last_payment", "referral_code"])
     # * reset user successful referrals
-    user_data = {
-        "subscriptions": retrieved_user_subs,
-        "successful_referrals_since_last_payment": [],
-    }
+    user_data = {"successful_referrals_since_last_payment": []}
     try:
-        user_update_result = user_manager.update_user(user_id, user_data)
+        user_update_result = user_manager.update_user(user_id, user_data) and user_update_result
     except:
         user_update_result = False
     free_sub_message = "Mese gratuito riscattato con successo!"
     if not user_update_result:
-        lgr.logger.error(f"Could not update data after payment for user {user_id} - {user_data=}")
+        lgr.logger.error(f"Could not add free month for user {user_id}")
         free_sub_message = "ERRORE: impossibile riscattare il mese gratuito, contattaci su @teamlot"
     free_sub_message += "\n\n" + utils.create_personal_referral_updated_text(retrieved_user["referral_code"], 0)
     context.bot.edit_message_text(

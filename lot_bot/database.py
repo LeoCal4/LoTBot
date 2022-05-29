@@ -30,6 +30,7 @@ class MongoDatabase:
         self.giocate = db["giocate"]
         # ensures the uniqueness of the giocata_num together with sport
         self.giocate.create_index([("giocata_num", 1), ("sport", 1)], unique=True)
+        self.analytics = db["analytics"]
 
 
 def create_db():
