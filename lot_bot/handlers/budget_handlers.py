@@ -503,11 +503,6 @@ PS: potrai modificarlo in un secondo momento! </i>
  
 Quando vuoi <b>invia</b> il tuo budget (es: scrivi "87,25" senza virgolette)👇👇"""
 
-    context.bot.send_message(
-    chat_id = 149015368, 
-    text= f"L'utente con id: {chat_id} ha premuto su 'Avanti' dopo il messaggio di benvenuto"
-)
-
     update.effective_message.reply_text(
     reply_text,
     parse_mode="HTML"
