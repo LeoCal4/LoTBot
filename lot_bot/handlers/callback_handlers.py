@@ -654,7 +654,6 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
             except Exception as e:
                 lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
 
-    to_homepage(update, context, send_new_message=True, delete_last_message=False)
     # context.bot.send_message(
     #     chat_id,
     #     cst.HOMEPAGE_MESSAGE,
@@ -666,7 +665,6 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
 def send_socials_list(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
-    #consulente = random.choice(["@Pentium077","@massi_grim"])
     update.callback_query.edit_message_reply_markup(reply_markup = None)
     send_latest_giocate_to_new_user(update,context)
     #Creating user subscription
@@ -680,6 +678,7 @@ def send_socials_list(update: Update, context: CallbackContext):
     db.mongo.utenti.update_one({ "_id": chat_id }, { "$set": { "subscriptions": subscriptions } } )
     #user_data["subscriptions"].append(sub)
     #user_data["subscriptions"].append(free_sub)
+    to_homepage(update, context, send_new_message=True, delete_last_message=False)
 
 def send_resoconto_since_timestamp(update: Update, context: CallbackContext, giocate_since_timestamp: float, resoconto_message_header: str):
     """[summary]

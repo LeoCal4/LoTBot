@@ -59,7 +59,7 @@ def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
     """Retrieves users' IDs.
 
     Args:
-        _type: can be "not_blocked","expired","active",activated_from","expires_in","new_users"
+        _type: can be "not_blocked","expired","active",activated_from","expires_in"
 
     Raises:
         e: in case of db errors
@@ -79,8 +79,6 @@ def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
         if _type == "activated_from":
             date = (datetime.datetime.utcnow() - relativedelta(days=days)).timestamp()
             results = db.mongo.utenti.find({"blocked": False, "first_access_timestamp" : {"$gt": date}}, {"_id": 1})
-        if _type == "new_users":
-            results = db.mongo.utenti.find({"role": "new_user"}, {"_id": 1})
         if not results:
             return []
         return [entry["_id"] for entry in results]

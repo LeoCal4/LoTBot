@@ -200,15 +200,12 @@ def start_command(update: Update, context: CallbackContext):
             teacherbet_code = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     # * check if the user exists
-    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions","role"])
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions","role","linked_referral_user"])
     if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
         return
     # * existing user wants to link a referral code
-    elif user_data["role"] == "new_user":
-        lgr.logger.debug(f"received start command from a new_user")
-        return
     elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:
         existing_user_linking_ref_code_handler(update, user_id, ref_code)
     # * existing user wants to activate teacherbet trial
@@ -901,31 +898,6 @@ L'utente risulta """
     #stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
     update.effective_message.reply_text(user_info_text, parse_mode="HTML")
 
-def activate_all_users(update: Update, context: CallbackContext):
-    """Sends a message containing target user's personalized stakes.
-    
-        /visualizza_stake <username o ID>
-
-    Args:
-        update (Update)
-        context (CallbackContext)
-    """
-    user_id = update.effective_user.id
-    # * check if the user has the permission to use this command
-    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
-        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
-        return
-    # * retrieve all new_users
-    users = user_manager.retrieve_user_ids("new_users")
-    # * check if there are new_users
-    if target_user_data is None:
-        update.effective_message.reply_text("ERRORE: non ci sono nuovi utenti che devono ancora completare l'avvio del bot")
-        return
-    # * set a default budget
-    
-    stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
-    stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
-    update.effective_message.reply_text(stakes_message)
 ############################################ OTHER COMMANDS ############################################
 
 def send_file_id(update: Update, _):
