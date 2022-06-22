@@ -68,7 +68,8 @@ Scegli il tipo di resoconto"""
 
 
 # {0}: user first name
-SERVICE_STATUS_MESSAGE = """Ciao {0} 😊 lo status della tua iscrizione al servizio è il seguente:\n"""
+SERVICE_STATUS_MESSAGE = """Ciao {0} 😊
+Lo status della tua iscrizione è il seguente:\n"""
 
 # {1}: linked referral code
 # {2}: user successful_referrals_since_last_payment
@@ -180,7 +181,7 @@ Ti verranno inviati non appena disponibili, promesso ✌️
 
 Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
 
-<i>PS: hai già dato un'occhiata al nostro sistema di referall?  
+<i>Dai un'occhiata al nostro sistema di referral,
 <b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍"""
 
 

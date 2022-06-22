@@ -123,19 +123,18 @@ def to_payments(update: Update, context: CallbackContext):
     context.bot.send_invoice(
         chat_id, "30 Giorni di SportSignalsBot Premium", """Comprende 30 giorni di servizio premium ovvero:
 
-<b>- Tutte le analisi del team LoT su Calcio, Basket, Tennis ed Exchange ✅️
+- Tutte le analisi del team LoT su Calcio, Basket, Tennis ed Exchange ✅️
 
 - Consulenza per personalizzazione percorso e supporto lungo termine ✅️
 
-- Assistenza Prioritaria h24</b> (anche su whatsapp)<b> ✅️
-
-- Analisi personalizzate in base a preferenze, orari ect. ✅️
+- Assistenza Prioritaria h24 (anche su whatsapp) ✅️""", payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices, 
+        need_email=True, need_name=True, start_parameter="Paga"
+    )
+    extra_text = """- Analisi personalizzate in base a preferenze, orari ect. ✅️
 
 - Accesso anticipato a nuove funzioni e servizi ✅️
 
-- Accesso ad eventi privati, formativi e informativi ✅️</b>""", payload, cfg.config.PAYMENT_TOKEN, CURRENCY, prices,
-        need_email=True, need_name=True, start_parameter="Paga"
-    )
+- Accesso ad eventi privati, formativi e informativi ✅️"""
     return ConversationHandler.END
 
 

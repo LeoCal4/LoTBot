@@ -22,7 +22,7 @@ def retrieve_budgets_from_user_id(user_id: int):
 def retrieve_default_budget_from_user_id(user_id: int) -> Dict:
     try:
         user_budgets = retrieve_budgets_from_user_id(user_id)
-        #user_budgets = utenti.find_one({"_id":149015368, "budgets.default":True },{"budgets":1})["budgets"]
+        #user_budgets = utenti.find_one({"_id":123, "budgets.default":True },{"budgets":1})["budgets"]
         if not user_budgets:
             return {}
         else:

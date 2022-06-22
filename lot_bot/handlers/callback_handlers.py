@@ -239,13 +239,20 @@ def to_service_status(update: Update, context: CallbackContext):
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
     service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
     for sub in user_data["subscriptions"]: 
-        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub["expiration_date"]) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
-        expiration_date_text = "" if sub["expiration_date"] == 9999999999 else f": valido fino a {expiration_date}"
+        sub_exp_date = sub["expiration_date"]
+        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub_exp_date) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        if sub_exp_date == 9999999999:
+            expiration_date_text = " (sempre attivo)"
+        elif float(sub_exp_date) >= update.effective_message.date.timestamp():
+            expiration_date_text = f": valido fino a {expiration_date}"
+        else:
+            expiration_date_text = f": scaduto il {expiration_date}"
+
         sub_name = subs_model.sub_container.get_subscription(sub["name"])
-        sub_emoji = "🟢" if float(sub["expiration_date"]) >= update.effective_message.date.timestamp() else "🔴"
+        sub_emoji = "🟢" if float(sub_exp_date) >= update.effective_message.date.timestamp() else "🔴"
         service_status += f"\n- {sub_emoji} {sub_name.display_name}{expiration_date_text}"
     if "- 🟢 LoT Versione Premium:" in service_status:
-        service_status = service_status.replace("\n- 🟢 LoT Versione Base","")
+        service_status = service_status.replace("\n- 🟢 LoT Versione Base","").replace(" (sempre attivo)","")
     #if "- 🔴 Lot Versione Premium" in service_status:
         #mettere prima versione base in alto e sotto "- 🔴 Lot Versione Premium"
         #magari aggiungendo una frase per far acquistare al cliente il Premium
