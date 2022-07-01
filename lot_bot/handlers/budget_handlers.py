@@ -232,6 +232,12 @@ def edit_budget_name(update: Update, context: CallbackContext):
     budget_name = update.callback_query.data.split("_", 3)[3:][0] # edit_budget_name_<budget_name> -> <budget_name>
     context.user_data["budget_name"] = budget_name #storing the old budget_name that will be modified
     #TODO  forse modificare keyboard
+    #* update analtics and check checklist completion
+    analytics_update = analytics_manager.update_analytics(chat_id, {"has_modified_budget": True})
+    if not analytics_update:
+        lgr.logger.warning(f"Could not update analytics with modified budget")
+    if analytics_manager.check_checklist_completion(chat_id):
+        message_handlers.checklist_completed_handler(update, context)
     context.bot.edit_message_text(
         f"Budget: <b>{budget_name}</b>\nInserisci il nuovo nome per il budget, o torna indietro.",
         chat_id=chat_id,
@@ -282,6 +288,12 @@ def edit_budget_balance(update: Update, context: CallbackContext):
     budget_name = update.callback_query.data.split("_", 3)[3:][0] # edit_budget_balance_<budget_name> -> <budget_name>
     context.user_data["budget_name"] = budget_name #storing the budget_name that will be modified
     #keyboard = InlineKeyboardMarkup(inline_keyboard=[InlineKeyboardButton(text=f"Indietro ↩️", callback_data= "to_budget_menu")])    
+    #* update analtics and check checklist completion
+    analytics_update = analytics_manager.update_analytics(chat_id, {"has_modified_budget": True})
+    if not analytics_update:
+        lgr.logger.warning(f"Could not update analytics with modified budget")
+    if analytics_manager.check_checklist_completion(chat_id):
+        message_handlers.checklist_completed_handler(update, context)
     context.bot.edit_message_text(
         f"Budget: <b>{budget_name}</b>\nInserisci il nuovo importo per il budget, o torna indietro.",
         chat_id=chat_id,

@@ -334,14 +334,17 @@ def create_edit_budget_inline_keyboard(update: Update) -> InlineKeyboardMarkup:
     callback_data = update.callback_query.data
     budget_name = callback_data.split("_", 2)[2:][0] # edit_budget_<budget_name> -> <budget_name>
     #TODO2 change every function with this message - also this keyboard
-    _edit_budget_buttons = [
-    [InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}"),InlineKeyboardButton(text="Modifica tipo d'interesse", callback_data=f"edit_budget_interest_{budget_name}")],
-    [InlineKeyboardButton(text="Imposta come principale", callback_data= f"set_default_budget_{budget_name}"), InlineKeyboardButton(text="Elimina budget", callback_data= f"pre_delete_budget_{budget_name}")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")]
-    ]
+    # _edit_budget_buttons = [
+    # [InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}"),InlineKeyboardButton(text="Modifica tipo d'interesse", callback_data=f"edit_budget_interest_{budget_name}")],
+    # [InlineKeyboardButton(text="Imposta come principale", callback_data= f"set_default_budget_{budget_name}"), InlineKeyboardButton(text="Elimina budget", callback_data= f"pre_delete_budget_{budget_name}")],
+    # [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")]
+    # ]
     _edit_budget_buttons2 = [
-    [InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}")],
-    [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")],
+        [
+            InlineKeyboardButton(text="Modifica nome", callback_data=f"edit_budget_name_{budget_name}"),
+            InlineKeyboardButton(text="Modifica saldo", callback_data=f"edit_budget_balance_{budget_name}")
+        ],
+        [InlineKeyboardButton(text="Indietro ↩️", callback_data= "to_budgets_menu")],
     ]
     EDIT_BUDGET_MENU_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=_edit_budget_buttons2)
 
