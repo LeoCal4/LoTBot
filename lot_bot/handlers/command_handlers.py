@@ -127,23 +127,23 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
         )'''
 
 def existing_user_linking_ref_code_handler(update: Update, user_id: int, ref_code: str):
-        # * connect user to used ref_code
+    # * connect user to used ref_code
+    update_result = False
+    try:
+        # * check if the code is valid and connect to user
+        ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
+        if ref_user_data:
+            referral_user_data = {"linked_user_code": ref_code, "linked_user_id": ref_user_data["_id"]}
+            update_result = user_manager.update_user(user_id, {"linked_referral_user": referral_user_data})
+            update_result = update_result and user_manager.update_user_succ_referrals(ref_user_data["_id"], user_id)
+    except Exception as e:
+        lgr.logger.error(f"Error in adding ref code to already existing user from deep linking - {str(e)}")
         update_result = False
-        try:
-            # * check if the code is valid and connect to user
-            ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)
-            if ref_user_data:
-                referral_user_data = {"linked_user_code": ref_code, "linked_user_id": ref_user_data["_id"]}
-                update_result = user_manager.update_user(user_id, {"linked_referral_user": referral_user_data})
-                update_result = update_result and user_manager.update_user_succ_referrals(ref_user_data["_id"], user_id)
-        except Exception as e:
-            lgr.logger.error(f"Error in adding ref code to already existing user from deep linking - {str(e)}")
-            update_result = False
-        if update_result:
-            reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
-        else:
-            reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
-        update.message.reply_text(reply_text, parse_mode="HTML")
+    if update_result:
+        reply_text = cst.SUCC_REFERRED_USER_MESSAGE.format(ref_code)
+    else:
+        reply_text = cst.NO_REFERRED_USER_FOUND_MESSAGE.format(ref_code)
+    update.message.reply_text(reply_text, parse_mode="HTML")
 
 
 def existing_user_activating_teacherbet_trial_handler(update: Update, user_id:int, user_subscriptions: List, teacherbet_code: str):

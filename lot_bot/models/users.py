@@ -313,7 +313,7 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
         {'sport':'exchange', 'strategies': ['produzione']},
         {'sport':'tuttoilresto', 'strategies': ['produzione']},
         {'sport':'analisimiste', 'strategies': ['communnitybet','freebet']},
-        ]
+    ]
     # * if a referral code is being used, update the user's field and the referrer's referred user count/list
     if ref_code:
         ref_user_data = user_manager.retrieve_user_id_by_referral(ref_code)

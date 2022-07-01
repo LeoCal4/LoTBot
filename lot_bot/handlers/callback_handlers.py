@@ -714,7 +714,7 @@ def get_free_month_subscription(update: Update, context: CallbackContext):
         lgr.logger.warning(f"Could not extend user {user_id}'s sub by 30 days")
     retrieved_user = user_manager.retrieve_user_fields_by_user_id(user_id, ["successful_referrals_since_last_payment", "referral_code"])
     # * reset user successful referrals
-    user_data = {"successful_referrals_since_last_payment": []}
+    user_data = {"successful_referrals_since_last_payment": retrieved_user["successful_referrals_since_last_payment"][10:]}
     try:
         user_update_result = user_manager.update_user(user_id, user_data) and user_update_result
     except:
