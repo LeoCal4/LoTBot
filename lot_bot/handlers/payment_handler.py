@@ -195,7 +195,6 @@ def successful_payment_callback(update: Update, context: CallbackContext):
             if sub_entry["name"] == sub_name:
                 sub_entry["expiration_date"] = new_expiration_date
                 break
-    # * reset user successful referrals
     # * add email to user data
     user_email = update.message.successful_payment.order_info.email
     user_data = {
@@ -217,6 +216,10 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     if not linked_referral_id is None:
         lgr.logger.debug(f"Updating referred user {linked_referral_id} after successful payment by {user_id}")
         payment_data["referred_by"] = linked_referral_id
+        refs_update_result = user_manager.update_user_referred_payments(linked_referral_id, payment_data["payment_id"])
+        if not refs_update_result:
+            refs_error_message = f"ERRORE PAGAMENTO: non è stato possibile aggiungere il pagamento {payment_data['payment_id']} dell'utente {user_id} all'utente referral {linked_referral_id}"
+            message_handlers.send_messages_to_developers(context, [refs_error_message])
     # * registering payment
     lgr.logger.debug(f"Registering payment {str(payment_data)} for {user_id}")
     try:

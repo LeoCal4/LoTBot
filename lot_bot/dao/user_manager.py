@@ -406,6 +406,37 @@ def update_user_succ_referrals(user_id: int, referred_user_id: str) -> bool:
         raise e
 
 
+def update_user_referred_payments(user_id: int, referred_user_id: str) -> bool:
+    """Add the referred user to the successful referred payments
+        for the user specified by user_id.
+
+    Args:
+        user_id (int)
+        referred_user_id (str)
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the referral is added, False otherwise
+    """
+    try:
+        lgr.logger.debug(f"Adding {referred_user_id=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            { "_id": user_id },
+            {"$addToSet": 
+                { 
+                    "referred_payments": referred_user_id
+                }
+            }
+        )
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during successful payment referral registration - {user_id=} - {referred_user_id=}")
+        raise e
+
+
+
 def delete_user(user_id: int) -> bool:
     """Deletes the user specified by user_id
 
