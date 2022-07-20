@@ -119,7 +119,7 @@ def update_giocata_outcome_and_get_giocata(sport: str, giocata_num: str, outcome
     Args:
         sport (str)
         giocata_num (str)
-        outcome (str): either "win", "loss", "void", "abbinata" or "?"
+        outcome (str): either "win", "loss", "void", "abbinata" or "?" maybe not more abbinata
 
     Raises:
         e: in case of db errors
@@ -160,7 +160,7 @@ def update_exchange_giocata_outcome_and_get_giocata(giocata_num: str, percentage
     elif percentage_outcome < 0:
         outcome = "loss"
     else:
-        outcome = "abbinata"
+        outcome = "void"
     try:
         updated_giocata = db.mongo.giocate.find_one_and_update(
             { "sport": spr.sports_container.EXCHANGE.name, "giocata_num": giocata_num },

@@ -141,7 +141,7 @@ def calculate_new_budget_after_giocata(user_budget: int, giocata: Dict, personal
     # * get outcome percentage
     if "cashout" in giocata:
         lgr.logger.debug(f"{giocata['cashout']=}")
-        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "abbinata") # just to be sure to avoid abbinate
+        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "void") # just to be sure to avoid abbinate
     else:
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
     # * update budget with outcome percentange
@@ -168,7 +168,7 @@ def calculate_new_budget_after_giocata2(user_budget_balance: int, giocata: Dict,
     # * get outcome percentage
     if "cashout" in giocata:
         lgr.logger.debug(f"{giocata['cashout']=}")
-        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "abbinata") # just to be sure to avoid abbinate
+        outcome_percentage = (giocata["cashout"] / 100) * int(giocata["outcome"] != "void") # just to be sure to avoid abbinate
     else:
         outcome_percentage = giocata_model.get_outcome_percentage(giocata["outcome"], stake, giocata["base_quota"])
     # * update budget with outcome percentange

@@ -51,7 +51,7 @@ def create_cashout_message(message_text: str) -> str:
     The message_text needs to be in the form "#<giocata id> +|-<percentage>.
     The final cashout message has the form:
     🟢|🔴 CASHOUT Exchange <giocata id> 🟢|🔴 or
-    ⚪️ Exchange #<giocata id> ABBINATA ⚪️
+    ⚪️ Exchange #<giocata id> VOID ⚪️
 
     Args:
         message_text (str): the text of the message containing the cashout.
@@ -65,7 +65,7 @@ def create_cashout_message(message_text: str) -> str:
     cashout_percentage = matches.group(2)
     emoji = get_emoji_for_cashout_percentage(cashout_percentage)
     if emoji == "⚪️":
-        return f"{emoji} Exchange #{giocata_num} ABBINATA {emoji}"
+        return f"{emoji} Exchange #{giocata_num} VOID {emoji}"
     else:        
         return f"{emoji} CASHOUT Exchange #{giocata_num} {emoji}"
 

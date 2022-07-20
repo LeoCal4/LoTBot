@@ -17,7 +17,7 @@ OUTCOME_EMOJIS = {
     "loss": "🔴",
     "?": "🕔",
     "neutral": "⚪",
-    "abbinata": "⚪",
+    #"abbinata": "⚪",
     "void": "🟡",
 }
 

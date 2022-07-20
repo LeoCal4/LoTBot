@@ -119,7 +119,7 @@ def test_calculate_new_budget_after_giocata_personalized_stake(outcome: str):
 
 @pytest.mark.parametrize(
     "outcome",
-    ["win", "loss", "abbinata"]
+    ["win", "loss", "void"]
 )
 def test_calculate_new_budget_after_giocata_cashout(outcome: str):
     base_giocata = giocate.create_base_giocata()
@@ -130,7 +130,7 @@ def test_calculate_new_budget_after_giocata_cashout(outcome: str):
     base_giocata["base_quota"] = random_quota
     base_giocata["outcome"] = outcome
     base_giocata["cashout"] = random.randint(100, 10000) # 1 - 100
-    if outcome == "abbinata":
+    if outcome == "void":
         base_giocata["cashout"] = 0
     new_budget = users.calculate_new_budget_after_giocata(base_budget, base_giocata)
     correct_budget = base_budget + base_budget * round((base_giocata["cashout"] / 100) / 100, 2)
