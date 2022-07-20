@@ -33,7 +33,7 @@ _analisi_miste_strategies = [
 _news_strategies = [
     strats.INFORMAZIONE,
     strats.FANTACONSIGLI,
-    strats.FATTENARISATA
+    #strats.FATTENARISATA
 ]
 
 # ! important: no _ in .name nor in var names
@@ -42,7 +42,7 @@ class SportsContainer:
     CALCIO : Sport = Sport("calcio", _base_strategies, emoji="⚽️")
     BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
     TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
-    EXCHANGE : Sport = Sport("exchange", _base_strategies, emoji="📊", outcome_percentage_in_resoconto=False)
+    EXCHANGE : Sport = Sport("exchange", [strats.PRODUZIONE,strats.TEST], emoji="📊", outcome_percentage_in_resoconto=False)
     #HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     #BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     #FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")

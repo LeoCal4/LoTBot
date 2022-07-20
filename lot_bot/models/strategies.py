@@ -38,7 +38,7 @@ class StrategyContainer:
     COMMUNITYBET : Strategy = Strategy("communitybet", display_name="Community Bet", explanation = cst.COMMUNITYBET_EXPL_TEXT)
     INFORMAZIONE : Strategy = Strategy("informazione", explanation = cst.INFORMAZIONE_EXPL_TEXT)
     FANTACONSIGLI : Strategy = Strategy("fantaconsigli", explanation = cst.FANTACONSIGLI_EXPL_TEXT)
-    FATTENARISATA : Strategy = Strategy("fattenarisata", display_name="Fatte 'na risata", explanation = cst.FATTENARISATA_EXPL_TEXT)
+    #FATTENARISATA : Strategy = Strategy("fattenarisata", display_name="Fatte 'na risata", explanation = cst.FATTENARISATA_EXPL_TEXT)
 
 
     # * Analisi Miste

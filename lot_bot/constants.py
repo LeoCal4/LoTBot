@@ -260,7 +260,7 @@ FREEBET_EXPL_TEXT = """La nostra produzione gratuita per tutti! Spesso reperibil
 COMMUNITYBET_EXPL_TEXT = """Eventi analizzati dal team e scelti da voi tutti insieme! <i>Together is Better!</i>"""
 INFORMAZIONE_EXPL_TEXT = """Tutte le notizie del mondo del gioco d’azzardo direttamente dalla redazione di LoT!"""
 FANTACONSIGLI_EXPL_TEXT = """In collaborazione con <a href="https://www.instagram.com/calciatori_per_sbaglio_">@CalciatoriPerSbaglio</a> i migliori suggerimenti per la tua rosa!""" #TODO inserire link instragram
-FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio!"""
+#FATTENARISATA_EXPL_TEXT = """Il tuo sorriso giornaliero, vignette e meme per iniziare la giornata al meglio!"""
 
 DEFAULT_STRAT_EXPLANATION_TEXT = """Contattaci su @teamlot per avere maggiori informazioni su questa strategia!"""
 
