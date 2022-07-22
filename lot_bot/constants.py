@@ -228,7 +228,7 @@ FIRST_BUDGET_NAME = "Primo budget"
 
 # ================================== TUTORIAL CHECKLIST ==========================================
 # spots needs to be filled with the relative emoji (✅ or ❌)
-TUTORIAL_CHECKLIST = """\nCompleta i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
+TUTORIAL_CHECKLIST = """Completa i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
 ✅ Avvia il bot
 {budget_check} Imposta il budget
 {event_check} Registra un evento

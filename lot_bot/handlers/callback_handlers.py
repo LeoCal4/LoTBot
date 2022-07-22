@@ -191,6 +191,22 @@ def to_use_guide_menu(update: Update, context: CallbackContext):
     menu_message = cst.USE_GUIDE_MENU_MESSAGE
     #* check if user completed tutorial
     menu_message += utils.create_checklist_completion_message(chat_id)
+    try: 
+        context.bot.send_document(
+            chat_id = update.effective_user.id, 
+            document=cfg.config.GUIDA_TEORICA_PDF,
+            filename="LoT - Guida Teorica.pdf",
+            caption="Questa è la caption da modificare",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        lgr.logger.warning(f"Could not send 'LoT - Guida Teorica.pdf' document.\nError: {e}")
+        ''''context.bot.send_message(
+            update.effective_user.id, 
+            "ERRORE: Non è stato possibile inviarti il documento contente la guida", 
+            reply_markup=kyb.TO_FIRST_BUDGET_KEYBOARD, 
+            parse_mode="HTML"
+        )'''
     context.bot.edit_message_text(
         text=menu_message,
         chat_id=chat_id,
@@ -677,7 +693,7 @@ def send_socials_list(update: Update, context: CallbackContext):
     #Creating user subscription
     free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     #if not teacherbet_code:
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=3)).timestamp()
     sub = {"name": subs_model.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
     #else:
     #    sub = subs_model.create_teacherbet_base_sub()
