@@ -196,7 +196,7 @@ def to_use_guide_menu(update: Update, context: CallbackContext):
             chat_id = update.effective_user.id, 
             document=cfg.config.GUIDA_TEORICA_PDF,
             filename="LoT - Guida Teorica.pdf",
-            caption="Questa è la caption da modificare",
+            caption="Questa è la tua guida da scaricare",
             parse_mode="HTML"
         )
     except Exception as e:
