@@ -365,6 +365,45 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
         except Exception as e:
             lgr.logger.warning(f"Error in sending message: {str(e)}")
 
+def send_message_handler(update: Update, context: CallbackContext):
+    """ Sends a message to the user specified by ID or username.
+    /invia_messaggio <user ID or username> LINE BREAK <message>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    lgr.logger.info("Received /invia_messaggio")
+    user_id = update.effective_user.id
+    # * check if the user has the permission to use this command
+    if not users.check_user_permission(user_id, permitted_roles=["admin"]):
+        update.effective_message.reply_text("ERRORE: non disponi dei permessi necessari ad utilizzare questo comando")
+        return
+
+    try:
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 2, permitted_roles=["admin"])
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "id (o username) e giorni di prova da aggiungere")
+        return  
+
+    # * retrieve the user's subscription expiration 
+    # TODO check if there is a way to just increment it 
+    if type(target_user_identification_data) is int:
+        target_user_data = {"_id":target_user_identification_data}
+    else:
+        target_user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id"])
+    # * check if the user exists
+    if target_user_data is None:
+        user_not_found_message = f"ERRORE: nessun utente specificato da {target_user_identification_data} è stato trovato (ricorda: gli username sono case-sensitive)"
+        update.effective_message.reply_text(user_not_found_message)
+        return
+    target_user_id = target_user_data["_id"] 
+    parsed_text = "\n".join(update.effective_message.text.split("\n")[1:]).strip()
+    # context.dispatcher.run_async(_send_broadcast_messages, context, parsed_text) # TODO find out why it doesn't work
+    context.bot.send_message(chat_id=target_user_id,text=parsed_text)
 
 def broadcast_handler(update: Update, context: CallbackContext):
     """ Sends a message to all the users in the db.

@@ -73,9 +73,9 @@ def retrieve_user_ids(_type: str, days: int = None ) -> List[int]:
         if _type == "not_blocked":
             results = db.mongo.utenti.find({"blocked": False}, {"_id": 1})
         if _type == "active":
-            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$gt": now_timestamp}} }}, {"_id": 1})
+            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$gt": now_timestamp}, "name":subs.sub_container.LOTCOMPLETE.name} }}, {"_id": 1})
         if _type == "expired":
-            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}} }}, {"_id": 1})
+            results = db.mongo.utenti.find({"blocked": False, "subscriptions" : { "$elemMatch": { "expiration_date": {"$lt": now_timestamp}, "name":subs.sub_container.LOTCOMPLETE.name} }}, {"_id": 1})
         if _type == "activated_from":
             date = (datetime.datetime.utcnow() - relativedelta(days=days)).timestamp()
             results = db.mongo.utenti.find({"blocked": False, "first_access_timestamp" : {"$gt": date}}, {"_id": 1})

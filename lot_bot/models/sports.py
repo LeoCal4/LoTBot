@@ -36,16 +36,24 @@ _news_strategies = [
     #strats.FATTENARISATA
 ]
 
+_sport_americani_strategies = [
+    strats.HOCKEY,
+    strats.BASEBALL,
+    strats.BASKET,
+    strats.FOOTBALLAMERICANO
+]
+
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
     CALCIO : Sport = Sport("calcio", _base_strategies, emoji="⚽️")
-    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
+    #BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
     TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.PRODUZIONE,strats.TEST], emoji="📊", outcome_percentage_in_resoconto=False)
     #HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     #BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     #FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
+    SPORTAMERICANI : Sport = Sport("sportamericani", _sport_americani_strategies, display_name="Sport Americani")
     #PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
     #PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")

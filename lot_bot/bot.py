@@ -157,6 +157,7 @@ def add_handlers(dispatcher: Dispatcher):
     dispatcher.add_handler(CommandHandler("broadcast_attivi", command_handlers.broadcast_attivi_handler))
     dispatcher.add_handler(CommandHandler("broadcast_nuovi", command_handlers.broadcast_nuovi_handler))
     dispatcher.add_handler(CommandHandler("broadcast", command_handlers.broadcast_handler))
+    dispatcher.add_handler(CommandHandler("invia_messaggio", command_handlers.send_message_handler))
     # ------------ Users managing commands --------------
     dispatcher.add_handler(CommandHandler("aggiungi_giorni", command_handlers.aggiungi_giorni))
     dispatcher.add_handler(CommandHandler("resoconto_utente", command_handlers.get_user_resoconto))
