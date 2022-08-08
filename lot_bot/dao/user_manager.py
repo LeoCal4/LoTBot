@@ -437,7 +437,7 @@ def update_user_referred_payments(user_id: int, referred_user_id: str) -> bool:
 
 
 
-def delete_user(user_id: int) -> bool:
+def delete_user_by_id(user_id: int) -> bool:
     """Deletes the user specified by user_id
 
     Args:
@@ -448,7 +448,8 @@ def delete_user(user_id: int) -> bool:
     """
     try:
         result: DeleteResult = db.mongo.utenti.delete_one({"_id": user_id})
-        return bool(result.deleted_count)
+        result2: DeleteResult = db.mongo.analytics.delete_one({"_id": user_id})
+        return bool(result.deleted_count and result2.deleted_count)
     except Exception as e:
         lgr.logger.error("Error during user deletion - {user_id}")
         raise e

@@ -76,9 +76,9 @@ def test_update_user(new_user: Dict, monkeypatch):
 
 def test_delete_user(new_user: Dict, monkeypatch):
     user_id = new_user["_id"]
-    assert user_manager.delete_user(user_id)
+    assert user_manager.delete_user_by_id(user_id)
     assert user_manager.retrieve_user(user_id) == None
-    assert not user_manager.delete_user(-1)
+    assert not user_manager.delete_user_by_id(-1)
     # db connection error
     monkeypatch.setattr(db, "mongo", None)
     assert not user_manager.delete_user(user_id)
@@ -264,7 +264,7 @@ def test_retrieve_users_who_played_giocata(correct_giocata_function_fixture: Cal
         assert ret_id in created_users_ids
     # * cleanup
     for user_id in created_users_ids:
-        user_manager.delete_user(user_id)
+        user_manager.delete_user_by_id(user_id)
     for created_giocata in created_giocate:
         giocate_manager.delete_giocata(created_giocata["original_id"])
 

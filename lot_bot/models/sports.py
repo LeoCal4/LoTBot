@@ -55,7 +55,7 @@ class SportsContainer:
     #FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
     SPORTAMERICANI : Sport = Sport("sportamericani", _sport_americani_strategies, display_name="Sport Americani")
     #PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
-    #PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
+    PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
     TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
     ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 

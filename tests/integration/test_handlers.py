@@ -39,7 +39,7 @@ def sport_subscription_exists_and_is_valid(user_id: int, sport: str, strategy: s
 
 
 def delete_user_and_sport_subscriptions(user_id: int):
-    user_manager.delete_user(user_id)
+    user_manager.delete_user_by_id(user_id)
     sport_subscriptions_manager.delete_sport_subscriptions_for_user_id(user_id)
 
 @pytest.fixture

@@ -79,6 +79,30 @@ def retrieve_analytics_fields_by_user_id(user_id: int, fields: List[str]) -> Dic
         lgr.logger.error(f"Error during analytics fields retrieval {user_id=} - {analytics_fields=}")
         raise e
 
+def retrieve_analytics_fields_by_username(username: str, user_fields: List[str]) -> Optional[Dict]:
+    """Retrieve the user fields from the user specified by username.
+
+    Args:
+        username (str)
+        user_fields (List[str]): the list of the fields that will be retrieved
+    
+    Raises:
+        Exception: if there was a db error
+
+    Returns:
+        Dict: the user data 
+
+    """
+    try:
+        user_fields = {field: 1 for field in user_fields}
+        if user_fields == {"all":1}:
+            return db.mongo.analytics.find_one({"username": username})
+        else:
+            return db.mongo.analytics.find_one({"username": username}, user_fields)
+    except Exception as e:
+        lgr.logger.error(f"Error during user fields retrieval {username=} - {user_fields=}")
+        raise e
+
 
 def retrieve_checklist_information_by_user_id(user_id: int) -> Dict:
     checklist_related_fields = [

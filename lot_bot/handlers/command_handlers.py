@@ -543,6 +543,42 @@ def set_user_blocked_status(update: Update, context: CallbackContext, user_statu
     update.effective_message.reply_text(reply_message)
     context.bot.send_message(target_user_id, user_message)
 
+def delete_user(update: Update, context: CallbackContext):
+    """Delete a user by <ID or username>
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    try:
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin"]) 
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "username (o ID) dell'utente di cui eliminare i dati")
+        return
+    update_result = False
+    reply_message = f"Errore durante l'eliminazione dei dati utente di {target_user_identification_data}"
+    # * an actual user_id was sent
+    if type(target_user_identification_data) is int:
+        lgr.logger.debug(f"Deleting user with user_id {target_user_identification_data}")
+        update_result = user_manager.delete_user_by_id(target_user_identification_data)
+    # * a username was sent
+    else:
+        lgr.logger.debug(f"Deleting user with username {target_user_identification_data}")
+        user_data = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id"])
+        if not user_data:
+            reply_message = f"Nessun utente specificato da {target_user_identification_data} è stato trovato"
+        else:
+            target_user_id = user_data["_id"]
+            update_result = user_manager.delete_user_by_id(target_user_id)
+    if update_result:
+        reply_message = f"Operazione avvenuta con successo per l'utente {target_user_identification_data}"
+
+    update.effective_message.reply_text(reply_message)
+
+
 
 def set_user_role(update: Update, context: CallbackContext):
     """/cambia_ruolo <username or ID> <new role>
@@ -930,6 +966,72 @@ L'utente risulta """
     command_sender_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
     if command_sender_role == "admin":
         user_info_text += payments_text + other_info_text
+    else:
+        user_info_text += other_info_text
+
+    #stakes_message = personal_stakes.create_personal_stakes_message(target_user_data["personal_stakes"])
+    #stakes_message = f"STAKES PERSONALIZZATI UTENTE {target_user_identification_data}\n{stakes_message}"
+    update.effective_message.reply_text(user_info_text, parse_mode="HTML")
+
+#TODO check if it works (it does probably)
+def visualize_user_analytics(update: Update, context: CallbackContext):
+    """Sends a message containing target user's general data.
+    
+        /analytics <username o ID>
+
+    Args:
+        update (Update)
+        context (CallbackContext)
+    """
+    user_id = update.effective_user.id
+    try:    
+        target_user_identification_data = initial_command_parsing(user_id, context.args, 1, permitted_roles=["admin","analyst"])
+    except custom_exceptions.UserPermissionError as e:
+        update.effective_message.reply_text(str(e))
+        return
+    except custom_exceptions.CommandArgumentsError as e:
+        update.effective_message.reply_text(str(e) + "username (o ID)")
+        return
+    # * retrieve personal info
+    if type(target_user_identification_data) is int:
+        target_user_data = analytics_manager.retrieve_analytics_fields_by_user_id(target_user_identification_data, ["all"])
+    else:
+        lgr.logger.debug(f"{target_user_identification_data=}")
+        try:
+            target_user_data_id = user_manager.retrieve_user_fields_by_username(target_user_identification_data, ["_id"])["_id"]
+            print(f"{target_user_data_id=}")
+            target_user_data = analytics_manager.retrieve_analytics_fields_by_user_id(target_user_data_id, ["all"])
+            print(f"{target_user_data=}")
+        except Exception as e:
+            lgr.logger.error(f"Error in retrieving user data from username {e}")
+            target_user_data = None
+    # * check if the user exists
+    if target_user_data is None:#
+        update.effective_message.reply_text("ERRORE: utente non trovato")
+        return
+    # * create and send user info message
+    lgr.logger.debug(f"{target_user_data=}")
+    telegramID = target_user_data["_id"]
+    num_giocate_accettate = len(target_user_data["accepted_giocate"])
+    num_giocate_rifiutate = len(target_user_data["refused_giocate"])
+    has_completed_checklist = target_user_data["has_completed_checklist"]
+    # = target_user_data[""]
+    user_info_text = f"""<b>Informazioni Utente</b>
+Id: {telegramID}
+Giocate accettate: {num_giocate_accettate}
+Giocate rifiutate: {num_giocate_rifiutate}
+L'utente """
+    if has_completed_checklist:
+        user_info_text += "ha completato la checklist\n"
+    else:
+        user_info_text += "non ha completato la checklist\n"
+
+    other_info_text = "<b>Altro:</b>\n"
+    other_info_text+= "Utilizza /visualizza_utente <ID o username>\n".replace("<", "&lt;").replace(">", "&gt;")
+
+    command_sender_role = user_manager.retrieve_user_fields_by_user_id(user_id, ["role"])["role"]
+    if command_sender_role == "admin":
+        user_info_text += other_info_text
     else:
         user_info_text += other_info_text
 

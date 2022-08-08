@@ -67,3 +67,4 @@
 - `/send_file_id` with <media> attached: sends a message containing the file_id of the sent media
 - `/broadcast A CAPO <messaggio da inviare>`: invia un messaggio a tutti gli utenti tramite il bot
 - `/modifica_referral <username o ID utente> <nuovo referral>`: modifica il codice referral dell'utente specificato. Se il nuovo referral è già utilizzato o non è valido, il referral non viene modificato e un messaggio di errore viene inviato per spiegare l'entità del problema.
+

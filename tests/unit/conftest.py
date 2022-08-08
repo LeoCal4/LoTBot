@@ -33,4 +33,4 @@ def new_user() -> Dict:
     user_data["name"] = "Mario"
     user_manager.create_user(user_data)
     yield user_data
-    user_manager.delete_user(user_data["_id"])
+    user_manager.delete_user_by_id(user_data["_id"])
