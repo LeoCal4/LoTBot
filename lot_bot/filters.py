@@ -231,6 +231,10 @@ def get_referral_filter() -> Filters:
     # [a-z A-Z 0-9 _ -]
     return Filters.regex(r"^(\w|-)+-lot$")
 
+def get_codice10euro_filter() -> Filters:
+    # [a-z A-Z 0-9 _ -]
+    return Filters.regex(r"^CODICE10EURO$")
+
 
 def get_successful_payment_filter() -> Filters:
     return Filters.successful_payment

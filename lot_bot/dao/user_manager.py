@@ -319,6 +319,61 @@ def update_user_personal_stakes(user_id: int, personal_stake: Dict) -> bool:
         lgr.logger.error(f"Error during personal stake registration: {user_id=} - {personal_stake=}")
         raise e
 
+
+def update_user_used_codes(user_id: int, used_code: str, method: str) -> bool:
+    """Adds a code to the ones of the specified user.
+
+    Args:
+        user_id (int)
+        used_code (str)
+        method (str) like 'addToSet' or 'pull'
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the code was added, False otherwise
+    """
+    try:
+        lgr.logger.debug(f"{method=} {used_code=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            { "_id": user_id, },
+            { "$"+method: {"used_codes":used_code} }
+        )
+        # this will be true if there was at least a match
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during code registration: {user_id=} - {used_code=}")
+        raise e
+
+
+        raise e
+
+def update_user_active_codes(user_id: int, active_code: str, method: str) -> bool:
+    """Adds a code to the ones of the specified user.
+
+    Args:
+        user_id (int)
+        active_code (str)
+        method (str) like 'addToSet' or 'pull'
+
+    Raises:
+        e: in case of db errors
+
+    Returns:
+        bool: True if the code was added, False otherwise
+    """
+    try:
+        lgr.logger.debug(f"{method=} {active_code=} for {user_id=}")
+        update_result: UpdateResult = db.mongo.utenti.update_one(
+            { "_id": user_id, },
+            { "$"+method: {"active_codes": active_code } }
+        )
+        # this will be true if there was at least a match
+        return bool(update_result.matched_count)
+    except Exception as e:
+        lgr.logger.error(f"Error during code registration: {user_id=} - {active_code=}")
+        raise e
         
 def update_user_giocata_with_previous_budget(user_id: int, giocata_id, previous_budget: int) -> bool:
     """Adds the pre-giocata budget to a personal user giocata.

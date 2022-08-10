@@ -85,7 +85,47 @@ def received_linked_referral_during_payment(update: Update, _) -> int:
         parse_mode="HTML"
     )
     return REFERRAL
+
+def received_codice_during_payment(update: Update, context: CallbackContext) -> int:
+    """Checks the referral code specified by the user in order to know if the 
+    code exists and if it is not the current user's one. If the referral code was 
+    valid, it is added to its data.
+    Finally, the user is prompted to add another code or to proceed to payment.
+
+    This is part of a ConversationHandler regulating the referral code.
     
+    Args:
+        update (Update)
+        _
+
+    Returns:
+        int: the REFERRAL state for the ConversationHandler
+    """
+    chat_id = update.effective_user.id
+    codice = update.effective_message.text
+    message_text = ""
+    error_text = "C'è stato un errore nella convalida del codice, invialo di nuovo oppure procedi al pagamento senza codice."
+    used_codes = user_manager.retrieve_user_fields_by_user_id(chat_id,["used_codes","active_codes"])["used_codes"]
+    active_codes = user_manager.retrieve_user_fields_by_user_id(chat_id,["used_codes","active_codes"])["active_codes"]
+    update_result=True
+    if not codice in used_codes:
+        update_result = user_manager.update_user_active_codes(chat_id,codice,"addToSet")
+        if update_result:
+            message_text = "Codice valido, clicca il bottone sottostante per procedere al pagamento."
+            context.user_data["active_code_to_add"] = codice
+        else:
+            message_text = error_text
+    else:
+        message_text = error_text
+    update_result = user_manager.update_user_used_codes(chat_id,codice,"addToSet")
+    delete_result = user_manager.update_user_active_codes(chat_id,codice,"pull")
+    # * send update outcome message
+    update.message.reply_text(
+        message_text,
+        reply_markup=kyb.PROCEED_TO_PAYMENTS_KEYBOARD,
+        parse_mode="HTML"
+    )
+    return REFERRAL    
 
 def to_payments(update: Update, context: CallbackContext):
     """Sends an invoice so that the user can buy LoT's sport_subscription. 
@@ -119,7 +159,17 @@ def to_payments(update: Update, context: CallbackContext):
     sub = subs.sub_container.get_subscription("lotcomplete")
     payload = f"payment_{sub.name}"
     # price = user_manager.get_subscription_price_for_user(chat_id)
-    prices = [LabeledPrice(sub.display_name, sub.price)]
+    print(f"{context.user_data=}")
+    codice = None
+    if "active_code_to_add" in context.user_data:
+        codice = context.user_data["active_code_to_add"]
+        del context.user_data["active_code_to_add"]
+    if codice == "CODICE10EURO":
+        price = 1000
+    else:
+        price = sub.price
+    print(f"{context.user_data=}")
+    prices = [LabeledPrice(sub.display_name, price)]
     context.bot.send_invoice(
         chat_id, "30 Giorni di SportSignalsBot Premium", """Comprende 30 giorni di servizio premium ovvero:
 
