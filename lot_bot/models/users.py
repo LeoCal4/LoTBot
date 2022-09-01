@@ -36,6 +36,7 @@ def create_base_user_data():
         "sport_subscriptions": [],
         "budgets": [],
         "personal_stakes": [],
+        "messages_received": []
     }
 
 def generate_referral_code() -> str:
@@ -312,7 +313,7 @@ def create_first_time_user(user: User, ref_code: str = None, teacherbet_code: st
         {'sport':'tennis', 'strategies': ['produzione']},
         {'sport':'exchange', 'strategies': ['produzione']},
         {'sport':'tuttoilresto', 'strategies': ['produzione']},
-        {'sport':'analisimiste', 'strategies': ['communnitybet','freebet']},
+        {'sport':'analisimiste', 'strategies': ['communitybet','freebet']},
     ]
     # * if a referral code is being used, update the user's field and the referrer's referred user count/list
     if ref_code:

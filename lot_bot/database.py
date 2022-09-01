@@ -3,6 +3,8 @@ from pymongo import MongoClient
 from lot_bot import config as cfg
 from lot_bot import logger as lgr
 
+import certifi
+
 # the mongo object that is used in the other modules
 # just import this variable in any of the other file which
 #   needs to access the db (theorically only DAOs)
@@ -15,6 +17,7 @@ class MongoDatabase:
         try:
             self.client = MongoClient(
                 cfg.config.MONGO_DB_URL,
+                tlsCAFile=certifi.where()
             )
             # The ping command is cheap and does not require auth, 
             #   so it is run to check if the db is active

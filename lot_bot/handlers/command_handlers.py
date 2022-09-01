@@ -64,7 +64,7 @@ def initial_command_parsing(user_id: int, context_args: List[str], min_num_args:
     return to_return
 
 
-def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str = None, teacherbet_code: str = None):
+def first_time_user_handler(update: Update, context: CallbackContext, ref_code: str = None, teacherbet_code: str = None, additional_data: str = None):
     """Sends welcome messages to the user, then creates two standard
     sport_subscriptions for her/him and creates the user itself.
 
@@ -74,7 +74,7 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     user = update.effective_user
     first_time_user_data = users.create_first_time_user(update.effective_user, ref_code=ref_code, teacherbet_code=teacherbet_code)
     # TODO add analytics creation
-    base_analytics = analytics.create_base_analytics()
+    base_analytics = analytics.create_base_analytics(additional_data=additional_data)
     base_analytics["_id"] = first_time_user_data["_id"]
     if not analytics_manager.create_analytics(base_analytics):
         lgr.logger.warning(f"Could not create base analytics for user {first_time_user_data['_id']}")
@@ -98,8 +98,10 @@ def first_time_user_handler(update: Update, context: CallbackContext, ref_code: 
     new_user_channel_message = cst.NEW_USER_MESSAGE.format(
         update.effective_user.id, 
         update.effective_user.first_name, 
-        update.effective_user.username
+        update.effective_user.username,
     )
+    if additional_data:
+        new_user_channel_message += "\nInfo: " + str(additional_data)
     try:
         context.bot.send_message(cfg.config.NEW_USERS_CHANNEL_ID, new_user_channel_message)
     except Exception as e:
@@ -189,6 +191,7 @@ def start_command(update: Update, context: CallbackContext):
     """
     user_id = update.effective_user.id
     additional_code = None
+    additional_data = None
     ref_code = None
     teacherbet_code = None
     # * check if a code has been specified
@@ -198,12 +201,14 @@ def start_command(update: Update, context: CallbackContext):
             ref_code = additional_code
         elif additional_code.endswith("-teacherbet"):
             teacherbet_code = additional_code
+        else:
+            additional_data = additional_code
     lgr.logger.debug(f"Received /start command from {user_id}")
     # * check if the user exists
     user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["_id", "referral_code", "teacherbet_code", "subscriptions","role","linked_referral_user"])
     if not user_data:
         # * the user does not exist yet
-        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code)
+        first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code, additional_data=additional_data)
         return
     # * existing user wants to link a referral code
     elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:
@@ -352,18 +357,28 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
     """
     user_ids = user_manager.retrieve_user_ids(_type, days)
     lgr.logger.info(f"Starting to send -{_type}- broadcast message in async to approx. {len(user_ids)} users")
+    bloccati, attivi = 0, 0
     for user_id in user_ids:
         try:
+            if context.bot.get_chat(user_id)["photo"] == None:
+                bloccati+=1
+            else:
+                attivi+=1
             context.bot.send_message(                
                 user_id,
                 parsed_text,
-                parse_mode="HTML"
+                parse_mode="HTML",
+                disable_notification = True
             )
         except Unauthorized:
+            lgr.logger.debug(f"""Unathorized user {user_id}""")
             # lgr.logger.info(f"User {user_id} blocked the bot")
             pass
         except Exception as e:
-            lgr.logger.warning(f"Error in sending message: {str(e)}")
+            lgr.logger.debug(f"""Generic exception for user {user_id} {e}""")
+            #lgr.logger.warning(f"Error in sending message: {str(e)}")
+            pass
+    lgr.logger.info(f"""Utenti: {attivi=} {bloccati=}""")
 
 def send_message_handler(update: Update, context: CallbackContext):
     """ Sends a message to the user specified by ID or username.

@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-def create_base_analytics() -> Dict:
+def create_base_analytics(additional_data: str = None) -> Dict:
     return {
         "_id": None, # user id
         "has_completed_checklist": False,
@@ -15,4 +15,5 @@ def create_base_analytics() -> Dict:
         # TODO implement ====== 
         "resoconto_requests": [], # list of resoconto types and timestamps
         "referred_users": [], # list of referred users ids and timestamps
+        "additional_data": additional_data
     }

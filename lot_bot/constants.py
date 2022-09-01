@@ -184,6 +184,40 @@ Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>commun
 <i>Dai un'occhiata al nostro sistema di referral,
 <b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍"""
 
+MSG_BENVENUTO = """Messaggio da @TeamLoT:
+
+Ciao {0}!
+È un piacere averti a bordo con noi ! 🚀
+
+Io sono <b>Massimiliano Malfatti</b> fondatore del progetto e su telegram mi trovi scrivendo a @TeamLoT o in privato a @Pentium077 ✌️
+
+Sono un consulente finanziario e <b>studio da oltre 10 anni il settore del gioco d'azzardo</b> perché desidero migliorarlo, renderlo più sicuro.
+
+<b>Dalle mie ricerche e dai preziosi feedback raccolti in questi ultimi anni è nata LoT</b>, start up che sta realizzando tecnologie per rinnovare il mercato.
+
+Quello che ti presento oggi, lo SportSignalsBoT, è solo il <b>primo di diversi progetti che arriveranno nei prossimi anni</b> <i>(scopri di più sul nostro sito!)</i>
+
+<b>Questo BoT nasce perché mi sono stancato di vedere quanti tipster fanno perdere denaro alle persone 😡</b>
+
+Con il team abbiamo fatto una <b>scelta:</b>
+<b>
+NON lavorare con i Casinò
+e NON guadagnare sulle tue perdite.
+</b>
+Noi <b>guadagniamo da quegli utenti che scelgono di pagare il nostro servizio premium</b>, quello che hai di prova per questi 5 giorni.🔥
+
+Forniamo anche <b>Consulenze private INCLUSE</b> con l'acquisto del bot e tantissime <b>analisi personalizzate</b> in base alle proprie preferenze.
+
+<b>Anche se sei un esperto di Betting ti chiedo di metterti in contatto con noi tramite</b> @TeamLoT per poterti guidare al meglio alla scoperta del servizio che abbiamo creato per te ! 😊
+
+Ti manderò altri messaggi durante questi giorni per sapere come sta andando, per qualsiasi cosa <b>non esitare a contattarmi</b>, a presto!
+
+<i>-Massimiliano Malfatti</i>
+
+
+PS: <i>Dietro ogni analisi che ti manda il bot <b>c'è il mio team di analisti sportivi</b> e nessun algoritmo preimpostato!</i>
+<i>Suggerimento: Ti consiglio di fissare in alto il bot, ti basterà tenere premuto sul bot e premere "fissa" così non perderai nessun match !</i>🔥
+"""
 
 # {0}: valid ref code
 SUCC_REFERRED_USER_MESSAGE = "Il tuo account è stato collegato con successo tramite il codice {0}!"

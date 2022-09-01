@@ -641,6 +641,12 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
             disable_web_page_preview=True,
             parse_mode ="HTML",
             reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+        context.bot.send_message(
+            chat_id, 
+            text=cst.MSG_BENVENUTO.format(update.effective_user.name),
+            parse_mode="HTML",
+            reply_markup=kyb.STARTUP_REPLY_KEYBOARD)
+
         return
     context.bot.send_message(
         text = "Ecco gli eventi che potrebbero essere ancora in corso!",
@@ -676,6 +682,11 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
                     reply_markup=custom_reply_markup)
             except Exception as e:
                 lgr.logger.error(f"Could not send message {text} to user {chat_id} - {str(e)}")
+    
+    context.bot.send_message(
+                    chat_id, 
+                    text=cst.MSG_BENVENUTO.format(update.effective_user.name),
+                    parse_mode="HTML")
 
     # context.bot.send_message(
     #     chat_id,
