@@ -103,7 +103,9 @@ PAYMENT_AND_REFERRAL_MENU_INLINE_KEYBOARD = InlineKeyboardMarkup(inline_keyboard
 # ===================================== PAGAMENTO E REFERRAL SUBMENU =====================================
 
 service_status_buttons = [
-    [InlineKeyboardButton(text="🌟 Prolunga Servizio Bot 🌟", callback_data="to_add_referral")], 
+    [InlineKeyboardButton(text="🌟 Acquista 1 Mese🌟", callback_data="to_add_referral:1m")], 
+    [InlineKeyboardButton(text="🌟 Acquista 4 Mesi 🌟", callback_data="to_add_referral:4m")], 
+    [InlineKeyboardButton(text="🌟 Acquista 1 Anno 🌟", callback_data="to_add_referral:1a")], 
     [InlineKeyboardButton(text="Indietro ↩️", callback_data="to_payments_and_referrals_menu")]
 ]
 SERVICE_STATUS_KEYBOARD = InlineKeyboardMarkup(inline_keyboard=service_status_buttons)

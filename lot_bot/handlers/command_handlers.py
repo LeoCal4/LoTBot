@@ -357,18 +357,12 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
     """
     user_ids = user_manager.retrieve_user_ids(_type, days)
     lgr.logger.info(f"Starting to send -{_type}- broadcast message in async to approx. {len(user_ids)} users")
-    bloccati, attivi = 0, 0
     for user_id in user_ids:
         try:
-            if context.bot.get_chat(user_id)["photo"] == None:
-                bloccati+=1
-            else:
-                attivi+=1
             context.bot.send_message(                
                 user_id,
                 parsed_text,
-                parse_mode="HTML",
-                disable_notification = True
+                parse_mode="HTML"
             )
         except Unauthorized:
             lgr.logger.debug(f"""Unathorized user {user_id}""")
@@ -378,7 +372,6 @@ def _send_broadcast_messages(context: CallbackContext, parsed_text: str, _type: 
             lgr.logger.debug(f"""Generic exception for user {user_id} {e}""")
             #lgr.logger.warning(f"Error in sending message: {str(e)}")
             pass
-    lgr.logger.info(f"""Utenti: {attivi=} {bloccati=}""")
 
 def send_message_handler(update: Update, context: CallbackContext):
     """ Sends a message to the user specified by ID or username.

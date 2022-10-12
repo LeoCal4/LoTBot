@@ -45,6 +45,24 @@ class SubContainer:
         aliases=["free", "freelot", "free lot", "lot free"]
     )
 
+    LOTPREMIUM : Subscription = Subscription(
+        "lotpremium",
+        display_name="LoT Versione Premium",
+        #available_sports=[sports.sports_container.ANALISIMISTE, sports.sports_container.NEWS],
+        price=0,
+        description="Accesso alla produzione premium LoT",
+        aliases=["lot premium", "premium", "premium lot"]
+    )
+
+    LOTPRO : Subscription = Subscription(
+        "lotpro",
+        display_name="LoT Versione Pro",
+        #available_sports=[sports.sports_container.ANALISIMISTE, sports.sports_container.NEWS],
+        price=0,
+        description="Accesso alla produzione pro LoT",
+        aliases=["lot pro", "pro", "pro lot"]
+    )
+
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()
         yield from (getattr(self, attribute) for attribute in attributes)

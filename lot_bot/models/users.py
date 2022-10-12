@@ -36,7 +36,9 @@ def create_base_user_data():
         "sport_subscriptions": [],
         "budgets": [],
         "personal_stakes": [],
-        "messages_received": []
+        "messages_received": [],
+        "used_codes": [],
+        "active_codes": []
     }
 
 def generate_referral_code() -> str:

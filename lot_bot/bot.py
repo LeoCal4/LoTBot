@@ -28,7 +28,7 @@ def get_referral_conversation_handler() -> ConversationHandler:
         ConversationHandler
     """
     payment_conversation_handler = ConversationHandler(
-        entry_points=[CallbackQueryHandler(payment_handler.to_add_linked_referral_before_payment, pattern=r"^to_add_referral$")],
+        entry_points=[CallbackQueryHandler(payment_handler.to_add_linked_referral_before_payment, pattern=r"^to_add_referral:\d[am]$")],
         states={
             payment_handler.REFERRAL: [
                 MessageHandler(filters.get_referral_filter(), payment_handler.received_linked_referral_during_payment),

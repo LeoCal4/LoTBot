@@ -233,7 +233,7 @@ def get_referral_filter() -> Filters:
 
 def get_codice10euro_filter() -> Filters:
     # [a-z A-Z 0-9 _ -]
-    return Filters.regex(r"^CODICE10EURO$")
+    return Filters.regex(r"^ILVIAGGIOINIZIAORA$")
 
 
 def get_successful_payment_filter() -> Filters:

@@ -1,6 +1,7 @@
 """Module containing the handlers for the payment"""
 
 import datetime
+from struct import pack
 from typing import Optional
 
 from lot_bot import config as cfg
@@ -46,6 +47,8 @@ def to_add_linked_referral_before_payment(update: Update, context: CallbackConte
     #     )
     #     message_handlers.homepage_handler(update, context)
     #     return ConversationHandler.END
+    pack_type = update.callback_query.data.split(":")[1]
+    context.user_data["pack_type"] = pack_type
     referral_text = ref_code_handlers.get_update_linked_referral_message(chat_id)
     message_text = f"{cst.PAYMENT_BASE_TEXT}\n{referral_text}"
     context.bot.edit_message_text(
@@ -157,21 +160,35 @@ def to_payments(update: Update, context: CallbackContext):
         )
     '''
     sub = subs.sub_container.get_subscription("lotcomplete")
-    payload = f"payment_{sub.name}"
     # price = user_manager.get_subscription_price_for_user(chat_id)
     print(f"{context.user_data=}")
     codice = None
     if "active_code_to_add" in context.user_data:
         codice = context.user_data["active_code_to_add"]
         del context.user_data["active_code_to_add"]
-    if codice == "CODICE10EURO":
+    if codice == "ILVIAGGIOINIZIAORA":
         price = 1000
     else:
         price = sub.price
     print(f"{context.user_data=}")
+    durata = "30 Giorni"
+    try:
+        pack_type = context.user_data["pack_type"]
+        payload = "payment_"+pack_type
+        if pack_type == "1m":
+            durata = "30 Giorni"
+            price = 2490
+        elif pack_type == "4m":
+            durata = "4 Mesi"
+            price = 5990
+        else:
+            durata = "1 Anno"
+            price = 12990
+    except:
+        pass
     prices = [LabeledPrice(sub.display_name, price)]
     context.bot.send_invoice(
-        chat_id, "30 Giorni di SportSignalsBot Premium", """Comprende 30 giorni di servizio premium ovvero:
+        chat_id, f"{durata} di SportSignalsBot Premium", f"""Comprende {durata} di servizio premium ovvero:
 
 - Tutte le analisi del team LoT su Calcio, Basket, Tennis ed Exchange ✅️
 
@@ -202,7 +219,7 @@ def pre_checkout_handler(update: Update, context: CallbackContext):
     query = update.pre_checkout_query
     payload = query.invoice_payload
     context.user_data["payment_payload"] = payload
-    if payload != "payment_lotcomplete" and payload != "payment_teacherbet": # TODO create method to check if valid
+    if payload[:8] != "payment_" and payload != "payment_teacherbet": # TODO create method to check if valid
         query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza su @teamlot")
     elif ("payment_limit_timestamp" not in context.user_data or 
         context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
@@ -232,15 +249,24 @@ def successful_payment_callback(update: Update, context: CallbackContext):
     retrieved_user_subs = retrieved_user["subscriptions"]
     user_subs_name = [entry["name"] for entry in retrieved_user_subs]
     # new_expiration_date =  datetime.datetime(2021, 12, 2, hour=23, minute=59).timestamp() # TODO REVERT
-    sub_name = "_".join(context.user_data["payment_payload"].split("_")[1:])
+    sub_name = "lotcomplete" #"_".join(context.user_data["payment_payload"].split("_")[1:])
     # * extend the user's subscription up to the same day of the next month
+    days = 30
+    pack_type = "_".join(context.user_data["payment_payload"].split("_")[1:])
+    if pack_type == "1m":
+        days = 30
+    elif pack_type == "4m":
+        days = 120
+    elif pack_type == "1a":
+        days = 365
     if sub_name not in user_subs_name:
-        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=30)).timestamp()
+        new_expiration_date = (datetime.datetime.utcnow() + datetime.timedelta(days=days)).timestamp()
         retrieved_user_subs.append({"name": sub_name, "expiration_date": new_expiration_date})
     else:
         base_exp_date = [entry["expiration_date"] for entry in retrieved_user_subs if entry["name"] == sub_name][0]
         # base_exp_date = retrieved_user_subs[sub_name]["expiration_date"]
-        new_expiration_date: float = users.extend_expiration_date(base_exp_date, 30)
+
+        new_expiration_date: float = users.extend_expiration_date(base_exp_date, days)
         for sub_entry in retrieved_user_subs:
             if sub_entry["name"] == sub_name:
                 sub_entry["expiration_date"] = new_expiration_date

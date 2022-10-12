@@ -17,7 +17,7 @@ class MongoDatabase:
         try:
             self.client = MongoClient(
                 cfg.config.MONGO_DB_URL,
-                tlsCAFile=certifi.where()
+                #tlsCAFile=certifi.where()
             )
             # The ping command is cheap and does not require auth, 
             #   so it is run to check if the db is active
