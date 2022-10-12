@@ -704,7 +704,7 @@ def send_socials_list(update: Update, context: CallbackContext):
     #Creating user subscription
     free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
     #if not teacherbet_code:
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=3)).timestamp()
+    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
     sub = {"name": subs_model.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
     #else:
     #    sub = subs_model.create_teacherbet_base_sub()
