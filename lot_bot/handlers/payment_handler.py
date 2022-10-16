@@ -166,11 +166,7 @@ def to_payments(update: Update, context: CallbackContext):
     if "active_code_to_add" in context.user_data:
         codice = context.user_data["active_code_to_add"]
         del context.user_data["active_code_to_add"]
-    if codice == "ILVIAGGIOINIZIAORA":
-        price = 1000
-    else:
-        price = sub.price
-    print(f"{context.user_data=}")
+
     durata = "30 Giorni"
     try:
         pack_type = context.user_data["pack_type"]
@@ -178,6 +174,8 @@ def to_payments(update: Update, context: CallbackContext):
         if pack_type == "1m":
             durata = "30 Giorni"
             price = 2490
+            if codice == "ILVIAGGIOINIZIAORA":
+                price = 1000
         elif pack_type == "4m":
             durata = "4 Mesi"
             price = 5990

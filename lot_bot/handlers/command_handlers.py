@@ -1150,17 +1150,31 @@ def get_user_budget(update: Update, context: CallbackContext):
         target_user_username = target_user_identification_data
 
     if not target_user_id is None:
-        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, {"budget"})
+        user_data = user_manager.retrieve_user_fields_by_user_id(target_user_id, {"budgets"})
     else:
-        user_data = user_manager.retrieve_user_fields_by_username(target_user_username, {"budget"})
+        user_data = user_manager.retrieve_user_fields_by_username(target_user_username, {"budgets"})
+    
     if not user_data:
         update.effective_message.reply_text(f"ERRORE: utente non trovato")
         return
-    if user_data["budget"] is None:
+
+    budgets = user_data["budgets"]
+    if not budgets:
         update.effective_message.reply_text(f"Il budget dell'utente non è stato impostato")
         return
-    user_budget = int(user_data["budget"]) / 100
-    update.effective_message.reply_text(f"Il budget dell'utente {target_user_identification_data} è {user_budget:.2f}€")
+
+    base_text = f"I budget di {target_user_identification_data} sono:\n"
+
+    for budget in budgets:
+        name = budget["budget_name"]
+        balance = budget["balance"] / 100
+        if budget["default"]:
+            base_text += "<b>(Principale) </b>"
+        interest_type = budget["interest_type"]
+        simply_interest_base = budget["simply_interest_base"] / 100
+        base_text += f"<b>{name} {balance:.2f}€ - {interest_type} - {simply_interest_base:.2f}€</b>"
+    
+    update.effective_message.reply_text(f"{base_text}",parse_mode="HTML")
 
 #TODO modify to handle multiple budgets
 def set_user_budget(update: Update, context: CallbackContext):
