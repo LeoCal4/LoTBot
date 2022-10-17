@@ -251,7 +251,10 @@ def update_users_budget_with_giocata(updated_giocata: Dict):
         #if target_user["budget"] is None: #temporary
         default_budget = budget_manager.retrieve_default_budget_from_user_id(target_user["_id"]) 
         if not default_budget:
+            print("LALALALALALA NOT DEFAULT BUDGET")
             continue
+        else:
+            print("LALALALALALA DEFAULT BUDGET")
         #target_user_budget = int(target_user["budget"]) temporary
         target_user_budget = int(default_budget["balance"]) 
         target_user_personal_stake = int(target_user["giocate"]["personal_stake"])

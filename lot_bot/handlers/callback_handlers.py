@@ -461,7 +461,7 @@ def accept_register_giocata(update: Update, context: CallbackContext):
     user_manager.register_giocata_for_user_id(personal_user_giocata, user_chat_id)
     # * update user budget if giocata has an outcome
     giocata_outcome = retrieved_giocata["outcome"]
-    if (giocata_outcome == "win" or giocata_outcome == "loss") and parsed_giocata["sport"] != spr.sports_container.EXCHANGE:
+    if (giocata_outcome == "win" or giocata_outcome == "loss"):# and parsed_giocata["sport"] != spr.sports_container.EXCHANGE:
         #temporary
         #user_budget = budget_manager.retrieve_budgets_from_user_id(chat_id)
         #user_budget = user_manager.retrieve_user_fields_by_user_id(user_chat_id, ["budget"])["budget"]
