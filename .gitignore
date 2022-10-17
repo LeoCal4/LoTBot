@@ -11,6 +11,7 @@ prova*
 gcloud/
 add_giocate_batch*
 activate_vm.bat
+gcloud_deploy.bat
 
 scripts/
 pyvenv.cfg
