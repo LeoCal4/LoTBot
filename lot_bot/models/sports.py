@@ -39,27 +39,27 @@ _news_strategies = [
 _sport_americani_strategies = [
     strats.HOCKEY,
     strats.BASEBALL,
-    strats.BASKET,
+    #strats.BASKET,
     strats.FOOTBALLAMERICANO
 ]
 
 # ! important: no _ in .name nor in var names
 @dataclasses.dataclass
 class SportsContainer:
-    CALCIO : Sport = Sport("calcio", _base_strategies, emoji="⚽️")
-    #BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
-    TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
     EXCHANGE : Sport = Sport("exchange", [strats.PRODUZIONE,strats.TEST], emoji="📊", outcome_percentage_in_resoconto=False)
+    CALCIO : Sport = Sport("calcio", _base_strategies, emoji="⚽️")
+    BASKET : Sport = Sport("basket", _base_strategies, emoji="🏀")
+    TENNIS : Sport = Sport("tennis", _base_strategies, emoji="🎾")
+    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
+    ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
     #HOCKEY : Sport = Sport("hockey", _base_strategies, emoji="🏒")
     #BASEBALL : Sport = Sport("baseball", _base_strategies, emoji="⚾️")
     #FOOTBALLAMERICANO : Sport = Sport("footballamericano", _base_strategies, emoji="🏈", display_name="Football Americano")
-    SPORTAMERICANI : Sport = Sport("sportamericani", _sport_americani_strategies, display_name="Sport Americani")
+    #SPORTAMERICANI : Sport = Sport("sportamericani", _sport_americani_strategies, display_name="Sport Americani")
     #PALLAVOLO : Sport = Sport("pallavolo", _base_strategies, emoji="🏐")
-    PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
+    #PINGPONG : Sport = Sport("pingpong", _base_strategies, display_name="Ping Pong", emoji="🏓")
     #MMA : Sport = Sport("mma", _base_strategies, emoji="🥋", display_name="MMA")
-    TUTTOILRESTO : Sport = Sport("tuttoilresto", _base_strategies, display_name="Tutto il Resto", outcome_percentage_in_resoconto=False)
-    ANALISIMISTE : Sport = Sport("analisimiste", _analisi_miste_strategies, display_name="Analisi Miste") 
-    NEWS : Sport = Sport("news", _news_strategies, display_name="News") 
+    #NEWS : Sport = Sport("news", _news_strategies, display_name="News") 
 
     def __iter__(self):
         attributes = dataclasses.asdict(self).keys()

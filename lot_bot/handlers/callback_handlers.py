@@ -176,6 +176,31 @@ def to_payments_and_referrals_menu(update: Update, context: CallbackContext):
     chat_id = update.callback_query.message.chat_id
     message_id = update.callback_query.message.message_id
     menu_message = cst.PAY_AND_REF_MENU_MESSAGE
+
+
+    user_id = update.effective_user.id
+    user_data = user_manager.retrieve_user_fields_by_user_id(user_id, ["name", "subscriptions"])
+    service_status = cst.SERVICE_STATUS_MESSAGE.format(user_data["name"])
+    for sub in user_data["subscriptions"]: 
+        sub_exp_date = sub["expiration_date"]
+        expiration_date = datetime.datetime.strftime(datetime.datetime.utcfromtimestamp(sub_exp_date) + datetime.timedelta(hours=1), "%d/%m/%Y alle %H:%M")
+        if sub_exp_date == 9999999999:
+            expiration_date_text = " (sempre attivo)"
+        elif float(sub_exp_date) >= update.effective_message.date.timestamp():
+            expiration_date_text = f": valido fino a {expiration_date}"
+        else:
+            expiration_date_text = f": scaduto il {expiration_date}"
+
+        sub_name = subs_model.sub_container.get_subscription(sub["name"])
+        sub_emoji = "🟢" if float(sub_exp_date) >= update.effective_message.date.timestamp() else "🔴"
+        service_status += f"\n- {sub_emoji} {sub_name.display_name}{expiration_date_text}"
+    if "- 🟢 LoT Versione Premium:" in service_status:
+        service_status = service_status.replace("\n- 🟢 LoT Versione Base","").replace(" (sempre attivo)","")
+    #if "- 🔴 Lot Versione Premium" in service_status:
+        #mettere prima versione base in alto e sotto "- 🔴 Lot Versione Premium"
+        #magari aggiungendo una frase per far acquistare al cliente il Premium
+    menu_message += service_status
+
     #* check if user completed tutorial
     menu_message += utils.create_checklist_completion_message(chat_id)
     context.bot.edit_message_text(
@@ -630,7 +655,7 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
     lgr.logger.debug("Sending last 5 giocate in last 10h")
     chat_id = update.callback_query.message.chat_id
     latest_giocate = giocate_manager.retrieve_giocate_between_timestamps(
-        datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-10)).timestamp()
+        datetime.datetime.now().timestamp(), (datetime.datetime.now()+datetime.timedelta(hours=-6)).timestamp()
     )
     lgr.logger.debug(f"{latest_giocate=}")
 
@@ -657,7 +682,7 @@ def send_latest_giocate_to_new_user(update: Update, context: CallbackContext):
     )
     sport_validi = ["calcio","basket","tennis","exchange","hockey","pallavolo","pingpong","tuttoilresto"]
     for i, giocata in enumerate(latest_giocate):
-        if i > 0:
+        if i > 2:
             break
         if giocata["sport"] in sport_validi:
             text = giocata["raw_text"]
@@ -701,15 +726,6 @@ def send_socials_list(update: Update, context: CallbackContext):
     message_id = update.callback_query.message.message_id
     update.callback_query.edit_message_reply_markup(reply_markup = None)
     send_latest_giocate_to_new_user(update,context)
-    #Creating user subscription
-    free_sub = {"name": subs_model.sub_container.LOTFREE.name, "expiration_date": 9999999999}
-    #if not teacherbet_code:
-    trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
-    sub = {"name": subs_model.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
-    #else:
-    #    sub = subs_model.create_teacherbet_base_sub()
-    subscriptions = [sub,free_sub]
-    db.mongo.utenti.update_one({ "_id": chat_id }, { "$set": { "subscriptions": subscriptions } } )
     #user_data["subscriptions"].append(sub)
     #user_data["subscriptions"].append(free_sub)
     to_homepage(update, context, send_new_message=True, delete_last_message=False)

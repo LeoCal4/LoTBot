@@ -9,15 +9,15 @@ REFERRAL_CODE_LEN = 8
 PAYMENT_BASE_TEXT = """<i>Se hai un <b>codice</b> sconto/amico o referral inseriscilo adesso e premi invio, oppure premi il pulsante sotto ! 😊</i>"""
 
 
-EXISTING_LINKED_REFERRAL_CODE_TEXT = """Il codice di referral a cui sei collegato è <b>{0}</b>.
+EXISTING_LINKED_REFERRAL_CODE_TEXT = """Il codice amico a cui sei collegato è <b>{0}</b>.
 
-Se vuoi cambiarlo, invia un messaggio con un altro codice di referral valido oppure premi il bottone sottostante per procedere"""
+Se vuoi cambiarlo, invia un messaggio con un altro codice amico valido oppure premi il bottone sottostante per procedere"""
 
-ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice di referral valido oppure premi il bottone sottostante per procedere."""
+ADD_LINKED_REFERRAL_CODE_TEXT = """Invia un messaggio con un codice amico valido oppure premi il bottone sottostante per procedere."""
 
 
 
-UPDATE_PERSONAL_REFERRAL_CODE_TEXT = """Il tuo codice di referral attuale è <b>{0}</b>.
+UPDATE_PERSONAL_REFERRAL_CODE_TEXT = """Il tuo codice amico attuale è <b>{0}</b>.
 <b>Invia un messaggio</b> con il codice che vorresti avere oppure premi il bottone sottostante per tornare indietro! ✌️
 
 <b>ATTENZIONE:</b> per essere valido il nuovo codice deve contenere solo lettere e/o numeri. Alla fine codice verrà aggiunto in automatico "-lot" se non è già presente.""" 
@@ -47,11 +47,13 @@ SPORT_MENU_MESSAGE = """<b>Seleziona</b> gli sport che vuoi seguire 🚀
 
 HOMEPAGE_MESSAGE = """<b>Homepage</b> 📱
 
-👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
+👉 /start serve a lanciare questo menu che comprende i tasti:
 
-- <a href="https://t.me/LoTVerse">🙋🏼‍♀️ Community Telegram 🙋🏾</a>
-- <a href="https://www.instagram.com/lot.verse">📱 LoT Instagram 📱</a>
-- <a href="https://www.instagram.com/sportsignalsbot/">📱 SportSignalsBot Instagram 📱</a>"""
+- Energia, ricarica il tuo bot o condividilo con gli amici !
+- Impostazioni, seleziona i tuoi sport, il tuo budget, i tuoi resoconti!
+- Guida all'uso, ti spieghiamo come funziona !
+
+Ti invierò analisi sportive non appena disponibili, per qualsiasi domanda scrivi su @TeamLoT"""
 
 
 STRATEGIES_EXPLANATION_MESSAGE = """<b>Seleziona</b> le strategie che vuoi scoprire 🚀
@@ -69,7 +71,7 @@ Scegli il tipo di resoconto"""
 
 # {0}: user first name
 SERVICE_STATUS_MESSAGE = """Ciao {0} 😊
-Lo status della tua iscrizione è il seguente:\n"""
+La tua ultima ricarica durerà fino al:\n"""
 
 # {1}: linked referral code
 # {2}: user successful_referrals_since_last_payment
@@ -104,8 +106,8 @@ Tramite il tasto "<i>il mio bot</i>" puoi configurare le tue preferenze!
  
 Parliamo di analisti sportivi che oltre a <b>fornirti analisi personalizzate</b> possono supportarti con competenza e passione nella <b>tua crescita personale e professionale</b> nel mondo del betting ! 🔥</i>"""
 
-BOT_CONFIG_BUTTON_TEXT = "⚙️ Il tuo Bot 🤖"
-PAYMENTS_AND_REFERRALS_BUTTON_TEXT = "🌟 Pagamenti e referral 💸"
+BOT_CONFIG_BUTTON_TEXT = "⚙️ Impostazioni 🤖"
+ENERGY_BUTTON_TEXT = "🌟 Energia 💸"
 USE_GUIDE_BUTTON_TEXT = "🧑🏽‍💻 Guida all'Uso 🧑🏽‍💻"
 
 #TODO change these messages
@@ -114,8 +116,9 @@ BOT_CONFIG_MENU_MESSAGE = """<b>Configurazione Bot</b> 📱
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
 """
 
-PAY_AND_REF_MENU_MESSAGE = """<b>Pagamenti e referral</b> 📱
+PAY_AND_REF_MENU_MESSAGE = """<b>Energia</b> 📱"""
 
+"""
 👉<b>Seleziona</b> un tasto oppure <i>attendi una notifica dal bot</i>!
 """
 
@@ -155,9 +158,10 @@ Versione 1.00"""
 WELCOME_MESSAGE_v2 = """<i><b>Ciao {0}! </b></i>👋
 
 Tramite questo bot riceverai <b>eventi analizzati</b> dal nostro team di analisti su vari sport e <b>molto altro.</b>
-Se premi il pulsante in basso ti verranno inviati gli <b>eventi</b> che potrebbero essere ancora in corso!
+Se ti serve aiuto -> <i>@TeamLoT</i>
 
-Per qualsiasi dubbio o richiesta contattaci su @teamlot. Inoltre trovi altri <b>appassionati</b> nella nostra <a href='https://t.me/LoTVerse'>Community</a>"""
+Premi qui ⬇️ per ricevere le analisi!
+"""
 
 """<i><b>Ciao {0}! </b>👋
 Io sono <b>SportSignalsBoT</b> il tuo strumento di supporto nel betting!  
@@ -177,12 +181,13 @@ Grazie alle mie funzioni potrai: </i>
 Premi <b>avanti</b> quando sei pronto, sarò qui ad aspettarti ✌️"""
 
 NO_GIOCATA_TO_SEND_ON_FIRST_USAGE = """<b>Attualmente non ci sono eventi da visualizzare.</b>
-Ti verranno inviati non appena disponibili, promesso ✌️
+Scrivi a @TeamLoT per ricevere delle analisi private! ✌️
 
-Sfrutta l'occasione per presentarti nella <a href='https://t.me/LoTVerse'>community</a> e conoscere gli altri appassionati e tutto il team di LoT, richiedere una consulenza su @teamlot o leggere qualche approfondimento sul nostro <a href='https://www.lotverse.it'>sito</a>!
+Oppure
 
-<i>Dai un'occhiata al nostro sistema di referral,
-<b>Ogni amico che porti ha un vantaggio e puoi avere il bot gratis!</b></i> 😍"""
+Attendi l’invio dei match dal bot!
+
+PS: ti suggerisco di creare una cartella così da non perdermi mai di vista"""
 
 MSG_BENVENUTO = """Messaggio da @TeamLoT:
 
@@ -262,11 +267,12 @@ FIRST_BUDGET_NAME = "Primo budget"
 
 # ================================== TUTORIAL CHECKLIST ==========================================
 # spots needs to be filled with the relative emoji (✅ or ❌)
-TUTORIAL_CHECKLIST = """\nCompleta i seguenti obiettivi per ottenere <b>2 giorni di prova gratuita!</b> 🚀
+TUTORIAL_CHECKLIST = """<b>-----------HAPPY TASK------------------</b>\nCompleta i seguenti obiettivi per ottenere <b>2 giorni extra</b> 🚀
 ✅ Avvia il bot
 {budget_check} Imposta il budget
 {event_check} Registra un evento
-{referral_check} Personalizza il codice referral"""
+{referral_check} Personalizza il codice amico
+<b>-----------HAPPY TASK------------------</b>"""
 
 CHECKLIST_COMPLETED =  "💥 <b>Complimenti!</b> 💥\nHai completato tutti gli obiettivi, il tuo abbonamento è stato esteso di 2 giorni! 🚀"
 

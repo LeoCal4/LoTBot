@@ -107,7 +107,7 @@ def received_codice_during_payment(update: Update, context: CallbackContext) -> 
     chat_id = update.effective_user.id
     codice = update.effective_message.text
     message_text = ""
-    error_text = "C'è stato un errore nella convalida del codice, invialo di nuovo oppure procedi al pagamento senza codice."
+    error_text = "C'è stato un errore nella convalida del codice, invialo di nuovo oppure procedi al pagamento senza codice. Ti ricordiamo che puoi contattarci su @teamlot"
     used_codes = user_manager.retrieve_user_fields_by_user_id(chat_id,["used_codes","active_codes"])["used_codes"]
     active_codes = user_manager.retrieve_user_fields_by_user_id(chat_id,["used_codes","active_codes"])["active_codes"]
     update_result=True
@@ -176,6 +176,8 @@ def to_payments(update: Update, context: CallbackContext):
             price = 2490
             if codice == "ILVIAGGIOINIZIAORA":
                 price = 1000
+            elif codice == "1EURO":
+                price = 105
         elif pack_type == "4m":
             durata = "4 Mesi"
             price = 5990
@@ -219,9 +221,9 @@ def pre_checkout_handler(update: Update, context: CallbackContext):
     context.user_data["payment_payload"] = payload
     if payload[:8] != "payment_" and payload != "payment_teacherbet": # TODO create method to check if valid
         query.answer(ok=False, error_message="Qualcosa è andato storto con il pagamento, contattare l'Assistenza su @teamlot")
-    elif ("payment_limit_timestamp" not in context.user_data or 
-        context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
-        query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")
+    #elif ("payment_limit_timestamp" not in context.user_data or 
+    #    context.user_data["payment_limit_timestamp"] < datetime.datetime.utcnow().timestamp()):
+    #    query.answer(ok=False, error_message="L'invoice selezionato è scaduto. Si prega di ricominciare la procedura di pagamento dall'inizio.")
     else:
         query.answer(ok=True)
     if "payment_limit_timestamp" in context.user_data:

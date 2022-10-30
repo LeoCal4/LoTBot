@@ -4,6 +4,7 @@ from typing import List, Optional, Union, Callable, Tuple
 
 from lot_bot import config as cfg
 from lot_bot import constants as cst
+from lot_bot import database as db
 from lot_bot import custom_exceptions
 from lot_bot import keyboards as kyb
 from lot_bot import logger as lgr
@@ -209,6 +210,18 @@ def start_command(update: Update, context: CallbackContext):
     if not user_data:
         # * the user does not exist yet
         first_time_user_handler(update, context, ref_code=ref_code, teacherbet_code=teacherbet_code, additional_data=additional_data)
+
+        #Creating user subscription
+        free_sub = {"name": subscriptions.sub_container.LOTFREE.name, "expiration_date": 9999999999}
+        #if not teacherbet_code:
+        trial_expiration_timestamp = (datetime.datetime.now() + datetime.timedelta(days=5)).timestamp()
+        sub = {"name": subscriptions.sub_container.LOTCOMPLETE.name, "expiration_date": trial_expiration_timestamp}
+        #else:
+        #    sub = subs_model.create_teacherbet_base_sub()
+        subscriptions_list = [sub,free_sub]
+        db.mongo.utenti.update_one({ "_id": user_id }, { "$set": { "subscriptions": subscriptions_list } } )
+
+
         return
     # * existing user wants to link a referral code
     elif ref_code and user_data["linked_referral_user"]["linked_user_id"] is None and ref_code != user_data["referral_code"]:

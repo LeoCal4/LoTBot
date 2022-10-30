@@ -33,6 +33,7 @@ def get_referral_conversation_handler() -> ConversationHandler:
             payment_handler.REFERRAL: [
                 MessageHandler(filters.get_referral_filter(), payment_handler.received_linked_referral_during_payment),
                 MessageHandler(filters.get_codice10euro_filter(), payment_handler.received_codice_during_payment), # TODO make this more generic, not only for codice10euro
+                MessageHandler(filters.get_codice1euro_filter(), payment_handler.received_codice_during_payment), 
                 #MessageHandler(filters.get_qualsiasicodice_filter(), payment_handler.received_codice_during_payment),
                 CallbackQueryHandler(payment_handler.to_payments, pattern=r"^to_payments$")
                 ],

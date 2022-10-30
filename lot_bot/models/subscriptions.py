@@ -39,7 +39,7 @@ class SubContainer:
     LOTFREE : Subscription = Subscription(
         "lotfree",
         display_name="LoT Versione Base",
-        available_sports=[sports.sports_container.ANALISIMISTE, sports.sports_container.NEWS],
+        available_sports=[sports.sports_container.CALCIO,sports.sports_container.TUTTOILRESTO],
         price=0,
         description="Accesso alla produzione gratuita LoT e alle news",
         aliases=["free", "freelot", "free lot", "lot free"]

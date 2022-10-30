@@ -235,6 +235,9 @@ def get_codice10euro_filter() -> Filters:
     # [a-z A-Z 0-9 _ -]
     return Filters.regex(r"^ILVIAGGIOINIZIAORA$")
 
+def get_codice1euro_filter() -> Filters:
+    # [a-z A-Z 0-9 _ -]
+    return Filters.regex(r"^1EURO$")
 
 def get_successful_payment_filter() -> Filters:
     return Filters.successful_payment
